@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "My account | Techtronica" };
 export default async function AccountPage() {
   const supabase = await createClient();
   if (!supabase) {
-    return <Unavailable message="Connect the Supabase project to view your member account." />;
+    return <Unavailable message="Server unavailable" />;
   }
 
   let user: User | null = null;
