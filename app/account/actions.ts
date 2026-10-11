@@ -68,7 +68,51 @@ export async function updateProfileAction(
   }
 
   revalidatePath("/account");
+  revalidatePath("/account/settings");
   return { status: "success", message: "Your profile has been updated." };
+}
+
+export async function updateAccountEmailAction(
+  _previousState: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  const email = readText(formData, "email").toLowerCase();
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return errorState("Enter a valid email address.");
+  }
+
+  const supabase = await createClient();
+  if (!supabase) return errorState("Account settings are temporarily unavailable.");
+
+  let currentEmail = "";
+  let authenticated = false;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    authenticated = !error && Boolean(data.user);
+    currentEmail = data.user?.email?.toLowerCase() ?? "";
+  } catch {
+    return errorState("We could not verify your session. Refresh and sign in again.");
+  }
+  if (!authenticated) redirect("/auth/sign-in?next=/account/settings");
+  if (email === currentEmail) return errorState("That is already the email on your account.");
+
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://techtronicaglau.vercel.app").replace(/\/$/, "");
+  try {
+    const { error } = await supabase.auth.updateUser(
+      { email },
+      { emailRedirectTo: `${siteUrl}/auth/callback?next=/account/settings` },
+    );
+    if (error) return errorState("We could not start the email change. Check the address and try again.");
+  } catch {
+    return errorState("The email change could not be started. Please try again.");
+  }
+
+  revalidatePath("/account");
+  revalidatePath("/account/settings");
+  return {
+    status: "success",
+    message: "Check your inbox for the confirmation link. Your email changes after you confirm it.",
+  };
 }
 
 function isSafeAvatarUrl(value: string) {
