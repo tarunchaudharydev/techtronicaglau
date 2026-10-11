@@ -61,6 +61,8 @@ export default function PwaInstallPrompt() {
       await installPrompt.prompt();
       const { outcome } = await installPrompt.userChoice;
       if (outcome === "accepted") setIsInstalled(true);
+    } catch {
+      // The browser can reject or dismiss its native prompt; the browser menu remains available.
     } finally {
       setInstallPrompt(null);
     }

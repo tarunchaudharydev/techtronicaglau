@@ -38,6 +38,9 @@ export const metadata: Metadata = {
     "Explore Techtronica, the student technical society at GLA University in Mathura. Discover student-led clubs, engineering projects, workshops, and campus events.",
   applicationName: "Techtronica Society",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Techtronica" },
+  icons: {
+    apple: [{ url: "/logo.png", sizes: "512x512", type: "image/png" }],
+  },
   keywords: [
     "Techtronica Society",
     "Techtronica GLAU",
