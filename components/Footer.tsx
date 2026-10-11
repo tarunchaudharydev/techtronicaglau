@@ -8,7 +8,7 @@ import Version from "./features/Version";
 function Footer() {
   return (
     <footer className="mt-0">
-      <div className="bg-slate-100 px-4">\
+      <div className="bg-slate-100 px-4">
         <div className="mx-auto max-w-7xl rounded-t-3xl bg-white dark:bg-slate-900 shadow-[0_-12px_40px_rgba(0,0,0,0.08)]">
           <div className="mx-auto max-w-6xl px-4 py-30">
             <div className="flex flex-col gap-12 lg:flex-row ">
