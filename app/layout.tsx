@@ -27,10 +27,84 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// export const metadata: Metadata = {
+//   title: "Techtronica Society",
+//   description: "Made with ❤️ by Techtronica Society.",
+// };
+
+
+
 export const metadata: Metadata = {
-  title: "Techtronica Society",
+  metadataBase: new URL("https://techtronicaglau.vercel.app"),
+
+  title: {
+    default: "Techtronica Society | GLA University, Mathura",
+    template: "%s | Techtronica GLAU",
+  },
+
   description: "Made with ❤️ by Techtronica Society.",
+
+  applicationName: "Techtronica Society",
+
+  keywords: [
+    "Techtronica Society",
+    "Techtronica GLAU",
+    "GLA University Mathura",
+    "GLA University technical society",
+    "electronics and communication engineering",
+    "technical clubs",
+    "student projects",
+    "technical workshops",
+    "college technical events",
+    "student innovation",
+    "technical society",
+    "technical society GLAU",
+    "technical society GLA University",
+    "techtronica",
+    "gla university",
+    "gla university mathura",
+    "gla8085",
+    "glauniversity",
+    "exam.glauniversity",
+    "glauniversity.ac.in",
+    "glauniversity.in",
+    "glauniversity.edu.in",
+    "glauniversity.org",
+    "glauniversity.net",
+    ""
+  ],
+
+  alternates: {
+    canonical: "/",
+  },
+
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "/",
+    siteName: "Techtronica Society",
+    title: "Techtronica Society | GLA University, Mathura",
+    description:
+      "Discover technical clubs, electronics projects, workshops, events, and student innovation at Techtronica Society, GLA University.",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Techtronica Society | GLA University, Mathura",
+    description:
+      "Explore technical clubs, electronics projects, workshops, and events at Techtronica GLAU.",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
+
 
 export default async function RootLayout({
   children,
