@@ -312,7 +312,8 @@ import {
   AiOutlineUser,
   AiOutlineMenu,
 } from "react-icons/ai";
-import { LogIn, UserPlus, UserRound } from "lucide-react";
+import { LogIn, LogOut, UserPlus, UserRound } from "lucide-react";
+import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -668,6 +669,11 @@ function HeaderAccountLinks({
         <UserRound aria-hidden="true" className="size-4 shrink-0 text-sky-700" />
       </Link>
       <Link href="/account/settings" onClick={onNavigate} className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-sky-800">Profile settings</Link>
+      <form action={signOutAction}>
+        <button onClick={onNavigate} type="submit" className="inline-flex min-h-11 w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 dark:text-rose-300 dark:hover:bg-rose-950/40">
+          <LogOut aria-hidden="true" className="size-4" /> Sign out
+        </button>
+      </form>
     </div>;
   }
 
