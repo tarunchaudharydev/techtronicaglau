@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { formString, redirectResult, requireManager, validId } from "@/lib/manage/server";
+import { redirect } from "next/navigation";
+import { formString, requireManager, validId } from "@/lib/manage/server";
 
 const route = "/manage/team";
 const kinds = new Set(["team", "mentor", "faculty"]);
@@ -60,29 +61,38 @@ function daysInMonth(month: number) { return month === 2 ? 29 : [4, 6, 9, 11].in
 export async function createTeamMember(formData: FormData) {
   const { supabase } = await requireManager("team.manage");
   const { payload, valid } = readMember(formData);
-  if (!valid) return redirectResult(route, "invalid");
+  if (!valid) return redirectTeamResult(formData, "invalid");
   const { error } = await supabase.from("team_members").insert(payload);
   revalidateTeam();
-  return redirectResult(route, error ? "error" : "saved");
+  return redirectTeamResult(formData, error ? "error" : "saved");
 }
 
 export async function updateTeamMember(formData: FormData) {
   const { supabase } = await requireManager("team.manage");
   const id = formString(formData, "id", 36);
   const { payload, valid } = readMember(formData);
-  if (!validId(id) || !valid) return redirectResult(route, "invalid");
+  if (!validId(id) || !valid) return redirectTeamResult(formData, "invalid");
   const { data, error } = await supabase.from("team_members").update(payload).eq("id", id).select("id").maybeSingle();
   revalidateTeam();
-  return redirectResult(route, error ? "error" : data ? "saved" : "error");
+  return redirectTeamResult(formData, error ? "error" : data ? "saved" : "error");
 }
 
 export async function deleteTeamMember(formData: FormData) {
   const { supabase } = await requireManager("team.manage");
   const id = formString(formData, "id", 36);
-  if (!validId(id)) return redirectResult(route, "invalid");
+  if (!validId(id)) return redirectTeamResult(formData, "invalid");
   const { data, error } = await supabase.from("team_members").delete().eq("id", id).select("id").maybeSingle();
   revalidateTeam();
-  return redirectResult(route, error ? "error" : data ? "saved" : "error");
+  return redirectTeamResult(formData, error ? "error" : data ? "saved" : "error");
+}
+
+function redirectTeamResult(formData: FormData, result: "saved" | "error" | "invalid") {
+  const query = new URLSearchParams({ result });
+  const search = formString(formData, "search", 80);
+  const page = formString(formData, "page", 7);
+  if (search) query.set("search", search);
+  if (page && /^\d+$/.test(page) && Number(page) > 1) query.set("page", String(Math.min(Number(page), 1_000_000)));
+  redirect(`${route}?${query.toString()}`);
 }
 
 function revalidateTeam() {
