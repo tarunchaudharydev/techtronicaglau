@@ -239,65 +239,6 @@
 //   );
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -343,7 +284,9 @@ const clubItems = [
 export default function Navbar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isClubsOpen, setIsClubsOpen] = useState(false);
-  const [accountState, setAccountState] = useState<HeaderAccountState>(() => isSupabaseConfigured ? { status: "loading" } : { status: "signed-out" });
+  const [accountState, setAccountState] = useState<HeaderAccountState>(() =>
+    isSupabaseConfigured ? { status: "loading" } : { status: "signed-out" },
+  );
   const pathname = usePathname();
   const navRef = useRef<HTMLDivElement | null>(null);
 
@@ -362,19 +305,25 @@ export default function Navbar() {
       return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       authEvents += 1;
       if (mounted) setAccountState(accountStateFor(session?.user ?? null));
     });
     const initialEventVersion = authEvents;
 
-    void supabase.auth.getUser().then(({ data, error }) => {
-      if (mounted && authEvents === initialEventVersion) {
-        setAccountState(accountStateFor(error ? null : data.user));
-      }
-    }).catch(() => {
-      if (mounted && authEvents === initialEventVersion) setAccountState({ status: "signed-out" });
-    });
+    void supabase.auth
+      .getUser()
+      .then(({ data, error }) => {
+        if (mounted && authEvents === initialEventVersion) {
+          setAccountState(accountStateFor(error ? null : data.user));
+        }
+      })
+      .catch(() => {
+        if (mounted && authEvents === initialEventVersion)
+          setAccountState({ status: "signed-out" });
+      });
 
     return () => {
       mounted = false;
@@ -504,48 +453,65 @@ export default function Navbar() {
                 );
               })}
             </div>
-            <HeaderAccountLinks account={accountState} variant="desktop" pathname={pathname} />
+            <HeaderAccountLinks
+              account={accountState}
+              variant="desktop"
+              pathname={pathname}
+            />
           </nav>
         </div>
       </header>
 
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between px-4 py-2">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <div className="relative h-10 w-28">
+              <Image
+                src="/logo.png"
+                alt="Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
+          </Link>
 
-      
-<header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800">
-  <div className="flex items-center justify-between px-4 py-2">
-    
-    {/* Logo */}
-    <Link href="/" className="flex items-center">
-      <div className="relative h-10 w-28">
-        <Image
-          src="/logo.png"
-          alt="Logo"
-          fill
-          className="object-contain"
-        />
-      </div>
-    </Link>
-
-    <div className="flex items-center gap-1">
-      <HeaderAccountLinks account={accountState} variant="mobile" pathname={pathname} />
-      <button
-        onClick={() => setIsMobileOpen(true)}
-        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-        aria-label="Open navigation menu"
-        aria-expanded={isMobileOpen}
-      >
-        <AiOutlineMenu size={22} />
-      </button>
-    </div>
-  </div>
-</header>
+          <div className="flex items-center gap-1">
+            <HeaderAccountLinks
+              account={accountState}
+              variant="mobile"
+              pathname={pathname}
+            />
+            <button
+              onClick={() => setIsMobileOpen(true)}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              aria-label="Open navigation menu"
+              aria-expanded={isMobileOpen}
+            >
+              <AiOutlineMenu size={22} />
+            </button>
+          </div>
+        </div>
+      </header>
 
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t shadow-lg">
         <div className="flex justify-around py-2 text-xs">
           <NavItem href="/" icon={<AiOutlineHome />} active={isActive("/")} />
-          <NavItem href="/clubs" icon={<AiOutlineAppstore />} active={isActive("/clubs")} />
-          <NavItem href="/events" icon={<AiOutlineCalendar />} active={isActive("/events")} />
-          <NavItem href="/alumni" icon={<AiOutlineUser />} active={isActive("/alumni")} />
+          <NavItem
+            href="/clubs"
+            icon={<AiOutlineAppstore />}
+            active={isActive("/clubs")}
+          />
+          <NavItem
+            href="/events"
+            icon={<AiOutlineCalendar />}
+            active={isActive("/events")}
+          />
+          <NavItem
+            href="/alumni"
+            icon={<AiOutlineUser />}
+            active={isActive("/alumni")}
+          />
 
           <button onClick={() => setIsMobileOpen(true)}>
             <AiOutlineMenu size={22} />
@@ -577,7 +543,12 @@ export default function Navbar() {
               ))}
 
               <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
-                <HeaderAccountLinks account={accountState} variant="drawer" pathname={pathname} onNavigate={() => setIsMobileOpen(false)} />
+                <HeaderAccountLinks
+                  account={accountState}
+                  variant="drawer"
+                  pathname={pathname}
+                  onNavigate={() => setIsMobileOpen(false)}
+                />
               </div>
 
               <div>
@@ -606,15 +577,17 @@ export default function Navbar() {
 function accountStateFor(user: User | null): HeaderAccountState {
   if (!user) return { status: "signed-out" };
   const metadataName = user.user_metadata?.full_name;
-  const name = typeof metadataName === "string" && metadataName.trim()
-    ? metadataName.trim().replace(/\s+/g, " ")
-    : user.email?.split("@")[0] || "Techtronica member";
-  const initials = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "")
-    .join("") || "T";
+  const name =
+    typeof metadataName === "string" && metadataName.trim()
+      ? metadataName.trim().replace(/\s+/g, " ")
+      : user.email?.split("@")[0] || "Techtronica member";
+  const initials =
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "")
+      .join("") || "T";
   return { status: "signed-in", name: name.slice(0, 40), initials };
 }
 
@@ -632,55 +605,140 @@ function HeaderAccountLinks({
   const signInHref = `/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`;
 
   if (account.status === "loading") {
-    return <span role="status" aria-label="Loading account" className={`inline-block animate-pulse rounded-full bg-slate-200/80 ${variant === "mobile" ? "size-9" : "h-10 w-24"}`} />;
+    return (
+      <span
+        role="status"
+        aria-label="Loading account"
+        className={`inline-block animate-pulse rounded-full bg-slate-200/80 ${variant === "mobile" ? "size-9" : "h-10 w-24"}`}
+      />
+    );
   }
 
   if (account.status === "signed-out") {
     if (variant === "mobile") {
-      return <Link href={signInHref} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-sky-200 bg-white/80 px-3 text-xs font-semibold text-sky-800 shadow-sm transition hover:bg-sky-50"><LogIn aria-hidden="true" className="size-3.5" /> Sign in</Link>;
+      return (
+        <Link
+          href={signInHref}
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-sky-200 bg-white/80 px-3 text-xs font-semibold text-sky-800 shadow-sm transition hover:bg-sky-50"
+        >
+          <LogIn aria-hidden="true" className="size-3.5" /> Sign in
+        </Link>
+      );
     }
     if (variant === "drawer") {
-      return <div className="grid grid-cols-2 gap-3">
-        <Link href={signInHref} onClick={onNavigate} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50"><LogIn aria-hidden="true" className="size-4" /> Sign in</Link>
-        <Link href="/auth/sign-up" onClick={onNavigate} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800"><UserPlus aria-hidden="true" className="size-4" /> Sign up</Link>
-      </div>;
+      return (
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href={signInHref}
+            onClick={onNavigate}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50"
+          >
+            <LogIn aria-hidden="true" className="size-4" /> Sign in
+          </Link>
+          <Link
+            href="/auth/sign-up"
+            onClick={onNavigate}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800"
+          >
+            <UserPlus aria-hidden="true" className="size-4" /> Sign up
+          </Link>
+        </div>
+      );
     }
-    return <div className="flex shrink-0 items-center gap-1.5 xl:gap-2">
-      <Link href={signInHref} className="inline-flex min-h-9 items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800 xl:px-3 xl:text-sm"><LogIn aria-hidden="true" className="hidden size-3.5 xl:block" /> Sign in</Link>
-      <Link href="/auth/sign-up" className="inline-flex min-h-9 items-center gap-1 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-indigo-700 xl:gap-1.5 xl:px-3.5 xl:text-sm"><UserPlus aria-hidden="true" className="hidden size-3.5 xl:block" /> Sign up</Link>
-    </div>;
+    return (
+      <div className="flex shrink-0 items-center gap-1.5 xl:gap-2">
+        <Link
+          href={signInHref}
+          className="inline-flex min-h-9 items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800 xl:px-3 xl:text-sm"
+        >
+          <LogIn aria-hidden="true" className="hidden size-3.5 xl:block" /> Sign
+          in
+        </Link>
+        <Link
+          href="/auth/sign-up"
+          className="inline-flex min-h-9 items-center gap-1 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-indigo-700 xl:gap-1.5 xl:px-3.5 xl:text-sm"
+        >
+          <UserPlus aria-hidden="true" className="hidden size-3.5 xl:block" />{" "}
+          Sign up
+        </Link>
+      </div>
+    );
   }
 
   const isProfileActive = pathname.startsWith("/account");
   const profileLinkClass = `inline-flex min-h-10 items-center gap-2 rounded-full border px-2.5 py-1.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${isProfileActive ? "border-sky-200 bg-sky-50 text-sky-800" : "border-slate-200 bg-white/80 text-slate-700 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800"}`;
 
   if (variant === "mobile") {
-    return <Link href="/account" aria-label={`Open ${account.name}'s profile`} title="Profile" className={`${profileLinkClass} size-10 justify-center p-0 sm:w-auto sm:justify-start sm:px-2.5`}>
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white">{account.initials}</span>
-      <span className="hidden sm:inline">Profile</span>
-    </Link>;
+    return (
+      <Link
+        href="/account"
+        aria-label={`Open ${account.name}'s profile`}
+        title="Profile"
+        className={`${profileLinkClass} size-10 justify-center p-0 sm:w-auto sm:justify-start sm:px-2.5`}
+      >
+        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white">
+          {account.initials}
+        </span>
+        <span className="hidden sm:inline">Profile</span>
+      </Link>
+    );
   }
 
   if (variant === "drawer") {
-    return <div className="space-y-2">
-      <Link href="/account" onClick={onNavigate} className="flex min-h-14 items-center gap-3 rounded-2xl bg-gradient-to-r from-sky-50 to-violet-50 p-3 text-slate-900">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-xs font-bold text-white">{account.initials}</span>
-        <span className="min-w-0 flex-1"><span className="block text-sm font-bold">Profile</span><span className="block truncate text-xs text-slate-500">{account.name}</span></span>
-        <UserRound aria-hidden="true" className="size-4 shrink-0 text-sky-700" />
-      </Link>
-      <Link href="/account/settings" onClick={onNavigate} className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-sky-800">Profile settings</Link>
-      <form action={signOutAction}>
-        <button onClick={onNavigate} type="submit" className="inline-flex min-h-11 w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 dark:text-rose-300 dark:hover:bg-rose-950/40">
-          <LogOut aria-hidden="true" className="size-4" /> Sign out
-        </button>
-      </form>
-    </div>;
+    return (
+      <div className="space-y-2">
+        <Link
+          href="/account"
+          onClick={onNavigate}
+          className="flex min-h-14 items-center gap-3 rounded-2xl bg-gradient-to-r from-sky-50 to-violet-50 p-3 text-slate-900"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-xs font-bold text-white">
+            {account.initials}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold">Profile</span>
+            <span className="block truncate text-xs text-slate-500">
+              {account.name}
+            </span>
+          </span>
+          <UserRound
+            aria-hidden="true"
+            className="size-4 shrink-0 text-sky-700"
+          />
+        </Link>
+        <Link
+          href="/account/settings"
+          onClick={onNavigate}
+          className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-sky-800"
+        >
+          Profile settings
+        </Link>
+        <form action={signOutAction}>
+          <button
+            onClick={onNavigate}
+            type="submit"
+            className="inline-flex min-h-11 w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 dark:text-rose-300 dark:hover:bg-rose-950/40"
+          >
+            <LogOut aria-hidden="true" className="size-4" /> Sign out
+          </button>
+        </form>
+      </div>
+    );
   }
 
-  return <Link href="/account" className={profileLinkClass} aria-current={isProfileActive ? "page" : undefined} aria-label={`Open ${account.name}'s profile`}>
-    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white">{account.initials}</span>
-    <span>Profile</span>
-  </Link>;
+  return (
+    <Link
+      href="/account"
+      className={profileLinkClass}
+      aria-current={isProfileActive ? "page" : undefined}
+      aria-label={`Open ${account.name}'s profile`}
+    >
+      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white">
+        {account.initials}
+      </span>
+      <span>Profile</span>
+    </Link>
+  );
 }
 
 function NavItem({
@@ -695,9 +753,7 @@ function NavItem({
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center ${
-        active ? "text-blue-600" : ""
-      }`}
+      className={`flex flex-col items-center ${active ? "text-blue-600" : ""}`}
     >
       <div className="text-xl">{icon}</div>
     </Link>
