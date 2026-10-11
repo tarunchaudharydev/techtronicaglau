@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { getPublicClubs } from "@/lib/data/public-content";
 import { mapClub } from "@/lib/config/clubs";
+
+export const metadata: Metadata = {
+  title: "Student Technical Clubs at GLA University",
+  description:
+    "Explore Techtronica’s student-led technical clubs at GLA University, Mathura, covering engineering, coding, robotics, electronics, creativity, and innovation.",
+  alternates: { canonical: "/clubs" },
+};
 
 export default async function ClubsPage() {
   const rows = await getPublicClubs();

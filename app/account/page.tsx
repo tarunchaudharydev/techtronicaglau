@@ -6,12 +6,15 @@ import { signOutAction } from "@/app/auth/actions";
 import ProfileEditor from "@/components/account/ProfileEditor";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "My account | Techtronica" };
+export const metadata: Metadata = {
+  title: "My account",
+  robots: { index: false, follow: false },
+};
 
 export default async function AccountPage() {
   const supabase = await createClient();
   if (!supabase) {
-    return <Unavailable message="Server unavailable" />;
+    return <Unavailable message="Connect the Supabase project to view your member account." />;
   }
 
   let user: User | null = null;

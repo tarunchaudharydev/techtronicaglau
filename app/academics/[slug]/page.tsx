@@ -1,8 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
 import { getPublicSiteContentBySlug } from "@/lib/data/public-content";
 import { contentObject, contentText } from "@/lib/data/content-fields";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const resource = await getPublicSiteContentBySlug("learning_resource", slug);
+  if (!resource) return { title: "Resource not found", robots: { index: false, follow: false } };
+
+  const content = contentObject(resource.content);
+  const subject = contentText(content.subject);
+  const year = contentText(content.year);
+  const description = [subject, year, "study notes and learning resource from Techtronica at GLA University"].filter(Boolean).join(" · ");
+  return {
+    title: `${resource.title} | GLA University Resources`,
+    description: description.slice(0, 160),
+    alternates: { canonical: `/academics/${encodeURIComponent(resource.slug)}` },
+  };
+}
 
 export default async function ResourcePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
