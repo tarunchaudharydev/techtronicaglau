@@ -27,57 +27,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// export const metadata: Metadata = {
-//   title: "Techtronica Society",
-//   description: "Made with ❤️ by Techtronica Society.",
-// };
-
-
-
 export const metadata: Metadata = {
-  metadataBase: new URL("https://techtronicaglau.vercel.app"),
-
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://techtronicaglau.vercel.app"),
   title: {
     default: "Techtronica Society | GLA University, Mathura",
     template: "%s | Techtronica GLAU",
   },
-
-  description: "Made with ❤️ by Techtronica Society.",
-
+  description:
+    "Explore Techtronica, the student technical society at GLA University in Mathura. Discover student-led clubs, engineering projects, workshops, and campus events.",
   applicationName: "Techtronica Society",
-
   keywords: [
     "Techtronica Society",
     "Techtronica GLAU",
     "GLA University Mathura",
     "GLA University technical society",
-    "electronics and communication engineering",
-    "technical clubs",
-    "student projects",
-    "technical workshops",
-    "college technical events",
-    "student innovation",
-    "technical society",
-    "technical society GLAU",
-    "technical society GLA University",
-    "techtronica",
-    "gla university",
-    "gla university mathura",
-    "gla8085",
-    "glauniversity",
-    "exam.glauniversity",
-    "glauniversity.ac.in",
-    "glauniversity.in",
-    "glauniversity.edu.in",
-    "glauniversity.org",
-    "glauniversity.net",
-    ""
+    "student technical clubs at GLA University",
+    "engineering workshops and events in Mathura",
+    "student engineering projects",
   ],
-
-  alternates: {
-    canonical: "/",
-  },
-
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -85,26 +52,22 @@ export const metadata: Metadata = {
     siteName: "Techtronica Society",
     title: "Techtronica Society | GLA University, Mathura",
     description:
-      "Discover technical clubs, electronics projects, workshops, events, and student innovation at Techtronica Society, GLA University.",
+      "Discover student-led technical clubs, engineering projects, workshops, and events at GLA University in Mathura.",
+    images: [{ url: "/logo.png", width: 512, height: 512, alt: "Techtronica Society at GLA University" }],
   },
-
   twitter: {
     card: "summary_large_image",
     title: "Techtronica Society | GLA University, Mathura",
     description:
-      "Explore technical clubs, electronics projects, workshops, and events at Techtronica GLAU.",
+      "Student-led technical clubs, engineering projects, workshops, and events at GLA University in Mathura.",
+    images: ["/logo.png"],
   },
-
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-    },
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
   },
 };
-
 
 export default async function RootLayout({
   children,
@@ -122,6 +85,34 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "Techtronica Society",
+                alternateName: ["Techtronica", "Techtronica GLAU"],
+                url: process.env.NEXT_PUBLIC_SITE_URL || "https://techtronicaglau.vercel.app",
+                logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://techtronicaglau.vercel.app"}/logo.png`,
+                description:
+                  "A student-led technical society at GLA University, Mathura, bringing students together through clubs, engineering projects, workshops, and events.",
+                keywords: ["Techtronica", "GLA University", "GLAU", "student technical society", "Mathura"],
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "Techtronica Society",
+                alternateName: "Techtronica GLAU",
+                url: process.env.NEXT_PUBLIC_SITE_URL || "https://techtronicaglau.vercel.app",
+                inLanguage: "en-IN",
+              },
+            ]),
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-900 text-foreground dark:text-white dark:bg-black dark:text-white transition-colors duration-300`}
       >

@@ -3,7 +3,12 @@ import EventsList from "@/components/events/EventsList";
 import { getVisibleEvents } from "@/lib/data/public-content";
 import { mapDatabaseEvent } from "@/lib/data/event-mappers";
 
-export const metadata: Metadata = { title: "Events | Techtronica Society", description: "Explore workshops, hackathons, and events hosted by Techtronica Society." };
+export const metadata: Metadata = {
+  title: "Technical Events & Workshops at GLA University",
+  description:
+    "Find public Techtronica events at GLA University, Mathura, including student workshops, engineering showcases, competitions, and technical community meetups.",
+  alternates: { canonical: "/events" },
+};
 
 export default async function EventsPage() {
   const rows = await getVisibleEvents();

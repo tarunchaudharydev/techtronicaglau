@@ -200,6 +200,7 @@ export const getPublicEvents = unstable_cache(
       .select(
         "id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug), is_public",
       )
+      .eq("is_public", true)
       .eq("status", "published")
       .order("starts_at", { ascending: false })
       .order("id", { ascending: false })
@@ -245,6 +246,7 @@ export async function getPublicEventBySlug(slug: string) {
     .select(
       "id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug)",
     )
+    .eq("is_public", true)
     .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();

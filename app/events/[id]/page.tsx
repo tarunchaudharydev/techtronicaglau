@@ -1,5 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getVisibleEventBySlug } from "@/lib/data/public-content";
+import { getPublicEventBySlug, getVisibleEventBySlug } from "@/lib/data/public-content";
 import DatabaseEventDetails from "@/components/events/DatabaseEventDetails";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,6 +10,23 @@ type PageProps = {
   }>;
   searchParams: Promise<{ registration?: string }>;
 };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const event = await getPublicEventBySlug(id);
+  if (!event) {
+    return { title: "Member event", robots: { index: false, follow: false } };
+  }
+
+  const description = event.summary?.trim() ||
+    `${event.title} is hosted by Techtronica Society at GLA University, Mathura. View event details, venue, and registration information.`;
+  return {
+    title: `${event.title} | Techtronica Events`,
+    description: description.slice(0, 160),
+    alternates: { canonical: `/events/${encodeURIComponent(event.slug)}` },
+    openGraph: { title: `${event.title} | Techtronica GLAU`, description: description.slice(0, 160), type: "article" },
+  };
+}
 
 export default async function EventDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
