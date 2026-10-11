@@ -154,6 +154,7 @@ Avoid deleting a row when deactivation preserves useful history. Event deletion 
 - [Authentication and permissions](docs/authentication-and-permissions.md)
 - [Content management and visibility](docs/content-management.md)
 - [Storage and image workflow](docs/storage-and-assets.md)
+- [Install Techtronica as an app](docs/installable-app.md)
 - [Security and access control](docs/security-and-access-control.md)
 - [Operations and deployment](docs/operations.md)
 - [Contributing and review](CONTRIBUTING.md)

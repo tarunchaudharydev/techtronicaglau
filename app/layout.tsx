@@ -1,6 +1,6 @@
 // this is the main file for the layout of the website, it contains the navbar, footer and main content of the website, it also contains the global styles and fonts, it also contains the theme provider for dark mode and light mode, it also contains the analytics and speed insights for the website, it also contains the digital clock for the website, it also contains the event popup for the website, it also contains the upcoming event data for the website
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
@@ -14,6 +14,7 @@ import DigitalClock from "../components/features/DigitalClock";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import EventPopup from "@/components/features/events/EventPopup";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import { mapDatabaseEvent } from "@/lib/data/event-mappers";
 import { getPublicEvents } from "@/lib/data/public-content";
 
@@ -36,6 +37,7 @@ export const metadata: Metadata = {
   description:
     "Explore Techtronica, the student technical society at GLA University in Mathura. Discover student-led clubs, engineering projects, workshops, and campus events.",
   applicationName: "Techtronica Society",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Techtronica" },
   keywords: [
     "Techtronica Society",
     "Techtronica GLAU",
@@ -67,6 +69,11 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0284c7",
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
@@ -128,6 +135,7 @@ export default async function RootLayout({
         <SpeedInsights />
         <DigitalClock />
         <Footer />
+        <PwaInstallPrompt />
       
       </body>
     </html>
