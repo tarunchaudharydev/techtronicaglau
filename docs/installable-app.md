@@ -19,7 +19,7 @@ If no prompt appears, the browser may not support the install prompt or the site
 
 - `app/manifest.ts` defines the app name, standalone display mode, start URL, colors, and icons.
 - `components/PwaInstallPrompt.tsx` uses the native browser install event where available and provides Safari instructions on iOS/iPadOS.
-- `public/pwa-icon.svg` is the scalable app mark; `public/logo.png` is the large raster icon.
+- `public/pwa-icon.svg` is the scalable app mark, with generated 180, 192, and 512 pixel PNGs for Apple and Chromium install surfaces.
 - No service worker or offline cache is registered. The app needs a network connection; authenticated pages and society data are not copied to an offline cache.
 - Authentication and role checks work the same in the installed app as in the browser.
 
