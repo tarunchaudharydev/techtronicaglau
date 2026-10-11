@@ -1,76 +1,27 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { notes } from "@/lib/data/notes";
 import { FiArrowLeft } from "react-icons/fi";
+import { getPublicSiteContentBySlug } from "@/lib/data/public-content";
+import { contentObject, contentText } from "@/lib/data/content-fields";
 
-type PageProps = {
-  params: Promise<{
-    slug: string;
-  }>;
-};
-
-export default async function NotePage({ params }: PageProps) {
+export default async function ResourcePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const resource = await getPublicSiteContentBySlug("learning_resource", slug);
+  if (!resource) notFound();
+  const content = contentObject(resource.content);
+  const fileUrl = contentText(content.file_url);
+  if (!fileUrl) notFound();
 
-  const note = notes.find((n) => n.slug === slug);
-  if (!note) notFound();
-
-  return (
-    <main className="pt-28 pb-20 px-4 max-w-6xl mx-auto">
-      {/* Back Button */}
-      <div className="mb-4">
-        <Link
-          href="/academics"
-          className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 hover:text-foreground dark:text-white transition"
-        >
-          <FiArrowLeft />
-          Back to Academics
-        </Link>
+  return <main className="mx-auto max-w-6xl px-4 pb-20 pt-28">
+    <Link href="/academics" className="mb-5 inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 dark:text-white">
+      <FiArrowLeft /> Back to Academics
+    </Link>
+    <h1 className="mb-2 text-2xl font-bold text-foreground dark:text-white sm:text-3xl">{resource.title}</h1>
+    <p className="mb-6 text-sm text-muted">{contentText(content.subject)} · {contentText(content.year)} · {contentText(content.category)}</p>
+    <div className="overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-slate-900">
+      <div className="relative aspect-[1/1.4142]">
+        <iframe src={`${fileUrl}#zoom=page-width`} title={resource.title} className="absolute inset-0 h-full w-full" />
       </div>
-
-      {/* Title */}
-      <h1 className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white mb-2">
-        {note.title}
-      </h1>
-
-      {/* Meta */}
-      <p className="text-sm text-muted mb-6">
-        {note.subject} • {note.year} • {note.category}
-      </p>
-
-      {/* PDF Viewer */}
-      {/* PDF Viewer */}
-      {/* <div className="rounded-2xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-        <div className="relative w-full aspect-[1/1.4142]">
-          <iframe
-            src={`${note.pdfUrl}#zoom=page-width`}
-            title={note.title}
-            className="absolute inset-0 w-full h-full"
-          />
-        </div>
-      </div> */}
-
-      {/* PDF Viewer – embedded in page */}
-      {/* <div className="rounded-2xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-        <div className="relative w-full aspect-[1/1.4142]">
-          <iframe
-            src={`${note.pdfUrl}#zoom=page-width`}
-            title={note.title}
-            className="absolute inset-0 w-full h-full"
-          />
-        </div>
-      </div> */}
-
-      {/* PDF Viewer – stays on same page */}
-      <div className="rounded-2xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-        <div className="relative w-full aspect-[1/1.4142]">
-          <iframe
-            src={`${note.pdfUrl}#zoom=page-width`}
-            title={note.title}
-            className="absolute inset-0 w-full h-full"
-          />
-        </div>
-      </div>
-    </main>
-  );
+    </div>
+  </main>;
 }

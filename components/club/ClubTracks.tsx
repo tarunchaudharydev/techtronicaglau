@@ -1,4 +1,4 @@
-import { Club } from "@/lib/config/clubs";
+import type { Club } from "@/lib/config/clubs";
 
 export default function ClubTracks({ club }: { club: Club }) {
   return (

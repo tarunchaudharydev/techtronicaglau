@@ -320,6 +320,7 @@ const navLinks = [
   { href: "/library", label: "Library", badge: "NEW" },
   { href: "/alumni", label: "Alumni" },
   { href: "/contact", label: "Contact us" },
+  { href: "/account", label: "Account" },
 ];
 
 const clubItems = [
@@ -352,7 +353,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ================= DESKTOP NAV ================= */}
       <header className="hidden md:flex fixed inset-x-0 top-0 z-50 justify-center">
         <div ref={navRef} className="mt-4 w-full max-w-6xl px-4">
           <nav
@@ -368,7 +368,6 @@ export default function Navbar() {
               hover:shadow-[0_10px_40px_rgb(0,0,0,0.18)]
             "
           >
-            {/* Logo */}
             <Link href="/" className="flex items-center shrink-0">
               <div className="relative h-12 w-36 rounded-xl overflow-hidden transition-transform duration-300 hover:scale-105">
                 <Image
@@ -382,7 +381,6 @@ export default function Navbar() {
               </div>
             </Link>
 
-            {/* Desktop Links */}
             <div className="flex items-center gap-6 text-sm font-medium">
               {navLinks.map((link) => {
                 const active = isActive(link.href);
@@ -469,7 +467,7 @@ export default function Navbar() {
       </header>
 
 
-      {/* ================= MOBILE TOP HEADER ================= */}
+      
 <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800">
   <div className="flex items-center justify-between px-4 py-2">
     
@@ -485,7 +483,6 @@ export default function Navbar() {
       </div>
     </Link>
 
-    {/* Hamburger */}
     <button
       onClick={() => setIsMobileOpen(true)}
       className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
@@ -495,7 +492,6 @@ export default function Navbar() {
   </div>
 </header>
 
-      {/* ================= MOBILE BOTTOM NAV ================= */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t shadow-lg">
         <div className="flex justify-around py-2 text-xs">
           <NavItem href="/" icon={<AiOutlineHome />} active={isActive("/")} />
@@ -509,7 +505,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ================= MOBILE DRAWER ================= */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 bg-black/40">
           <div

@@ -1,4 +1,4 @@
-import { clubs } from "@/lib/config/clubs";
+import { mapClub } from "@/lib/config/clubs";
 import ClubPurpose from "@/components/club/ClubPurpose";
 import ClubTracks from "@/components/club/ClubTracks";
 import ClubWhatYouDo from "@/components/club/ClubWhatYouDo";
@@ -8,6 +8,8 @@ import ClubTeam from "@/components/club/ClubTeam";
 import ClubContact from "@/components/club/ClubContact";
 import ClubCTA from "@/components/club/ClubCTA";
 import { notFound } from "next/navigation";
+import { getPublicClubBySlug, getVisibleTeamMembers } from "@/lib/data/public-content";
+import { mapTeamMember } from "@/lib/data/public-content-mappers";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -16,22 +18,24 @@ type Props = {
 export default async function ClubPage({ params }: Props) {
   const { slug } = await params;
 
-  const club = clubs.find((c) => c.slug === slug);
-
-  if (!club) {
-    notFound();
-  }
+  const [clubRow, teamRows] = await Promise.all([
+    getPublicClubBySlug(slug),
+    getVisibleTeamMembers(),
+  ]);
+  if (!clubRow) notFound();
+  const club = mapClub(clubRow);
+  const team = (teamRows ?? []).filter((member) => member.club_id === club.id).map(mapTeamMember);
 
   return (
     <>
-      {/* <ClubHero club={club} /> */}
+      
       <ClubSessions club={club} />
       <ClubPurpose club={club} />
       <ClubTracks club={club} />
       <ClubWhatYouDo club={club} />
 
       <ClubVideo club={club} />
-      <ClubTeam club={club} />
+      <ClubTeam members={team} />
       <ClubContact club={club} />
       <ClubCTA club={club} />
     </>

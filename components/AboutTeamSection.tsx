@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Linkedin, MessageCircle } from "lucide-react";
-import { members, Member } from "@/lib/data/teamData";
+import type { Member } from "@/lib/data/teamData";
 
-/* 🎂 Birthday checker */
+// cool feature to show birthday confetti when a team member's profile is opened on their birthday
 const isBirthdayToday = (dob?: string) => {
   if (!dob) return false;
   const today = new Date();
@@ -16,7 +16,6 @@ const isBirthdayToday = (dob?: string) => {
   );
 };
 
-/* 🎨 Light Position Badge Colors */
 const getRoleColor = (role: string) => {
   const r = role.toLowerCase();
 
@@ -38,7 +37,6 @@ const getRoleColor = (role: string) => {
   return "bg-indigo-100 text-indigo-700 border border-indigo-300";
 };
 
-/* 🌟 Card Style Based on Category */
 const getCardStyle = (categories: string[]) => {
   if (categories.includes("President")) {
     return `
@@ -87,10 +85,13 @@ const getCardStyle = (categories: string[]) => {
   return "bg-white dark:bg-slate-900 shadow-xl hover:shadow-2xl";
 };
 
-export default function AboutTeamSection() {
+export default function AboutTeamSection({
+  members: directoryMembers,
+}: {
+  members: Member[];
+}) {
   const [selected, setSelected] = useState<{ member: Member } | null>(null);
 
-  /* 🎉 Birthday Confetti */
   useEffect(() => {
     if (!selected) return;
     if (!isBirthdayToday(selected.member.dob)) return;
@@ -125,7 +126,7 @@ export default function AboutTeamSection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {members.map((m) => {
+          {directoryMembers.map((m) => {
             const isBirthday = isBirthdayToday(m.dob);
             const cardStyle = getCardStyle(m.categories);
             const isTech = m.categories.includes("Tech Team");
@@ -197,9 +198,9 @@ export default function AboutTeamSection() {
             );
           })}
         </div>
+        {directoryMembers.length === 0 && <p className="text-center text-sm text-gray-300">Team profiles will be published here soon.</p>}
       </div>
 
-      {/* Modal */}
       {selected && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">

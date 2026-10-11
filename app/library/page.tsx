@@ -1,14 +1,11 @@
-// import Projects from "@/components/Projects";
-
+import type { Metadata } from "next";
 import LibrarySection from "@/components/library/LibrarySection";
-// import Projects from "@/components/library/Projects";
 
-// export const metadata = {
-//   title: "Projects | Techtronica",
-//   description:
-//     "Explore projects built by Techtronica members across IoT, AI/ML, Embedded Systems, and core electronics domains.",
-// };
+export const metadata: Metadata = {
+  title: "Library | Techtronica",
+  description: "Browse academic resources, projects, research, and patents published by Techtronica.",
+};
 
-export default function ProjectsPage() {
+export default function LibraryPage() {
   return <LibrarySection />;
 }

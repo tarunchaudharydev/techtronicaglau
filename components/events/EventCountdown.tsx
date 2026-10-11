@@ -29,7 +29,6 @@ export default function EventCountdown({ deadline }: { deadline?: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Lottie instead of icon */}
       <div className="h-6 w-6">
         <Lottie animationData={timeAnimation} loop autoplay />
       </div>

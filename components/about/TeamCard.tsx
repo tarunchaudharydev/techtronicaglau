@@ -1,16 +1,16 @@
-// components/TeamCard.tsx
 "use client";
 
 import Image from "next/image";
 import BirthdayBadge from "@/components/features/BirthdayBadge";
 import { isBirthdayToday } from "@/lib/utils/isBirthdayToday";
+import type { Member } from "@/lib/data/teamData";
 
 interface TeamCardProps {
-  member: any;
+  member: Member;
 }
 
 export default function TeamCard({ member }: TeamCardProps) {
-  const birthdayToday = isBirthdayToday(member.dateOfBirth);
+  const birthdayToday = isBirthdayToday(member.dob);
 
   return (
     <div

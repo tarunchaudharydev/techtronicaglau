@@ -1,5 +1,5 @@
-import RefundPolicy from "@/components/policy/RefundPolicy";
+import type { Metadata } from "next";
+import PolicyDocument from "@/components/policy/PolicyDocument";
 
-export default function RefundPolicyPage() {
-  return <RefundPolicy />;
-}
+export const metadata: Metadata = { title: "Refund Policy | Techtronica" };
+export default function RefundPolicyPage() { return <PolicyDocument slug="refund-policy" title="Refund & Cancellation Policy" />; }

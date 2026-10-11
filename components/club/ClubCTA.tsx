@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Club } from "@/lib/config/clubs";
+import type { Club } from "@/lib/config/clubs";
 
 export default function ClubCTA({ club }: { club: Club }) {
   return (

@@ -1,15 +1,14 @@
 import Image from "next/image";
-import { Club } from "@/lib/config/clubs";
+import type { Member } from "@/lib/data/teamData";
 
-export default function ClubTeam({ club }: { club: Club }) {
+export default function ClubTeam({ members }: { members: Member[] }) {
+  if (members.length === 0) return null;
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-      {/* spacing above heading */}
       <h2 className="pt-20 text-lg sm:text-2xl font-bold mb-10 text-center text-foreground dark:text-white">
         Club Team
       </h2>
 
-      {/* space-between layout */}
       <div className="flex justify-center">
         <div
           className="
@@ -21,9 +20,9 @@ export default function ClubTeam({ club }: { club: Club }) {
             max-w-4xl
           "
         >
-          {club.team.map((m) => (
+          {members.map((m) => (
             <div
-              key={m.name}
+              key={m.id}
               className="
                 w-[180px]
                 text-center
@@ -51,7 +50,7 @@ export default function ClubTeam({ club }: { club: Club }) {
               <p className="font-semibold text-xs sm:text-sm text-foreground dark:text-white">
                 {m.name}
               </p>
-              <p className="text-[11px] sm:text-xs text-muted">{m.role}</p>
+              <p className="text-[11px] sm:text-xs text-muted">{m.roles.join(" · ")}</p>
             </div>
           ))}
         </div>

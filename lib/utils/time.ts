@@ -5,7 +5,6 @@ export function nowIST(): Date {
 }
 
 export function deadlineIST(date: string): Date {
-  // End of day IST
   return new Date(`${date}T23:59:59+05:30`);
 }
 

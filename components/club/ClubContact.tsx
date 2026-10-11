@@ -1,25 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { Club } from "@/lib/config/clubs";
+import type { Club } from "@/lib/config/clubs";
 
 export default function ClubContact({ club }: { club: Club }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    // IMPORTANT: store form reference before await
     const form = e.currentTarget;
 
     setLoading(true);
     setSent(false);
+    setError("");
 
     const formData = new FormData(form);
 
     try {
-      await fetch("/api/club-contact", {
+      const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -27,14 +28,17 @@ export default function ClubContact({ club }: { club: Club }) {
           email: formData.get("email"),
           topic: formData.get("topic"),
           message: formData.get("message"),
-          clubName: club.name,
+          clubSlug: club.slug,
+          website: formData.get("website"),
         }),
       });
 
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "We could not send your message.");
       setSent(true);
-      form.reset(); // ✅ SAFE
-    } catch (error) {
-      console.error("Submit error:", error);
+      form.reset();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "We could not send your message.");
     } finally {
       setLoading(false);
     }
@@ -45,23 +49,26 @@ export default function ClubContact({ club }: { club: Club }) {
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center mb-14">
         <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-white">
-          Contact <span className="text-indigo-600">"{club.name}"</span>
+          Contact <span className="text-indigo-600">&quot;{club.name}&quot;</span>
         </h2>
         <p className="mt-4 text-sm sm:text-base text-muted">
           Reach us at{" "}
           <span className="font-medium text-slate-800">
-            {club.contact.instagram}
+            {club.contact.instagram || club.contact.linkedin || "our society team"}
           </span>
         </p>
       </div>
 
-      {/* Form Card */}
       <div className="relative max-w-3xl mx-auto">
-        {/* glow */}
+  
         <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 blur opacity-25"></div>
 
         <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 sm:p-12">
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="club-contact-website">Leave this field empty</label>
+              <input id="club-contact-website" name="website" tabIndex={-1} autoComplete="off" />
+            </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <input
                 name="name"
@@ -97,7 +104,6 @@ export default function ClubContact({ club }: { club: Club }) {
                          focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500"
             />
 
-            {/* CTA BUTTON */}
             <button
               type="submit"
               disabled={loading}
@@ -118,6 +124,7 @@ export default function ClubContact({ club }: { club: Club }) {
                 Message sent successfully.
               </p>
             )}
+            {error && <p role="alert" className="text-center text-sm font-medium text-red-600">{error}</p>}
           </form>
         </div>
       </div>

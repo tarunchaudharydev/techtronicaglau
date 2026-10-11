@@ -14,7 +14,6 @@ import {
   FiSend,
 } from "react-icons/fi";
 
-// 👉 Download a Lottie JSON and place in /public/contact.json
 import contactAnimation from "@/public/contact.json";
 
 const socialLinks = [
@@ -44,7 +43,9 @@ export default function ContactSection() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    topic: "",
     message: "",
+    website: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -68,12 +69,13 @@ export default function ContactSection() {
         body: JSON.stringify(form),
       });
 
-      if (!res.ok) throw new Error("Failed");
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.error || "Failed to send your message.");
 
       setSuccess(true);
-      setForm({ name: "", email: "", message: "" });
-    } catch {
-      setError("Something went wrong. Please try again.");
+      setForm({ name: "", email: "", topic: "", message: "", website: "" });
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -98,14 +100,12 @@ export default function ContactSection() {
           </p>
         </motion.div>
 
-        {/* Message + Animation */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
           animate="show"
           className="grid gap-10 lg:grid-cols-2 items-center bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 p-6 sm:p-10"
         >
-          {/* Lottie Animation */}
           <div className="hidden lg:block">
             <Lottie
               loop
@@ -115,13 +115,11 @@ export default function ContactSection() {
             />
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <h3 className="text-xl font-semibold text-foreground dark:text-white">
               Leave Us a Message
             </h3>
 
-            {/* Floating input */}
             <div className="relative">
               <input
                 name="name"
@@ -148,6 +146,18 @@ export default function ContactSection() {
             </div>
 
             <div className="relative">
+              <input
+                name="topic"
+                value={form.topic}
+                onChange={handleChange}
+                maxLength={160}
+                className="peer contact-input"
+                placeholder=" "
+              />
+              <label className="floating-label">Topic (optional)</label>
+            </div>
+
+            <div className="relative">
               <textarea
                 name="message"
                 rows={5}
@@ -158,6 +168,18 @@ export default function ContactSection() {
                 placeholder=" "
               />
               <label className="floating-label">Your Message</label>
+            </div>
+
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="contact-website">Leave this field empty</label>
+              <input
+                id="contact-website"
+                name="website"
+                value={form.website}
+                onChange={handleChange}
+                tabIndex={-1}
+                autoComplete="off"
+              />
             </div>
 
             <button
@@ -185,7 +207,6 @@ export default function ContactSection() {
           </form>
         </motion.div>
 
-        {/* Contact Info */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -223,7 +244,6 @@ export default function ContactSection() {
           ))}
         </motion.div>
 
-        {/* Google Map */}
         <div className="rounded-3xl overflow-hidden border shadow-lg">
           <iframe
             title="GLA University Map"
@@ -233,7 +253,6 @@ export default function ContactSection() {
           />
         </div>
 
-        {/* Socials */}
         <div className="flex justify-center gap-4">
           {socialLinks.map(({ href, icon: Icon, label }) => (
             <a

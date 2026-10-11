@@ -1,9 +1,9 @@
 "use client";
 
-import { members } from "@/lib/data/teamData";
+import type { Member } from "@/lib/data/teamData";
 import { isBirthdayToday } from "@/lib/utils/isBirthdayToday";
 
-export default function BirthdayBanner() {
+export default function BirthdayBanner({ members }: { members: Member[] }) {
   const birthdayMembers = members.filter((m) => isBirthdayToday(m.dob));
 
   if (birthdayMembers.length === 0) return null;
@@ -27,7 +27,7 @@ export default function BirthdayBanner() {
       "
     >
       <span className="block">
-        🎉🎂 Today we celebrate{" "}
+         Today we celebrate{" "}
         <span className="font-semibold">{names.join(", ")}</span>
         {isMultiple ? "'s birthdays" : "'s birthday"}!
       </span>
