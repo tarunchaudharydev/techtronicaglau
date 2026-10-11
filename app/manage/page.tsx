@@ -1,23 +1,60 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  ContactRound,
+  GraduationCap,
+  Inbox,
+  Layers3,
+  Network,
+  Settings2,
+  ShieldCheck,
+  Sparkles,
+  TicketCheck,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
 
 export const metadata: Metadata = { title: "Society management | Techtronica" };
 
 const sections = [
-  { title: "Membership requests", href: "/manage/memberships", permission: "members.manage", description: "Review and decide incoming society and club applications." },
-  { title: "Contact inbox", href: "/manage/contacts", permission: "contacts.manage", description: "Review and update messages in your society or club scope." },
-  { title: "Clubs", href: "/manage/clubs", permission: "clubs.manage", description: "Edit club pages and archive clubs while retaining membership history." },
-  { title: "Positions", href: "/manage/positions", permission: "positions.manage", description: "Create, edit, deactivate, or remove position definitions." },
-  { title: "Events", href: "/manage/events", permission: "events.manage", description: "Publish events and manage registration windows and capacity." },
-  { title: "Event registrations", href: "/manage/registrations", permission: "registrations.manage", description: "Review attendees, cancel registrations, and record attendance." },
-  { title: "Team directory", href: "/manage/team", permission: "team.manage", description: "Maintain public team, mentor, and faculty profiles." },
-  { title: "Alumni directory", href: "/manage/alumni", permission: "alumni.manage", description: "Maintain public alumni profiles and achievements." },
-  { title: "Website content", href: "/manage/content", permission: "content.manage", description: "Manage homepage content, FAQs, resources, research, and other site records." },
-  { title: "Roles and access", href: "/manage/access", permission: "admin.manage", description: "Manage role capabilities and user role assignments." },
-];
+  { title: "Membership requests", href: "/manage/memberships", permission: "members.manage", group: "People & access", description: "Review society and club applications, then welcome new members.", icon: UsersRound, tone: "sky" },
+  { title: "Team directory", href: "/manage/team", permission: "team.manage", group: "People & access", description: "Update team, mentor, and faculty profiles and their visibility.", icon: Network, tone: "violet" },
+  { title: "Alumni directory", href: "/manage/alumni", permission: "alumni.manage", group: "People & access", description: "Share alumni profiles, achievements, and career journeys.", icon: GraduationCap, tone: "amber" },
+  { title: "Roles & access", href: "/manage/access", permission: "admin.manage", group: "People & access", description: "Assign roles and control what each society team can manage.", icon: ShieldCheck, tone: "rose" },
+  { title: "Clubs", href: "/manage/clubs", permission: "clubs.manage", group: "Clubs & events", description: "Keep club pages, details, and membership history up to date.", icon: Layers3, tone: "cyan" },
+  { title: "Positions", href: "/manage/positions", permission: "positions.manage", group: "Clubs & events", description: "Create and maintain the positions held across the society.", icon: ContactRound, tone: "indigo" },
+  { title: "Events", href: "/manage/events", permission: "events.manage", group: "Clubs & events", description: "Publish events and manage their dates, capacity, and visibility.", icon: CalendarDays, tone: "fuchsia" },
+  { title: "Registrations", href: "/manage/registrations", permission: "registrations.manage", group: "Clubs & events", description: "Review attendees and record cancellations or attendance.", icon: TicketCheck, tone: "emerald" },
+  { title: "Contact inbox", href: "/manage/contacts", permission: "contacts.manage", group: "Website & communication", description: "Read and follow up on messages in your assigned scope.", icon: Inbox, tone: "orange" },
+  { title: "Website content", href: "/manage/content", permission: "content.manage", group: "Website & communication", description: "Update homepage sections, FAQs, resources, and site information.", icon: Sparkles, tone: "blue" },
+] as const;
+
+const groupStyles = {
+  "People & access": { icon: UsersRound, tint: "bg-sky-50 text-sky-700 ring-sky-100", number: "01" },
+  "Clubs & events": { icon: CalendarDays, tint: "bg-violet-50 text-violet-700 ring-violet-100", number: "02" },
+  "Website & communication": { icon: Sparkles, tint: "bg-amber-50 text-amber-700 ring-amber-100", number: "03" },
+} as const;
+
+const toneStyles = {
+  sky: "bg-sky-50 text-sky-700 group-hover:bg-sky-600 group-hover:text-white",
+  violet: "bg-violet-50 text-violet-700 group-hover:bg-violet-600 group-hover:text-white",
+  amber: "bg-amber-50 text-amber-700 group-hover:bg-amber-500 group-hover:text-white",
+  rose: "bg-rose-50 text-rose-700 group-hover:bg-rose-600 group-hover:text-white",
+  cyan: "bg-cyan-50 text-cyan-700 group-hover:bg-cyan-600 group-hover:text-white",
+  indigo: "bg-indigo-50 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white",
+  fuchsia: "bg-fuchsia-50 text-fuchsia-700 group-hover:bg-fuchsia-600 group-hover:text-white",
+  emerald: "bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white",
+  orange: "bg-orange-50 text-orange-700 group-hover:bg-orange-500 group-hover:text-white",
+  blue: "bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white",
+} as const;
+
+type GroupName = keyof typeof groupStyles;
+type Section = (typeof sections)[number];
 
 export default async function ManageHomePage() {
   const supabase = await createClient();
@@ -35,35 +72,104 @@ export default async function ManageHomePage() {
   const { permissionKeys, error } = await getMyPermissionKeys(supabase, userId);
   const isAdmin = permissionKeys.has("admin.manage");
   const availableSections = sections.filter(({ permission }) => isAdmin || permissionKeys.has(permission));
+  const groups = (Object.keys(groupStyles) as GroupName[]).map((name) => ({
+    name,
+    sections: availableSections.filter((section) => section.group === name),
+  })).filter((group) => group.sections.length > 0);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">Techtronica administration</p>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight">Manage society</h1>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">Your account can see the management areas assigned to its active society and club roles. The database checks every operation again when you save.</p>
+    <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-sky-50/70 via-slate-50 to-white px-4 py-6 sm:px-6 sm:py-10 lg:py-12">
+      <div className="mx-auto max-w-7xl">
+        <header className="relative isolate overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-violet-100/80 p-5 shadow-[0_18px_60px_-35px_rgba(14,116,144,0.3)] sm:p-8 lg:p-10">
+          <div aria-hidden="true" className="absolute -right-16 -top-24 -z-10 size-72 rounded-full bg-fuchsia-200/35 blur-3xl" />
+          <div aria-hidden="true" className="absolute -bottom-28 right-1/3 -z-10 size-64 rounded-full bg-cyan-200/45 blur-3xl" />
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/90 bg-white/75 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-sky-800 shadow-sm">
+                <span className="grid size-6 place-items-center rounded-full bg-sky-100"><Settings2 aria-hidden="true" className="size-3.5" /></span>
+                Society workspace
+              </div>
+              <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">Manage society</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">A clear home for your people, clubs, events, and website. Choose an area below to get started.</p>
+            </div>
 
-      {error && <p className="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">We could not load your permissions. Refresh the page to retry.</p>}
-      {!error && availableSections.length === 0 && (
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold">No management role assigned</h2>
-          <p className="mt-2 text-sm text-muted">You can still update your profile and submit club applications from your account.</p>
-          <Link className="mt-4 inline-block font-semibold text-sky-700 hover:underline" href="/account">Open your account →</Link>
-        </section>
-      )}
+            <div className="grid grid-cols-2 gap-3 sm:max-w-md lg:min-w-[320px]">
+              <div className="rounded-2xl border border-white/90 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Available areas</p>
+                <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{availableSections.length.toString().padStart(2, "0")}</p>
+                <p className="mt-1 text-xs text-slate-500">Based on your access</p>
+              </div>
+              <div className="rounded-2xl border border-white/90 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workspace access</p>
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-800">
+                  <span aria-hidden="true" className="size-1.5 rounded-full bg-emerald-500" />
+                  {isAdmin ? "Administrator" : "Scoped manager"}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">Your assigned roles set what you can manage.</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-7 flex items-start gap-2 border-t border-sky-200/70 pt-4 text-xs leading-5 text-slate-500 sm:mt-8 sm:text-sm">
+            <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-sky-700" />
+            <p>Changes are checked against your permissions when you save. You only see management areas assigned to your active society or club roles.</p>
+          </div>
+        </header>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {availableSections.map((section) => (
-          <Link className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900" href={section.href} key={section.href}>
-            <h2 className="text-lg font-semibold group-hover:text-sky-700">{section.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">{section.description}</p>
-            <span className="mt-5 inline-block text-sm font-semibold text-sky-700">Open →</span>
-          </Link>
-        ))}
+        {error && <div role="alert" className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-100"><ShieldCheck aria-hidden="true" className="size-4" /></span>
+          <div><p className="font-semibold">Could not load your access</p><p className="mt-1 text-amber-900">Refresh this page to try again. Your permissions have not been changed.</p></div>
+        </div>}
+
+        {!error && availableSections.length === 0 && <section className="mt-7 rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-violet-50 to-sky-50 p-6 shadow-sm sm:p-8">
+          <div className="grid size-12 place-items-center rounded-2xl bg-violet-100 text-violet-700"><ShieldCheck aria-hidden="true" className="size-6" /></div>
+          <h2 className="mt-5 text-xl font-bold text-slate-950">Your workspace is ready</h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">There is no management role assigned to this account yet. You can still update your profile and submit club applications from your account.</p>
+          <Link className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2" href="/account">Open your account <ArrowUpRight aria-hidden="true" className="size-4" /></Link>
+        </section>}
+
+        {!error && groups.length > 0 && <div className="mt-8 space-y-9 sm:mt-10 sm:space-y-11">
+          {groups.map(({ name, sections: groupSections }) => {
+            const style = groupStyles[name];
+            const GroupIcon = style.icon;
+            return <section key={name} aria-labelledby={`group-${style.number}`}>
+              <div className="mb-4 flex items-center gap-3 sm:mb-5">
+                <span className={`grid size-11 shrink-0 place-items-center rounded-2xl ring-1 ${style.tint}`}><GroupIcon aria-hidden="true" className="size-5" /></span>
+                <div>
+                  <p className="text-[11px] font-bold tracking-[0.16em] text-slate-400">{style.number} / WORKSPACE</p>
+                  <h2 id={`group-${style.number}`} className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{name}</h2>
+                </div>
+                <span className="ml-auto hidden rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500 sm:inline-flex">{groupSections.length} {groupSections.length === 1 ? "area" : "areas"}</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                {groupSections.map((section, index) => <ManagementCard key={section.href} section={section} number={index + 1} />)}
+              </div>
+            </section>;
+          })}
+        </div>}
       </div>
     </main>
   );
 }
 
+function ManagementCard({ section, number }: { section: Section; number: number }) {
+  const Icon: LucideIcon = section.icon;
+  return <Link href={section.href} className="group relative flex min-h-52 flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-[0_8px_30px_-24px_rgba(15,23,42,0.3)] transition duration-200 hover:-translate-y-1 hover:border-sky-200 hover:shadow-[0_22px_40px_-28px_rgba(14,116,144,0.42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 sm:p-6">
+    <span aria-hidden="true" className="absolute -right-8 -top-10 size-28 rounded-full bg-gradient-to-br from-sky-50 to-violet-50 transition duration-300 group-hover:scale-125" />
+    <div className="relative flex items-start justify-between gap-4">
+      <span className={`grid size-12 place-items-center rounded-2xl transition duration-200 ${toneStyles[section.tone]}`}><Icon aria-hidden="true" className="size-5" /></span>
+      <span className="grid size-9 place-items-center rounded-full border border-slate-200 text-slate-400 transition group-hover:border-sky-200 group-hover:bg-sky-50 group-hover:text-sky-700"><ArrowUpRight aria-hidden="true" className="size-4" /></span>
+    </div>
+    <div className="relative mt-5 flex-1">
+      <div className="flex items-center gap-2">
+        <h3 className="text-base font-bold tracking-tight text-slate-900 group-hover:text-sky-800 sm:text-lg">{section.title}</h3>
+        <span className="text-[10px] font-bold tabular-nums text-slate-300">{String(number).padStart(2, "0")}</span>
+      </div>
+      <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">{section.description}</p>
+    </div>
+    <span className="relative mt-5 inline-flex min-h-10 items-center text-sm font-semibold text-sky-700">Open workspace <ArrowUpRight aria-hidden="true" className="ml-1.5 size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
+  </Link>;
+}
+
 function Unavailable({ message = "Connect the Supabase project to use society management." }: { message?: string }) {
-  return <main className="mx-auto max-w-xl px-4 py-24 text-center"><h1 className="text-2xl font-bold">Management unavailable</h1><p className="mt-3 text-sm text-muted">{message}</p><Link className="mt-6 inline-block text-sky-700 underline" href="/account">Return to your account</Link></main>;
+  return <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-sky-50 via-white to-violet-50 px-4 py-24 text-center"><div className="mx-auto max-w-xl rounded-3xl border border-sky-100 bg-white/90 p-8 shadow-lg shadow-sky-950/5 sm:p-12"><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-sky-700"><Settings2 aria-hidden="true" className="size-6" /></div><h1 className="mt-5 text-2xl font-bold text-slate-950">Management unavailable</h1><p className="mt-3 text-sm leading-6 text-slate-600">{message}</p><Link className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-800" href="/account">Return to your account</Link></div></main>;
 }
