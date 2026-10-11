@@ -1,5 +1,5 @@
-import TermsConditions from "@/components/policy/TermsConditions";
+import type { Metadata } from "next";
+import PolicyDocument from "@/components/policy/PolicyDocument";
 
-export default function Page() {
-  return <TermsConditions />;
-}
+export const metadata: Metadata = { title: "Terms and Conditions | Techtronica" };
+export default function Page() { return <PolicyDocument slug="terms" title="Terms & Conditions" />; }

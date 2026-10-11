@@ -1,3 +1,6 @@
+// this is the 404 page for our website it is a global page i mean whenever any use tried to acces an undefined page or indefined route this page show the custom error of 404..
+
+
 "use client";
 
 import Link from "next/link";
@@ -8,12 +11,11 @@ export default function NotFound() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-sky-50 dark:via-slate-900 to-amber-50 px-4">
       <div className="w-full max-w-xl rounded-3xl border border-purple-200 bg-white dark:bg-slate-900/90 px-6 py-8 shadow-[0_25px_80px_rgba(15,23,42,0.15)] backdrop-blur-xl text-center">
-        {/* Error Animation */}
+      
         <div className="mx-auto max-w-xs">
           <Lottie animationData={errorAnimation} loop autoplay />
         </div>
 
-        {/* Text */}
         <div className="space-y-3 mt-2">
           <h1 className="text-xl sm:text-2xl font-extrabold text-foreground dark:text-white">
             Lost in the circuit of{" "}
@@ -29,7 +31,6 @@ export default function NotFound() {
           </p>
         </div>
 
-        {/* Navigation Buttons */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Link
             href="/"

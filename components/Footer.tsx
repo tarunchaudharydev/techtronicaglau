@@ -8,14 +8,10 @@ import Version from "./features/Version";
 function Footer() {
   return (
     <footer className="mt-0">
-      {/* OUTER BACKGROUND (page separation) */}
-      <div className="bg-slate-100 px-4">
-        {/* INNER ROUNDED FOOTER CARD */}
+      <div className="bg-slate-100 px-4">\
         <div className="mx-auto max-w-7xl rounded-t-3xl bg-white dark:bg-slate-900 shadow-[0_-12px_40px_rgba(0,0,0,0.08)]">
-          {/* Top */}
           <div className="mx-auto max-w-6xl px-4 py-30">
             <div className="flex flex-col gap-12 lg:flex-row ">
-              {/* Brand */}
               <div className="flex-1 space-y-5">
                 <div className="relative h-14 w-40 sm:h-16 sm:w-48">
                   <Link href="/">
@@ -47,9 +43,7 @@ function Footer() {
                 </div>
               </div>
 
-              {/* Links */}
               <div className="flex-1 grid grid-cols-2 gap-y-10 gap-x-8 sm:grid-cols-4 ">
-                {/* Navigate */}
                 <div>
                   <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-sky-700">
                     Navigate
@@ -78,7 +72,6 @@ function Footer() {
                   </ul>
                 </div>
 
-                {/* About */}
                 <div>
                   <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-sky-700">
                     About
@@ -127,7 +120,6 @@ function Footer() {
                   </ul>
                 </div>
 
-                {/* Connect */}
                 <div>
                   <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-sky-700">
                     Connect
@@ -160,7 +152,6 @@ function Footer() {
                   </ul>
                 </div>
 
-                {/* Official */}
                 <div>
                   <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-sky-700 ">
                     Official Links

@@ -2,26 +2,12 @@
 
 import { useState } from "react";
 import PolicyLayout from "./PolicyLayout";
+import { contentObject, contentText } from "@/lib/data/content-fields";
+import type { Json } from "@/types/database";
 
-const faqs = [
-  {
-    question: "Who can join Techtronica?",
-    answer:
-      "Any student of the university, regardless of branch or year, can join and participate in events.",
-  },
-  {
-    question: "Is there any membership or event fee?",
-    answer:
-      "Most events are completely free. Some premium workshops or competitions may have a minimal registration fee.",
-  },
-  {
-    question: "Do participants receive certificates?",
-    answer:
-      "Yes. Certificates are provided for eligible events, workshops, and competitions.",
-  },
-];
+type FAQRecord = { id: string; content: Json };
 
-export default function FAQ() {
+export default function FAQ({ faqs }: { faqs: FAQRecord[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
@@ -29,10 +15,11 @@ export default function FAQ() {
       <div className="space-y-4">
         {faqs.map((faq, index) => {
           const isOpen = openIndex === index;
+          const content = contentObject(faq.content);
 
           return (
             <div
-              key={index}
+              key={faq.id}
               className="border border-gray-200 rounded-xl p-5 transition-all duration-300
                          hover:border-indigo-500 hover:shadow-md bg-white dark:bg-slate-900"
             >
@@ -41,7 +28,7 @@ export default function FAQ() {
                 className="w-full flex items-center justify-between text-left"
               >
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {faq.question}
+                  {contentText(content.question)}
                 </h3>
 
                 <span
@@ -58,7 +45,7 @@ export default function FAQ() {
                   isOpen ? "max-h-40 mt-3 opacity-100" : "max-h-0 opacity-0"
                 }`}
               >
-                <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                <p className="text-gray-600 leading-relaxed">{contentText(content.answer)}</p>
               </div>
             </div>
           );

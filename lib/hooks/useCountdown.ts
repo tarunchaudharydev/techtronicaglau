@@ -15,9 +15,8 @@ export function useCountdown(deadlineDate?: string) {
       setTimeLeft(getTimeLeft(deadline));
     };
 
-    update(); // initial call
-    const interval = setInterval(update, 1000); // ⏱ every second
-
+    update(); 
+    const interval = setInterval(update, 1000); 
     return () => clearInterval(interval);
   }, [deadlineDate]);
 

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { clubs } from "@/lib/config/clubs";
+import JoinClubForm from "@/components/clubs/JoinClubForm";
+import { getPublicClubBySlug } from "@/lib/data/public-content";
 
 export default async function JoinClub({
   params,
@@ -8,13 +9,14 @@ export default async function JoinClub({
 }) {
   const { slug } = await params;
 
-  const club = clubs.find((c) => c.slug === slug);
-  if (!club) return notFound();
+  const publicClub = await getPublicClubBySlug(slug);
+  if (!publicClub) notFound();
+  const club = publicClub;
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50 flex items-center justify-center px-4 py-20">
       <div className="w-full max-w-xl rounded-3xl bg-white dark:bg-slate-900 shadow-lg border border-slate-100 p-6 sm:p-8">
-        {/* Heading */}
+        
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white mb-2">
           Join <span className="text-purple-700">{club.name}</span>
         </h1>
@@ -24,7 +26,7 @@ export default async function JoinClub({
           <span className="font-medium">{club.name}</span>.
         </p>
 
-        {/* Info Card */}
+        
         <div className="rounded-2xl bg-slate-50 border border-slate-200 dark:border-slate-800 p-4 mb-6">
           <p className="text-sm text-slate-700 leading-relaxed">
             By joining <strong>{club.name}</strong>, you’ll get access to
@@ -33,26 +35,8 @@ export default async function JoinClub({
           </p>
         </div>
 
-        {/* Action */}
-        <a
-          // href={club.joinFormUrl ?? "#"}
-          target="_blank"
-          rel="noreferrer"
-          className="block w-full text-center rounded-full bg-yellow-400 hover:bg-yellow-500 transition-colors py-3 text-sm sm:text-base font-semibold text-foreground dark:text-white shadow-sm"
-        >
-          {/* Open Interest Form */}
-          Oops! You missed it.
-        </a>
-
-        {/* Back link */}
-        <div className="mt-6 text-center">
-          <a
-            href={`/clubs/${club.slug}`}
-            className="text-sm text-muted hover:text-purple-700 hover:underline"
-          >
-            ← Back to {club.name}
-          </a>
-        </div>
+    
+        <JoinClubForm clubName={publicClub.name} clubSlug={publicClub.slug} />
       </div>
     </main>
   );

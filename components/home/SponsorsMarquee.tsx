@@ -1,28 +1,14 @@
 import Image from "next/image";
 
-type Sponsor = {
+export type Sponsor = {
   name: string;
   logo: string;
 };
 
-const sponsors: Sponsor[] = [
-  { name: "Sponsor One", logo: "/sponsors/adani.png" },
-  { name: "Sponsor Two", logo: "/sponsors/amber.jpg" },
-  { name: "Sponsor Three", logo: "/sponsors/Cadence-Logo.png" },
-  { name: "Sponsor Four", logo: "/sponsors/capgenmini.png" },
-  { name: "Sponsor Five", logo: "/sponsors/euler.png" },
-  { name: "Sponsor Six", logo: "/sponsors/lg.png" },
-  { name: "Sponsor Seven", logo: "/sponsors/ni.png" },
-  { name: "Sponsor Eight", logo: "/sponsors/silicon_labs.png" },
-  { name: "Sponsor Nine", logo: "/sponsors/sony.png" },
-  { name: "Sponsor Ten", logo: "/sponsors/synopsys.jpg" },
-  { name: "Sponsor Eleven", logo: "/sponsors/uno_minda.png" },
-];
-
-export default function SponsorsMarquee() {
+export default function SponsorsMarquee({ sponsors }: { sponsors: Sponsor[] }) {
+  if (sponsors.length === 0) return null;
   return (
     <section className="space-y-6">
-      {/* Heading */}
       <div className="text-center space-y-2">
         <p className="text-xs uppercase tracking-widest text-sky-600">
           Our Sponsors & Partners
@@ -32,7 +18,6 @@ export default function SponsorsMarquee() {
         </h2>
       </div>
 
-      {/* Marquee */}
       <div className="relative overflow-hidden">
         <div className="marquee flex items-center gap-12">
           {[...sponsors, ...sponsors].map((sponsor, index) => (

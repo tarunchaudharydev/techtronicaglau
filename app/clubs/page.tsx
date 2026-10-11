@@ -1,53 +1,11 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
+import { getPublicClubs } from "@/lib/data/public-content";
+import { mapClub } from "@/lib/config/clubs";
 
-const clubs = [
-  {
-    slug: "technovation",
-    name: "Technovation",
-    tag: "Projects & Innovation",
-    description:
-      "Build real-world tech projects, explore hardware–software integration, and present innovative prototypes.",
-    image: "/clubs/technovation/logo.jpeg",
-  },
-
-  {
-    slug: "gizmo",
-    name: "Gizmo",
-    tag: "Robotics & Electronics",
-    description:
-      "Dive into circuits, bots, and embedded systems with hands-on hardware experiments and competitions.",
-    image: "/clubs/gizmo/logo.jpeg",
-  },
-  {
-    slug: "code-e-phobia",
-    name: "Code-E-Phobia",
-    tag: "Coding & Programming",
-    description:
-      "Overcome the fear of coding through DSA practice, contests, hackathons, and guided coding sessions.",
-    image: "/clubs/code-e-phobia/logo.jpeg",
-  },
-  {
-    slug: "unnati",
-    name: "Unnati",
-    tag: "Cultural & Events",
-    description:
-      "Manage cultural events, fests, and celebrations that keep the campus energetic and connected.",
-    image: "/clubs/unnati/logo.jpeg",
-  },
-  {
-    slug: "mindboggler",
-    name: "Mindboggler",
-    tag: "Creativity & Content",
-    description:
-      "A space for writers, designers, and storytellers to create blogs, posters, reels, and digital content.",
-    image: "/clubs/mindbogglers/logo.jpeg",
-  },
-];
-
-export default function ClubsPage() {
+export default async function ClubsPage() {
+  const rows = await getPublicClubs();
+  const clubs = (rows ?? []).map(mapClub);
   return (
     <main className="min-h-screen flex justify-center bg-gradient-to-br from-white dark:from-slate-950 via-sky-50 dark:via-slate-900 to-purple-100 dark:to-black">
       <section className="w-full max-w-5xl pb-16">
@@ -66,7 +24,6 @@ export default function ClubsPage() {
           </p>
         </header>
 
-        {/* Cards grid */}
         <div className="grid gap-6 sm:gap-7 sm:grid-cols-2 lg:grid-cols-3">
           {clubs.map((club) => (
             <article
@@ -84,10 +41,10 @@ export default function ClubsPage() {
                 hover:border-sky-200
               "
             >
-              {/* IMAGE */}
+            
               <div style={{ height: "9rem" }} className="relative w-full">
                 <Image
-                  src={club.image}
+                  src={club.logoUrl}
                   alt={club.name}
                   fill
                   sizes="(max-width: 640px) 100vw,
@@ -99,7 +56,7 @@ export default function ClubsPage() {
 
               <div className="p-4 flex flex-col gap-1.5">
                 <p className="text-[11px] uppercase tracking-wide text-sky-600">
-                  {club.tag}
+                  {club.focusAreas.length ? club.focusAreas.join(" · ") : club.tagline}
                 </p>
 
                 <h2 className="font-semibold text-foreground dark:text-white">
@@ -107,7 +64,7 @@ export default function ClubsPage() {
                 </h2>
 
                 <p className="text-sm text-slate-700 mt-1 flex-1">
-                  {club.description}
+                  {club.shortDescription}
                 </p>
 
                 <Link
@@ -120,6 +77,7 @@ export default function ClubsPage() {
             </article>
           ))}
         </div>
+        {clubs.length === 0 && <p className="mt-8 text-center text-sm text-muted">Club information is being updated. Please check back soon.</p>}
       </section>
     </main>
   );

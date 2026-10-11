@@ -8,7 +8,6 @@ export default function ClubHero({ club }: { club: Club }) {
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 sm:pt-12 pb-12 sm:pb-16">
       <div className="grid gap-8 sm:gap-10 lg:grid-cols-2 items-center">
-        {/* LEFT */}
         <div className="space-y-4 sm:space-y-6 text-center lg:text-left">
           <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-sky-600">
             Techtronica • {club.name}
@@ -27,7 +26,6 @@ export default function ClubHero({ club }: { club: Club }) {
             {club.shortDescription}
           </p>
 
-          {/* CTA BUTTONS */}
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-2 justify-center lg:justify-start">
             <Link
               href={`/clubs/${club.slug}/join`}
@@ -45,7 +43,6 @@ export default function ClubHero({ club }: { club: Club }) {
           </div>
         </div>
 
-        {/* RIGHT */}
         <div className="relative max-w-md mx-auto lg:max-w-lg xl:max-w-xl w-full">
           <div className="absolute -inset-2 sm:-inset-3 rounded-3xl bg-gradient-to-tr from-sky-200 via-purple-200 to-orange-200 blur-xl opacity-60 -z-10" />
           <Image

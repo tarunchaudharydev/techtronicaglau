@@ -1,56 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Event } from "@/types/event";
+import { useCallback, useEffect, useState } from "react";
+import type { EventSummary } from "@/lib/data/event-mappers";
 import Image from "next/image";
 import Link from "next/link";
 import EventCountdown from "../../events/EventCountdown";
-import RegisterButton from "@/components/features/events/RegisterButton";
-import { parse12HourTime } from "@/lib/utils/eventUtils";
 
 interface Props {
-  event: Event;
-  eventSlug: string;
+  event: EventSummary;
 }
 
 export default function EventPopup({ event }: Props) {
   const [open, setOpen] = useState(false);
+  const [eventHasPassed, setEventHasPassed] = useState(false);
 
-  // Convert event date + time to Date object
-  const eventDateTime = parse12HourTime(event.date, event.time);
-
-  // 24 hours before event start
-  const popupCutoffTime = new Date(
-    eventDateTime.getTime() - 24 * 60 * 60 * 1000,
-  );
+  const eventDateTime = new Date(event.startsAt).getTime();
+  const popupCutoffTime = eventDateTime - 24 * 60 * 60 * 1000;
 
   useEffect(() => {
-    const shown = sessionStorage.getItem("event-popup-shown");
-    if (shown) return;
+    const remaining = eventDateTime - Date.now();
 
-    const now = new Date();
+    if (remaining <= 0) {
+      const timer = window.setTimeout(() => setEventHasPassed(true), 0);
+      return () => window.clearTimeout(timer);
+    }
 
-    // ❌ Don't show popup if event already started
+    const resetTimer = window.setTimeout(() => setEventHasPassed(false), 0);
+    const passedTimer = window.setTimeout(
+      () => setEventHasPassed(true),
+      remaining,
+    );
+
+    return () => {
+      window.clearTimeout(resetTimer);
+      window.clearTimeout(passedTimer);
+    };
+  }, [eventDateTime]);
+
+  useEffect(() => {
+    const storageKey = `event-popup-shown:${event.slug}`;
+    try {
+      if (sessionStorage.getItem(storageKey)) return;
+    } catch {
+      // Storage may be disabled by a strict browser privacy setting.
+    }
+
+    const now = Date.now();
+
     if (now >= eventDateTime) return;
 
-    // ❌ Don't show popup if within 24 hours of event
     if (now >= popupCutoffTime) return;
 
     const timer = setTimeout(() => setOpen(true), 2000);
     return () => clearTimeout(timer);
-  }, [eventDateTime, popupCutoffTime]);
+  }, [event.slug, eventDateTime, popupCutoffTime]);
 
-  const closePopup = () => {
-    sessionStorage.setItem("event-popup-shown", "true");
+  const closePopup = useCallback(() => {
+    try {
+      sessionStorage.setItem(`event-popup-shown:${event.slug}`, "true");
+    } catch {
+      // Closing the popup must still work when storage is unavailable.
+    }
     setOpen(false);
-  };
+  }, [event.slug]);
+
+  useEffect(() => {
+    if (!open) return;
+    const dismissOnEscape = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key === "Escape") closePopup();
+    };
+    window.addEventListener("keydown", dismissOnEscape);
+    return () => window.removeEventListener("keydown", dismissOnEscape);
+  }, [open, closePopup]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
+    <div role="dialog" aria-modal="true" aria-labelledby="upcoming-event-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
       <div className="relative w-full max-w-md rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-black text-white shadow-[0_30px_80px_rgba(56,189,248,0.25)] overflow-hidden transition-transform duration-300 hover:-translate-y-1">
-        {/* ❌ Close Button */}
+
         <button
           onClick={closePopup}
           aria-label="Close popup"
@@ -61,7 +89,6 @@ export default function EventPopup({ event }: Props) {
           ✕
         </button>
 
-        {/* Image */}
         <div className="relative h-40 sm:h-48 w-full bg-black">
           <Image
             src={event.coverImage}
@@ -73,9 +100,8 @@ export default function EventPopup({ event }: Props) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
         </div>
 
-        {/* Content */}
         <div className="p-4 sm:p-6 space-y-3">
-          <h2 className="text-lg sm:text-xl font-bold text-sky-400">
+          <h2 id="upcoming-event-title" className="text-lg sm:text-xl font-bold text-sky-400">
             {event.title}
           </h2>
 
@@ -84,14 +110,13 @@ export default function EventPopup({ event }: Props) {
           </p>
 
           <ul className="text-xs sm:text-sm text-slate-300 space-y-1">
-            {event.description.slice(0, 2).map((point, i) => (
+            {event.description.split(/\n+/).filter(Boolean).slice(0, 2).map((point, i) => (
               <li key={i}>• {point}</li>
             ))}
           </ul>
 
-          {/* Countdown & Actions */}
           <div className="pt-3">
-            {eventDateTime >= new Date() && (
+            {!eventHasPassed && (
               <div className="rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4">
                 <p className="text-lg font-semibold text-emerald-900">
                   Time Left
@@ -102,19 +127,14 @@ export default function EventPopup({ event }: Props) {
                 )}
 
                 <div className="flex flex-wrap gap-3">
-                  <RegisterButton
-                    registrationLink={event.registrationLink}
-                    registrationDeadline={event.registrationDeadline}
-                  />
-
                   <Link
-                    href={`/events/${event.id}`}
+                    href={`/events/${event.slug}`}
                     onClick={closePopup}
-                    className="flex-1 rounded-xl border border-slate-600 py-2 text-center text-sm font-medium text-black
+                    className="flex-1 rounded-xl bg-sky-600 py-2 text-center text-sm font-semibold text-white
                                transition-all duration-300
-                               hover:-translate-y-0.5 hover:shadow-md"
+                               hover:-translate-y-0.5 hover:bg-sky-700 hover:shadow-md"
                   >
-                    Read More
+                    View event & register
                   </Link>
                 </div>
               </div>
