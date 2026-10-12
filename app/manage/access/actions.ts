@@ -63,7 +63,8 @@ export async function assignRole(formData: FormData) {
     supabase.from("roles").select("id, scope").eq("id", roleId).maybeSingle(),
     supabase.from("profiles").select("id").eq("id", targetUserId).maybeSingle(),
   ]);
-  if (!role || !profile || (role.scope === "society") !== (clubId === null)) return redirectResult(route, "invalid");
+  if (!role || !profile) return redirectResult(route, "invalid");
+  if ((role.scope === "society") !== (clubId === null)) return redirectResult(route, "scope_mismatch");
   const { error } = await supabase.from("user_role_assignments").insert({ user_id: targetUserId, role_id: roleId, club_id: clubId, granted_by: user.id });
   revalidatePath(route);
   revalidatePath("/manage");
