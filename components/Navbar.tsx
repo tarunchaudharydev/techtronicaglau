@@ -54,6 +54,7 @@ export default function Navbar() {
   const mobileCloseRef = useRef<HTMLButtonElement | null>(null);
   const mobileTriggerRef = useRef<HTMLButtonElement | null>(null);
   const clubsTriggerRef = useRef<HTMLAnchorElement | null>(null);
+  const suppressClubFocusRef = useRef(false);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -192,14 +193,18 @@ export default function Navbar() {
                       className="relative"
                       onMouseEnter={() => setIsClubsOpen(true)}
                       onMouseLeave={() => setIsClubsOpen(false)}
-                      onFocus={() => setIsClubsOpen(true)}
+                      onFocus={() => {
+                        if (!suppressClubFocusRef.current) setIsClubsOpen(true);
+                      }}
                       onBlur={(event) => {
                         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsClubsOpen(false);
                       }}
                       onKeyDown={(event) => {
                         if (event.key === "Escape") {
                           setIsClubsOpen(false);
+                          suppressClubFocusRef.current = true;
                           clubsTriggerRef.current?.focus();
+                          suppressClubFocusRef.current = false;
                         }
                       }}
                     >
