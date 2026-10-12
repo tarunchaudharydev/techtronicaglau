@@ -11,12 +11,11 @@ import DigitalClock from "../components/features/DigitalClock";
 
 // import { ThemeProvider } from "next-themes";
 
+import { Suspense } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-import EventPopup from "@/components/features/events/EventPopup";
+import EventPopupLoader from "@/components/features/events/EventPopupLoader";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
-import { mapDatabaseEvent } from "@/lib/data/event-mappers";
-import { getPublicEvents } from "@/lib/data/public-content";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -84,15 +83,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const publicEvents = await getPublicEvents();
-  // This root-layout event query is cached public content; private events never enter the popup.
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
-  const nextEvent = [...(publicEvents ?? [])]
-    .filter((event) => new Date(event.starts_at).valueOf() > now)
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
-  const eventPopupData = nextEvent ? mapDatabaseEvent(nextEvent) : null;
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -130,7 +120,7 @@ export default async function RootLayout({
         <Navbar />
 
         <main className="pt-28 min-h-screen bg-gradient-to-br from-white dark:from-slate-950 via-sky-50 dark:via-slate-900 to-purple-100 dark:to-black dark:from-slate-900 dark:via-slate-800 dark:to-black transition-colors duration-300">
-          {eventPopupData && <EventPopup event={eventPopupData} />}
+          <Suspense fallback={null}><EventPopupLoader /></Suspense>
           {children}
         </main>
 
