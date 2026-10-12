@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { EventSummary } from "@/lib/data/event-mappers";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,11 +12,14 @@ interface Props {
 }
 
 export default function EventPopup({ event }: Props) {
+  const pathname = usePathname();
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
   const [eventHasPassed, setEventHasPassed] = useState(false);
 
   const eventDateTime = new Date(event.startsAt).getTime();
   const popupCutoffTime = eventDateTime - 24 * 60 * 60 * 1000;
+  const suppressPopup = pathname.startsWith("/manage") || pathname.startsWith("/account") || pathname.startsWith("/auth") || pathname.startsWith("/events/") || pathname === "/contact" || (pathname.startsWith("/clubs/") && pathname.endsWith("/join"));
 
   useEffect(() => {
     const remaining = eventDateTime - Date.now();
@@ -38,6 +42,10 @@ export default function EventPopup({ event }: Props) {
   }, [eventDateTime]);
 
   useEffect(() => {
+    if (suppressPopup) {
+      setOpen(false);
+      return;
+    }
     const storageKey = `event-popup-shown:${event.slug}`;
     try {
       if (sessionStorage.getItem(storageKey)) return;
@@ -53,7 +61,7 @@ export default function EventPopup({ event }: Props) {
 
     const timer = setTimeout(() => setOpen(true), 2000);
     return () => clearTimeout(timer);
-  }, [event.slug, eventDateTime, popupCutoffTime]);
+  }, [event.slug, eventDateTime, popupCutoffTime, suppressPopup]);
 
   const closePopup = useCallback(() => {
     try {
@@ -66,6 +74,7 @@ export default function EventPopup({ event }: Props) {
 
   useEffect(() => {
     if (!open) return;
+    closeButtonRef.current?.focus();
     const dismissOnEscape = (keyboardEvent: KeyboardEvent) => {
       if (keyboardEvent.key === "Escape") closePopup();
     };
@@ -80,6 +89,7 @@ export default function EventPopup({ event }: Props) {
       <div className="relative w-full max-w-md rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-black text-white shadow-[0_30px_80px_rgba(56,189,248,0.25)] overflow-hidden transition-transform duration-300 hover:-translate-y-1">
 
         <button
+          ref={closeButtonRef}
           onClick={closePopup}
           aria-label="Close popup"
           className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white dark:bg-slate-900/10 text-lg text-white cursor-pointer

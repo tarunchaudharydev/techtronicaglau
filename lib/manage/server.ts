@@ -38,6 +38,6 @@ export function parsedDate(value: string | null) {
   return Number.isNaN(date.valueOf()) ? null : date.toISOString();
 }
 
-export function redirectResult(path: string, result: "saved" | "error" | "invalid" | "conflict" | "invited" | "member_added" | "member_exists" | "member_not_found" | "member_not_verified") {
+export function redirectResult(path: string, result: "saved" | "error" | "invalid" | "conflict" | "invited" | "member_added" | "member_exists" | "member_not_found" | "member_not_verified" | "scope_mismatch") {
   redirect(`${path}?result=${result}`);
 }
