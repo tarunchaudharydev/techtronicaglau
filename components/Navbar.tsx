@@ -50,6 +50,10 @@ export default function Navbar() {
   );
   const pathname = usePathname();
   const navRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileCloseRef = useRef<HTMLButtonElement | null>(null);
+  const mobileTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const clubsTriggerRef = useRef<HTMLAnchorElement | null>(null);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -103,6 +107,50 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [isMobileOpen]);
 
+  useEffect(() => {
+    if (!isMobileOpen) return;
+
+    const panel = mobileMenuRef.current;
+    const focusable = () =>
+      Array.from(
+        panel?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((element) => element.offsetParent !== null);
+
+    mobileCloseRef.current?.focus();
+
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsMobileOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const elements = focusable();
+      if (!elements.length) {
+        event.preventDefault();
+        return;
+      }
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handler);
+    return () => {
+      document.removeEventListener("keydown", handler);
+      mobileTriggerRef.current?.focus();
+    };
+  }, [isMobileOpen]);
+
   return (
     <>
       <header className="hidden lg:flex fixed inset-x-0 top-0 z-50 justify-center">
@@ -144,9 +192,22 @@ export default function Navbar() {
                       className="relative"
                       onMouseEnter={() => setIsClubsOpen(true)}
                       onMouseLeave={() => setIsClubsOpen(false)}
+                      onFocus={() => setIsClubsOpen(true)}
+                      onBlur={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsClubsOpen(false);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          setIsClubsOpen(false);
+                          clubsTriggerRef.current?.focus();
+                        }
+                      }}
                     >
                       <Link
+                        ref={clubsTriggerRef}
                         href="/clubs"
+                        aria-expanded={isClubsOpen}
+                        aria-controls="desktop-club-links"
                         className={`relative group px-2 py-1 ${
                           active
                             ? "text-blue-600"
@@ -165,13 +226,13 @@ export default function Navbar() {
                       </Link>
 
                       {isClubsOpen && (
-                        <div className="absolute left-1/2 z-50 mt-2 w-60 -translate-x-1/2 rounded-xl border bg-white dark:bg-slate-900 shadow-xl">
+                        <div id="desktop-club-links" className="absolute left-1/2 z-50 mt-2 w-60 -translate-x-1/2 rounded-xl border bg-white dark:bg-slate-900 shadow-xl">
                           <ul className="py-2 text-xs">
                             {clubItems.map((club) => (
                               <li key={club.href}>
                                 <Link
                                   href={club.href}
-                                  className="block px-4 py-2 hover:text-blue-500"
+                                  className="block rounded px-4 py-2 hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                                 >
                                   {club.label}
                                 </Link>
@@ -244,10 +305,14 @@ export default function Navbar() {
               pathname={pathname}
             />
             <button
-              onClick={() => setIsMobileOpen(true)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              onClick={(event) => {
+                mobileTriggerRef.current = event.currentTarget;
+                setIsMobileOpen(true);
+              }}
+              className="rounded-lg p-2 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:hover:bg-slate-800"
               aria-label="Open navigation menu"
               aria-expanded={isMobileOpen}
+              aria-controls="mobile-navigation-dialog"
             >
               <AiOutlineMenu size={22} />
             </button>
@@ -274,7 +339,17 @@ export default function Navbar() {
             active={isActive("/alumni")}
           />
 
-          <button onClick={() => setIsMobileOpen(true)}>
+          <button
+            type="button"
+            onClick={(event) => {
+              mobileTriggerRef.current = event.currentTarget;
+              setIsMobileOpen(true);
+            }}
+            className="rounded-lg p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+            aria-label="Open navigation menu"
+            aria-expanded={isMobileOpen}
+            aria-controls="mobile-navigation-dialog"
+          >
             <AiOutlineMenu size={22} />
           </button>
         </div>
@@ -283,12 +358,25 @@ export default function Navbar() {
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 bg-black/40">
           <div
-            ref={navRef}
-            className="absolute bottom-0 w-full rounded-t-3xl bg-white dark:bg-slate-900 p-4 max-h-[80vh] overflow-y-auto"
+            id="mobile-navigation-dialog"
+            ref={(element) => {
+              mobileMenuRef.current = element;
+              navRef.current = element;
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-menu-title"
+            className="absolute bottom-0 w-full max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-4 dark:bg-slate-900"
           >
-            <div className="flex justify-between mb-4">
-              <h2 className="font-semibold">Menu</h2>
-              <button onClick={() => setIsMobileOpen(false)}>✕</button>
+            <div className="mb-4 flex justify-between">
+              <h2 id="mobile-menu-title" className="font-semibold">Menu</h2>
+              <button
+                ref={mobileCloseRef}
+                type="button"
+                onClick={() => setIsMobileOpen(false)}
+                className="rounded-lg p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                aria-label="Close navigation menu"
+              >✕</button>
             </div>
 
             <div className="space-y-3">
