@@ -9,6 +9,7 @@ export default function ResultMessage({ result }: { result?: string }) {
     member_not_verified: "This account has not confirmed its email address yet. Add the member after email verification.",
     error: "We could not save this change. Check your access and try again.",
     invalid: "Some fields are missing or invalid. Review the form and try again.",
+    scope_mismatch: "The selected role and scope do not match. Choose a club for a club-scoped role, or choose society-wide for a society role.",
     conflict: "That name or assignment already exists, or the record is in use.",
     permission: "You need an active society membership to view this private content.",
     registered: "Registration confirmed.",
