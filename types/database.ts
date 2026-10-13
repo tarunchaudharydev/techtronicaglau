@@ -32,7 +32,7 @@ export type Database = {
           created_at?: string
           downlink_bucket: string
           effective_type: string
-          expires_at?: string
+          expires_at?: never
           region_code?: string | null
           session_id: string
           user_id?: string | null
@@ -43,7 +43,7 @@ export type Database = {
           created_at?: string
           downlink_bucket?: string
           effective_type?: string
-          expires_at?: string
+          expires_at?: never
           region_code?: string | null
           session_id?: string
           user_id?: string | null
