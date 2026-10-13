@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { formString, parsedDate, redirectResult, requireManager, safeSlug, validId } from "@/lib/manage/server";
 
 const route = "/manage/events";
@@ -58,6 +58,7 @@ export async function createEvent(formData: FormData) {
   const { error } = await supabase.from("events").insert({ ...payload, created_by: user.id });
   revalidatePath(route);
   revalidatePath("/events");
+  if (!error) updateTag("public-events");
   return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : "saved");
 }
 
@@ -70,6 +71,7 @@ export async function updateEvent(formData: FormData) {
   revalidatePath(route);
   revalidatePath("/events");
   revalidatePath(`/events/${String(formData.get("slug") ?? "")}`);
+  if (!error && data) updateTag("public-events");
   return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : data ? "saved" : "error");
 }
 
@@ -80,5 +82,6 @@ export async function deleteEvent(formData: FormData) {
   const { data, error } = await supabase.from("events").delete().eq("id", id).select("id").maybeSingle();
   revalidatePath(route);
   revalidatePath("/events");
+  if (!error && data) updateTag("public-events");
   return redirectResult(route, error ? "error" : data ? "saved" : "error");
 }

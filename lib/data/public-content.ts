@@ -69,7 +69,7 @@ export async function getHomepageCounts() {
   if (!supabase) return null;
   const [clubs, events, team, alumni] = await Promise.all([
     supabase.from("clubs").select("id", { count: "exact", head: true }).eq("is_active", true),
-    supabase.from("events").select("id", { count: "exact", head: true }).eq("is_public", true).eq("status", "published"),
+    supabase.from("events").select("id", { count: "exact", head: true }).eq("is_public", true).in("status", ["published", "completed"]),
     supabase.from("team_members").select("id", { count: "exact", head: true }).eq("is_public", true).eq("is_active", true),
     supabase.from("alumni").select("id", { count: "exact", head: true }).eq("is_active", true),
   ]);
@@ -201,7 +201,7 @@ export const getPublicEvents = unstable_cache(
         "id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug), is_public",
       )
       .eq("is_public", true)
-      .eq("status", "published")
+      .in("status", ["published", "completed"])
       .order("starts_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(100);
@@ -226,7 +226,7 @@ export async function getVisibleEvents() {
   const { data, error } = await supabase
     .from("events")
     .select("id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug), is_public")
-    .eq("status", "published")
+    .in("status", ["published", "completed"])
     .order("starts_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(100);
@@ -248,7 +248,7 @@ export async function getPublicEventBySlug(slug: string) {
     )
     .eq("is_public", true)
     .eq("slug", slug)
-    .eq("status", "published")
+    .in("status", ["published", "completed"])
     .maybeSingle();
 
   if (error) {
@@ -268,7 +268,7 @@ export async function getVisibleEventBySlug(slug: string) {
     .from("events")
     .select("id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug), is_public")
     .eq("slug", slug)
-    .eq("status", "published")
+    .in("status", ["published", "completed"])
     .maybeSingle();
   if (error) {
     console.error("Visible event lookup failed", { code: error.code });

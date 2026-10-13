@@ -21,7 +21,7 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
   return <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
     <Link href="/manage" className="text-sm font-medium text-sky-700 hover:underline">← Management</Link>
     <h1 className="mt-4 text-3xl font-bold">Events</h1>
-    <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Draft, publish, cancel, and edit events. Public is selected by default. Private published events are visible only to signed-in users with an active society or club membership; Supabase enforces this on every read.</p>
+    <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Draft, publish, cancel, and edit events. New events start published and public by default. Published public events appear to everyone; completed events remain in Past, while drafts and cancelled events stay hidden. Supabase enforces private event access.</p>
     <ResultMessage result={result} />
     {(eventResult.error || clubResult.error) && <p className="mt-5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">Some event data could not be loaded. Refresh and check your event permissions.</p>}
     <section id="add-event" className="mt-8 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -37,7 +37,7 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
         <Field label="Capacity (blank means unlimited)"><input name="capacity" type="number" min="1" max="100000" className={inputClass} /></Field>
         <Field label="Registration opens (UTC)"><input name="registration_opens_at" type="datetime-local" className={inputClass} /></Field>
         <Field label="Registration closes (UTC)"><input name="registration_closes_at" type="datetime-local" className={inputClass} /></Field>
-        <Field label="Status"><select name="status" className={inputClass}><option value="draft">Draft</option><option value="published">Published</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select></Field>
+        <Field label="Status"><select name="status" defaultValue="published" className={inputClass}><option value="draft">Draft</option><option value="published">Published</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select></Field>
         <Field label="Cover image URL"><input name="cover_image_url" type="url" maxLength={2048} className={inputClass} /></Field>
         <div><StorageImageUpload name="uploaded_asset_url" folder="events" folderScopeField="club_id" folderScopeOptions={Object.fromEntries(clubs.map((club) => [club.id, club.slug]))} label="Upload one event image" /></div>
         <Field label="Short summary"><textarea name="summary" maxLength={500} rows={2} className={inputClass} /></Field>
