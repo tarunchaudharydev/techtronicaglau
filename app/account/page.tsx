@@ -8,6 +8,20 @@ import type { User } from "@supabase/supabase-js";
 import { FiArrowRight, FiCalendar, FiSettings, FiUsers } from "react-icons/fi";
 import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
+import { getMyPermissionKeys } from "@/lib/auth/permissions";
+
+const MANAGEMENT_PERMISSION_KEYS = [
+  "admin.manage",
+  "members.manage",
+  "team.manage",
+  "alumni.manage",
+  "clubs.manage",
+  "positions.manage",
+  "events.manage",
+  "registrations.manage",
+  "contacts.manage",
+  "content.manage",
+] as const;
 
 export const metadata: Metadata = {
   title: "My account",
@@ -27,7 +41,11 @@ export default async function AccountPage() {
   }
   if (!user) redirect("/auth/sign-in?next=/account");
 
-  const [profileResult, membershipsResult, registrationsResult] = await Promise.all([
+  const accessPromise = getMyPermissionKeys(supabase, user.id).catch(() => ({
+    permissionKeys: new Set<string>(),
+    error: true,
+  }));
+  const [profileResult, membershipsResult, registrationsResult, accessResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("full_name, department, year_of_study, avatar_url")
@@ -47,8 +65,11 @@ export default async function AccountPage() {
       .order("registered_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(25),
+    accessPromise,
   ]);
 
+  const canManageSociety = !accessResult.error
+    && MANAGEMENT_PERMISSION_KEYS.some((permission) => accessResult.permissionKeys.has(permission));
   const profile = profileResult.data ?? {
     full_name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "",
     department: null,
@@ -82,12 +103,12 @@ export default async function AccountPage() {
           >
             <FiSettings aria-hidden="true" /> Profile settings
           </Link>
-          <Link
+          {canManageSociety && <Link
             className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold transition hover:border-sky-500 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900"
             href="/manage"
           >
             Manage society
-          </Link>
+          </Link>}
           <form action={signOutAction}>
             <PendingSubmitButton className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-700">
               Sign out
