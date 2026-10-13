@@ -7,7 +7,21 @@ const route = "/manage/access";
 const scopes = new Set(["society", "club"]);
 
 function selectedPermissions(formData: FormData) {
-  return formData.getAll("permission_keys").filter((value): value is string => typeof value === "string" && value.length <= 100).slice(0, 100);
+  return [...new Set(
+    formData.getAll("permission_keys")
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0 && value.length <= 100),
+  )].slice(0, 100);
+}
+
+function createRoleResult(error: { code?: string; message?: string } | null) {
+  if (!error) return "saved";
+  if (error.code === "23505") return "role_exists";
+  const message = error.message?.toLowerCase() ?? "";
+  if (error.code === "42501" || message.includes("society admin permission required")) return "admin_required";
+  if (message.includes("invalid role details") || message.includes("unknown permission key") || message.includes("too many permissions")) return "invalid";
+  return "error";
 }
 
 export async function createRole(formData: FormData) {
@@ -20,7 +34,7 @@ export async function createRole(formData: FormData) {
   const { error } = await supabase.rpc("admin_create_role", { p_name: name, p_scope: scope, p_description: description, p_permission_keys: permissionKeys });
   revalidatePath(route);
   revalidatePath("/manage");
-  return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : "saved");
+  return redirectResult(route, createRoleResult(error));
 }
 
 export async function updateRole(formData: FormData) {

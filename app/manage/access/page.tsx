@@ -127,7 +127,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
                 <form action={createRole} className="space-y-5">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="text-sm font-medium" htmlFor="new-role-name">Role name
-                      <input className={inputClass} id="new-role-name" maxLength={80} minLength={2} name="name" placeholder="For example, Club Events Manager" required />
+                      <input autoComplete="off" className={inputClass} enterKeyHint="next" id="new-role-name" inputMode="text" maxLength={80} minLength={2} name="name" placeholder="For example, Club Events Manager" required type="text" />
                     </label>
                     <label className="text-sm font-medium" htmlFor="new-role-scope">Where can this role work?
                       <select className={inputClass} id="new-role-scope" name="scope" defaultValue="club">
@@ -425,7 +425,7 @@ function formatDate(value: string) {
   return Number.isNaN(date.valueOf()) ? "Date unavailable" : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(date);
 }
 
-const inputClass = "mt-1 block min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-950 dark:text-white";
+const inputClass = "mt-1 block min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base font-normal text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-950 dark:text-white sm:text-sm";
 const buttonClass = "inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2";
 const secondaryButtonClass = "inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold transition hover:border-sky-500 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900";
 const dangerButtonClass = "inline-flex min-h-10 items-center justify-center rounded-lg bg-rose-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2";
