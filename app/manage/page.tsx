@@ -81,8 +81,8 @@ export default async function ManageHomePage() {
   })).filter((group) => group.sections.length > 0);
 
   const overview = isAdmin && !error ? await Promise.all([
-    supabase.from("memberships").select("id", { count: "exact", head: true }).not("club_id", "is", null).eq("status", "pending"),
-    supabase.from("memberships").select("id", { count: "exact", head: true }).not("club_id", "is", null).in("status", ["active", "inactive", "rejected"]),
+    supabase.from("memberships").select("id", { count: "exact", head: true }).not("club_id", "is", "null").eq("status", "pending"),
+    supabase.from("memberships").select("id", { count: "exact", head: true }).not("club_id", "is", "null").in("status", ["active", "inactive", "rejected"]),
     supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "new"),
     supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "in_progress"),
     supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "resolved"),
@@ -102,7 +102,7 @@ export default async function ManageHomePage() {
   ] : [];
   const overviewHasError = overviewStats.some((stat) => stat.error);
   const activity = isAdmin && !error ? await Promise.all([
-    supabase.from("memberships").select("id, created_at, profiles(full_name), clubs(name)").not("club_id", "is", null).eq("status", "pending").order("created_at", { ascending: false }).limit(5),
+    supabase.from("memberships").select("id, created_at, profiles(full_name), clubs(name)").not("club_id", "is", "null").eq("status", "pending").order("created_at", { ascending: false }).limit(5),
     supabase.from("contact_submissions").select("id, name, topic, created_at, clubs(name)").eq("status", "new").order("created_at", { ascending: false }).limit(5),
     supabase.from("event_registrations").select("id, status, registered_at, events!event_registrations_event_id_fkey!inner(title), profiles!event_registrations_user_id_fkey!inner(full_name)").order("registered_at", { ascending: false }).limit(5),
   ]) : null;
