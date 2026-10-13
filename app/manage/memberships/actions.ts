@@ -60,7 +60,7 @@ export async function inviteMultipleUsers(_previousState: BulkInviteState, formD
   const results: BulkInviteResult[] = addresses.map((email) => validEmail(email)
     ? { email, status: "failed", message: "Not processed yet" }
     : { email, status: "invalid", message: "Invalid email address" });
-  const queue = addresses.flatMap((email, index) => validEmail.test(email) ? [index] : []);
+  const queue = addresses.flatMap((email, index) => validEmail(email) ? [index] : []);
   let nextIndex = 0;
 
   async function inviteAt(index: number) {
