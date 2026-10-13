@@ -61,9 +61,14 @@ export async function POST(request: NextRequest) {
   }
 
   const currentSessionCookie = request.cookies.get(sessionCookieName)?.value;
-  const sessionId = currentSessionCookie && uuidPattern.test(currentSessionCookie)
-    ? currentSessionCookie
+  const ownerPrefix = authData.user ? "user:" + authData.user.id + ":" : "guest:";
+  const currentCookieSessionId = currentSessionCookie?.startsWith(ownerPrefix)
+    ? currentSessionCookie.slice(ownerPrefix.length)
+    : null;
+  const sessionId = currentCookieSessionId && uuidPattern.test(currentCookieSessionId)
+    ? currentCookieSessionId
     : crypto.randomUUID();
+  const nextSessionCookie = ownerPrefix + sessionId;
 
   const { error } = await supabase.from("network_diagnostic_sessions").insert({
     session_id: sessionId,
@@ -80,8 +85,8 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json({ saved: true, alreadySaved: error?.code === "23505" });
-  if (!currentSessionCookie || !uuidPattern.test(currentSessionCookie)) {
-    response.cookies.set(sessionCookieName, sessionId, {
+  if (currentSessionCookie !== nextSessionCookie) {
+    response.cookies.set(sessionCookieName, nextSessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
