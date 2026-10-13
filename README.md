@@ -87,7 +87,7 @@ Never put a Supabase secret or service-role key in a NEXT_PUBLIC_ variable, comm
 
 ### Run locally
 
-~~~sh
+~~~
 npm run dev
 ~~~
 
@@ -95,7 +95,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Useful commands:
 
-~~~sh
+~~~
 npm run lint
 npx tsc --noEmit
 npm run build
@@ -104,7 +104,7 @@ npm start
 
 ## Repository map
 
-~~~text
+~~~
 app/
   (public)/       public about, alumni, and contact pages
   account/        signed-in profile and membership view
@@ -170,4 +170,6 @@ Avoid deleting a row when deactivation preserves useful history. Event deletion 
 
 ## License
 
-See LICENSE if present in the repository.
+The original frontend source code and documentation in this repository are licensed under the [MIT License](LICENSE).
+
+Techtronica and GLA University names and logos, society/member data, photographs, and other branded media are not covered by that license. Third-party packages and assets remain under their respective licenses. Do not reuse those materials without permission from their respective rights holders.
