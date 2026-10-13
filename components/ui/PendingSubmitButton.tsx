@@ -3,7 +3,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
-type PendingSubmitButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> & {
+type PendingSubmitButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
   pendingLabel?: string;
 };
@@ -12,6 +12,7 @@ export default function PendingSubmitButton({
   children,
   className,
   disabled,
+  type = "submit",
   pendingLabel = "Saving…",
   ...props
 }: PendingSubmitButtonProps) {
@@ -23,7 +24,7 @@ export default function PendingSubmitButton({
       aria-busy={pending || undefined}
       className={className}
       disabled={disabled || pending}
-      type="submit"
+      type={type}
     >
       {pending && (
         <span
