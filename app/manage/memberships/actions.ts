@@ -25,6 +25,93 @@ export async function addSocietyMember(formData: FormData) {
   return redirectResult(route, data === "already_active" ? "member_exists" : "member_added");
 }
 
+export type BulkInviteResult = { email: string; status: "sent" | "invalid" | "existing" | "failed"; message: string };
+export type BulkInviteState = {
+  status: "idle" | "complete" | "error";
+  message: string;
+  results: BulkInviteResult[];
+  duplicateCount: number;
+  submissionId: number;
+};
+
+export async function inviteMultipleUsers(_previousState: BulkInviteState, formData: FormData): Promise<BulkInviteState> {
+  const { supabase } = await requireManager("admin.manage");
+  const raw = formString(formData, "emails", 4096) ?? "";
+  if (!raw) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount: 0, submissionId: Date.now() };
+
+  const seen = new Set<string>();
+  const addresses: string[] = [];
+  let duplicateCount = 0;
+  for (const token of raw.split(/[\s,;]+/)) {
+    const email = token.trim().toLowerCase();
+    if (!email) continue;
+    if (seen.has(email)) {
+      duplicateCount += 1;
+      continue;
+    }
+    seen.add(email);
+    addresses.push(email);
+  }
+
+  if (addresses.length === 0) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount, submissionId: Date.now() };
+  if (addresses.length > 10) return { status: "error", message: "Send up to 10 unique invitations at a time. No invitations were sent; split the list into smaller batches.", results: [], duplicateCount, submissionId: Date.now() };
+
+  const validEmail = (value: string) => value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const results: BulkInviteResult[] = addresses.map((email) => validEmail(email)
+    ? { email, status: "failed", message: "Not processed yet" }
+    : { email, status: "invalid", message: "Invalid email address" });
+  const queue = addresses.flatMap((email, index) => validEmail(email) ? [index] : []);
+  let nextIndex = 0;
+
+  async function inviteAt(index: number) {
+    const email = addresses[index];
+    try {
+      const { error } = await supabase.functions.invoke("admin-invite-user", { body: { email } });
+      if (!error) {
+        results[index] = { email, status: "sent", message: "Invitation sent" };
+        return;
+      }
+
+      let detail = error.message ?? "";
+      const context = "context" in error ? error.context : null;
+      if (context instanceof Response) {
+        const payload = await context.clone().json().catch(() => null) as { error?: unknown } | null;
+        if (typeof payload?.error === "string") detail = payload.error;
+      }
+      if (/already exists|account already/i.test(detail)) {
+        results[index] = { email, status: "existing", message: "Account already exists" };
+      } else {
+        results[index] = { email, status: "failed", message: "Invitation could not be sent" };
+      }
+    } catch {
+      results[index] = { email, status: "failed", message: "Invitation could not be sent" };
+    }
+  }
+
+  async function worker() {
+    while (nextIndex < queue.length) {
+      const index = queue[nextIndex++];
+      await inviteAt(index);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(3, queue.length) }, () => worker()));
+
+  const sentCount = results.filter(({ status }) => status === "sent").length;
+  const existingCount = results.filter(({ status }) => status === "existing").length;
+  const invalidCount = results.filter(({ status }) => status === "invalid").length;
+  const failedCount = results.filter(({ status }) => status === "failed").length;
+  const summary = [
+    `${sentCount} invitation${sentCount === 1 ? "" : "s"} sent`,
+    existingCount ? `${existingCount} account${existingCount === 1 ? "" : "s"} already existed` : "",
+    invalidCount ? `${invalidCount} invalid address${invalidCount === 1 ? "" : "es"}` : "",
+    failedCount ? `${failedCount} failed` : "",
+    duplicateCount ? `${duplicateCount} duplicate${duplicateCount === 1 ? "" : "s"} skipped` : "",
+  ].filter(Boolean).join(" · ");
+
+  revalidatePath(route);
+  return { status: sentCount === 0 && (invalidCount > 0 || failedCount > 0) ? "error" : "complete", message: summary, results, duplicateCount, submissionId: Date.now() };
+}
+
 export async function decideMembershipAction(
   _previousState: MembershipDecisionState,
   formData: FormData,

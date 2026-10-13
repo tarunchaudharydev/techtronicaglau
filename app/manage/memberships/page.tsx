@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import MembershipDecision from "@/components/manage/MembershipDecision";
+import BulkInviteForm from "@/components/manage/BulkInviteForm";
 import ResultMessage from "@/components/manage/ResultMessage";
 import { createClient } from "@/lib/supabase/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
@@ -58,13 +59,26 @@ export default async function ManageMembershipsPage({
       <h1 className="mt-4 text-3xl font-bold">Membership requests</h1>
       <p className="mt-2 max-w-3xl text-sm text-muted">Society membership is assigned by a Society Admin. Club applications are shown in pages of 25; approve or reject only while a request is pending.</p>
       <ResultMessage result={params.result} />
-      {canAddSocietyMember && <section id="add-society-member" className="mt-6 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-lg font-semibold">Add an existing account to the society</h2>
-        <p className="mt-1 text-sm text-muted">The person must first create and verify an email account. Adding them here creates an active society membership; it does not grant an admin role.</p>
-        <form action={addSocietyMember} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <label className="flex-1 text-sm font-medium">Account email<input name="email" type="email" autoComplete="email" required maxLength={254} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
-          <PendingSubmitButton className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700" type="submit">Add society member</PendingSubmitButton>
-        </form>
+      {canAddSocietyMember && <section id="add-society-member" className="mt-6 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+        <h2 className="text-lg font-semibold">Add or invite society members</h2>
+        <p className="mt-1 text-sm leading-6 text-muted">Add an account that has already verified its email, or invite several people to create accounts. Invitations do not create memberships or grant roles; add new members after they verify and sign up.</p>
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="min-w-0 rounded-2xl border border-slate-200 p-4 dark:border-slate-800 sm:p-5">
+            <h3 className="font-semibold">Add a verified account</h3>
+            <p className="mt-1 text-sm leading-5 text-muted">Creates an active society membership for an existing account.</p>
+            <form action={addSocietyMember} className="mt-4 space-y-3">
+              <label className="block text-sm font-medium" htmlFor="society-member-email">Account email
+                <input id="society-member-email" name="email" type="email" autoComplete="email" required maxLength={254} className="mt-1 block min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base font-normal text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-950 dark:text-white sm:text-sm" />
+              </label>
+              <PendingSubmitButton className="min-h-11 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700" type="submit">Add society member</PendingSubmitButton>
+            </form>
+          </div>
+          <div className="min-w-0 rounded-2xl border border-sky-100 bg-sky-50/50 p-4 dark:border-sky-900 dark:bg-sky-950/20 sm:p-5">
+            <h3 className="font-semibold">Invite multiple people</h3>
+            <p className="mt-1 text-sm leading-5 text-muted">Send account setup emails in one batch. Each address is checked separately.</p>
+            <BulkInviteForm />
+          </div>
+        </div>
       </section>}
       <p className="mt-3 max-w-3xl text-sm text-muted">Club managers can review applications only for clubs in their assigned scope. Database policies reject direct attempts to create society memberships without admin permission.</p>
       {permissionError && <p className="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">We could not verify your current management permissions. Refresh the page to retry.</p>}
