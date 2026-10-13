@@ -14,7 +14,7 @@ import {
   AiOutlineUser,
   AiOutlineMenu,
 } from "react-icons/ai";
-import { LogIn, LogOut, UserPlus, UserRound } from "lucide-react";
+import { ChevronDown, LogIn, LogOut, UserPlus, UserRound } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -32,7 +32,7 @@ const navLinks = [
 type HeaderAccountState =
   | { status: "loading" }
   | { status: "signed-out" }
-  | { status: "signed-in"; name: string; initials: string };
+  | { status: "signed-in"; userId: string; name: string; initials: string; avatarUrl: string | null };
 
 const clubItems = [
   { href: "/clubs/code-e-phobia", label: "Code-E-Phobia" },
@@ -60,6 +60,33 @@ export default function Navbar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const authEventVersionRef = useRef(0);
+  const accountUserId = accountState.status === "signed-in" ? accountState.userId : null;
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !accountUserId) return;
+    let active = true;
+    try {
+      const supabase = createClient();
+      void supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", accountUserId)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (active && !error) {
+            setAccountState((current) =>
+              current.status === "signed-in" && current.userId === accountUserId
+                ? { ...current, avatarUrl: data?.avatar_url ?? null }
+                : current,
+            );
+          }
+        })
+        .catch(() => undefined);
+    } catch {
+      // The initials avatar remains available if profile data cannot be read.
+    }
+    return () => { active = false; };
+  }, [accountUserId]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -458,7 +485,7 @@ function accountStateFor(user: User | null): HeaderAccountState {
       .slice(0, 2)
       .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "")
       .join("") || "T";
-  return { status: "signed-in", name: name.slice(0, 40), initials };
+  return { status: "signed-in", userId: user.id, name: name.slice(0, 40), initials, avatarUrl: null };
 }
 
 function HeaderAccountLinks({
@@ -536,7 +563,7 @@ function HeaderAccountLinks({
   }
 
   const isProfileActive = pathname.startsWith("/account");
-  const profileLinkClass = `inline-flex min-h-10 items-center gap-2 rounded-full border px-2.5 py-1.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${isProfileActive ? "border-sky-200 bg-sky-50 text-sky-800" : "border-slate-200 bg-white/80 text-slate-700 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800"}`;
+  const profileLinkClass = `inline-flex min-h-11 min-w-0 items-center gap-2.5 rounded-full border px-2 py-1.5 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${isProfileActive ? "border-sky-300 bg-sky-50 text-sky-900 dark:border-sky-700 dark:bg-sky-950/70 dark:text-sky-100" : "border-slate-200 bg-white/90 text-slate-700 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-900 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:bg-slate-800"}`;
 
   if (variant === "mobile") {
     return (
@@ -546,8 +573,8 @@ function HeaderAccountLinks({
         title="Profile"
         className={`${profileLinkClass} size-10 justify-center p-0 sm:w-auto sm:justify-start sm:px-2.5`}
       >
-        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white">
-          {account.initials}
+        <span className="relative grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white ring-2 ring-white shadow-sm dark:ring-slate-900">
+          {account.avatarUrl ? <Image alt="" aria-hidden="true" className="object-cover" fill sizes="32px" src={account.avatarUrl} unoptimized /> : account.initials}
         </span>
         <span className="hidden sm:inline">Profile</span>
       </Link>
@@ -562,8 +589,8 @@ function HeaderAccountLinks({
           onClick={onNavigate}
           className="flex min-h-14 items-center gap-3 rounded-2xl bg-gradient-to-r from-sky-50 to-violet-50 p-3 text-slate-900"
         >
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-xs font-bold text-white">
-            {account.initials}
+          <span className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-xs font-bold text-white ring-2 ring-white shadow-sm dark:ring-slate-900">
+            {account.avatarUrl ? <Image alt="" aria-hidden="true" className="object-cover" fill sizes="44px" src={account.avatarUrl} unoptimized /> : account.initials}
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-bold">Profile</span>
@@ -583,11 +610,12 @@ function HeaderAccountLinks({
         >
           Profile settings
         </Link>
-        <form action={signOutAction}>
+        <form action={signOutAction} className="rounded-2xl border border-rose-200 bg-rose-50/80 p-3 dark:border-rose-900/70 dark:bg-rose-950/30">
+          <p className="px-1 text-xs leading-5 text-rose-900/80 dark:text-rose-200/80">Finished browsing? Sign out of your Techtronica account on this device.</p>
           <PendingSubmitButton
-            onClick={onNavigate}
             type="submit"
-            className="inline-flex min-h-11 w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 dark:text-rose-300 dark:hover:bg-rose-950/40"
+            pendingLabel="Signing out…"
+            className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700 disabled:cursor-wait disabled:opacity-70"
           >
             <LogOut aria-hidden="true" className="size-4" /> Sign out
           </PendingSubmitButton>
@@ -602,11 +630,14 @@ function HeaderAccountLinks({
       className={profileLinkClass}
       aria-current={isProfileActive ? "page" : undefined}
       aria-label={`Open ${account.name}'s profile`}
+      title={account.name}
     >
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white">
-        {account.initials}
+      <span className="relative grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white ring-2 ring-white shadow-sm dark:ring-slate-900">
+        {account.avatarUrl ? <Image alt="" aria-hidden="true" className="object-cover" fill sizes="32px" src={account.avatarUrl} unoptimized /> : account.initials}
       </span>
-      <span>Profile</span>
+      <span className="hidden max-w-28 truncate xl:inline">{account.name}</span>
+      <span className="xl:hidden">Profile</span>
+      <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-slate-500" />
     </Link>
   );
 }
