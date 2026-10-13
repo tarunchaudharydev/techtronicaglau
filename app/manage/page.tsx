@@ -198,54 +198,6 @@ export default async function ManageHomePage() {
 }
 
 
-function OverviewChart({ stats }: { stats: Array<{ label: string; count: number | null; error: unknown }> }) {
-  const maxCount = Math.max(1, ...stats.map(({ count, error }) => error ? 0 : count ?? 0));
-  const barTints: Record<string, string> = {
-    "Active memberships": "bg-sky-500",
-    "Active clubs": "bg-violet-500",
-    "Upcoming events": "bg-emerald-500",
-    "Open enquiries": "bg-amber-500",
-  };
-
-  return (
-    <figure aria-labelledby="overview-chart-title" className="mt-4 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <figcaption className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-        <div>
-          <h3 id="overview-chart-title" className="text-base font-bold text-slate-950">Workspace snapshot</h3>
-          <p className="mt-1 text-xs leading-5 text-slate-500">Bar lengths compare the totals shown above.</p>
-        </div>
-        <span aria-hidden="true" className="mt-0.5 hidden size-2.5 rounded-full bg-sky-500 sm:block" />
-      </figcaption>
-      <ul className="mt-5 space-y-4">
-        {stats.map(({ label, count, error }) => {
-          const value = error ? null : count ?? 0;
-          const width = value === null || value === 0 ? 0 : Math.max(3, Math.round((value / maxCount) * 100));
-          return (
-            <li key={label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:grid-cols-[9.5rem_minmax(0,1fr)_3rem]">
-              <span className="truncate text-sm font-medium text-slate-700">{label}</span>
-              <span className="text-right text-sm font-semibold tabular-nums text-slate-900 sm:col-start-3 sm:row-start-1">{value === null ? "—" : value.toLocaleString("en-IN")}</span>
-              <div
-                role="progressbar"
-                aria-label={`${label} compared with the largest overview total`}
-                aria-valuemin={0}
-                aria-valuemax={maxCount}
-                aria-valuenow={value ?? 0}
-                className="col-span-2 h-2.5 overflow-hidden rounded-full bg-slate-100 sm:col-span-1 sm:col-start-2 sm:row-start-1"
-              >
-                <div
-                  aria-hidden="true"
-                  className={`h-full rounded-full transition-[width] duration-700 motion-reduce:transition-none ${barTints[label] ?? "bg-sky-500"}`}
-                  style={{ width: `${width}%` }}
-                />
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </figure>
-  );
-}
-
 function ManagementCard({ section, number }: { section: Section; number: number }) {
   const Icon: LucideIcon = section.icon;
   return <Link href={section.href} className="group relative flex min-h-52 flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-[0_8px_30px_-24px_rgba(15,23,42,0.3)] transition duration-200 hover:-translate-y-1 hover:border-sky-200 hover:shadow-[0_22px_40px_-28px_rgba(14,116,144,0.42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 sm:p-6">
