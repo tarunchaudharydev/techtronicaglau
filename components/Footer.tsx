@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import LastUpdated from "./features/LastUpdate";
 import Version from "./features/Version";
+import NetworkDiagnostics from "./features/NetworkDiagnostics";
 
 function Footer() {
   return (
@@ -201,6 +202,7 @@ function Footer() {
             {/* FOREGROUND COPYRIGHT */}
 
             <div className="relative mx-auto max-w-6xl px-4 py-8 text-[11px] text-muted text-center sm:text-left">
+              <NetworkDiagnostics />
               © {new Date().getFullYear()} Techtronica 
               {/* • GLA University • */}
               {/* Electronics & Communication Engineering */}
