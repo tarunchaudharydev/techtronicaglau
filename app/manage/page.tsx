@@ -256,3 +256,15 @@ function ManagementCard({ section, number }: { section: Section; number: number 
 function Unavailable({ message = "Connect the Supabase project to use society management." }: { message?: string }) {
   return <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-sky-50 via-white to-violet-50 px-4 py-24 text-center"><div className="mx-auto max-w-xl rounded-3xl border border-sky-100 bg-white/90 p-8 shadow-lg shadow-sky-950/5 sm:p-12"><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-sky-700"><Settings2 aria-hidden="true" className="size-6" /></div><h1 className="mt-5 text-2xl font-bold text-slate-950">Management unavailable</h1><p className="mt-3 text-sm leading-6 text-slate-600">{message}</p><Link className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-800" href="/account">Return to your account</Link></div></main>;
 }
+
+
+function one<T>(value: T | T[] | null | undefined): T | null {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+}
+
+function formatActivityDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf())
+    ? "Date unavailable"
+    : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
