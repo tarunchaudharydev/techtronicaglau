@@ -109,7 +109,7 @@ export default async function ManageHomePage() {
   const activityItems = activity ? [
     ...(activity[0].data ?? []).map((row) => ({ id: `membership-${row.id}`, title: one(row.profiles)?.full_name || "Someone", detail: `Applied to ${one(row.clubs)?.name || "a club"}`, date: row.created_at, href: "/manage/memberships", type: "Club application" })),
     ...(activity[1].data ?? []).map((row) => ({ id: `contact-${row.id}`, title: row.name || "New enquiry", detail: row.topic || `Contact form · ${one(row.clubs)?.name || "Society-wide"}`, date: row.created_at, href: "/manage/contacts", type: "Contact form" })),
-    ...(activity[2].data ?? []).map((row) => ({ id: `registration-${row.id}`, title: one(row.profiles)?.full_name || "Member", detail: `Registered for ${one(row.events)?.title || "an event"}`, date: row.registered_at, href: "/manage/registrations", type: "Event registration" })),
+    ...(activity[2].data ?? []).map((row) => ({ id: `registration-${row.id}`, title: one(row.profiles)?.full_name || "Member", detail: `Registration ${row.status.replaceAll("_", " ")} · ${one(row.events)?.title || "an event"}`, date: row.registered_at, href: "/manage/registrations", type: "Event registration" })),
   ].sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf()).slice(0, 8) : [];
   const activityHasError = activity?.some((result) => result.error) ?? false;
   const adminActions = [
