@@ -115,7 +115,7 @@ export default async function ManageHomePage() {
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">A clear home for your people, clubs, events, and website. Choose an area below to get started.</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:max-w-md lg:min-w-[320px]">
+            <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:max-w-md lg:min-w-[320px]">
               <div className="rounded-2xl border border-white/90 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Available areas</p>
                 <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{availableSections.length.toString().padStart(2, "0")}</p>
@@ -150,6 +150,7 @@ export default async function ManageHomePage() {
               <ArrowUpRight aria-hidden="true" className="ml-auto size-4 shrink-0 text-slate-300 transition group-hover:text-sky-700" />
             </Link>)}
           </div>
+          <OverviewChart stats={overviewStats} />
         </section>}
 
         {isAdmin && !error && <section aria-labelledby="admin-shortcuts" className="mt-8 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-violet-50/80 p-5 shadow-sm sm:p-7">
@@ -199,6 +200,55 @@ export default async function ManageHomePage() {
         </div>}
       </div>
     </main>
+  );
+}
+
+
+function OverviewChart({ stats }: { stats: Array<{ label: string; count: number | null; error: unknown }> }) {
+  const maxCount = Math.max(1, ...stats.map(({ count, error }) => error ? 0 : count ?? 0));
+  const barTints: Record<string, string> = {
+    "Active memberships": "bg-sky-500",
+    "Active clubs": "bg-violet-500",
+    "Upcoming events": "bg-emerald-500",
+    "Open enquiries": "bg-amber-500",
+  };
+
+  return (
+    <figure aria-labelledby="overview-chart-title" className="mt-4 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <figcaption className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+        <div>
+          <h3 id="overview-chart-title" className="text-base font-bold text-slate-950">Workspace snapshot</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-500">Bar lengths compare the totals shown above.</p>
+        </div>
+        <span aria-hidden="true" className="mt-0.5 hidden size-2.5 rounded-full bg-sky-500 sm:block" />
+      </figcaption>
+      <ul className="mt-5 space-y-4">
+        {stats.map(({ label, count, error }) => {
+          const value = error ? null : count ?? 0;
+          const width = value === null || value === 0 ? 0 : Math.max(3, Math.round((value / maxCount) * 100));
+          return (
+            <li key={label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:grid-cols-[9.5rem_minmax(0,1fr)_3rem]">
+              <span className="truncate text-sm font-medium text-slate-700">{label}</span>
+              <span className="text-right text-sm font-semibold tabular-nums text-slate-900 sm:col-start-3 sm:row-start-1">{value === null ? "—" : value.toLocaleString("en-IN")}</span>
+              <div
+                role="progressbar"
+                aria-label={`${label} compared with the largest overview total`}
+                aria-valuemin={0}
+                aria-valuemax={maxCount}
+                aria-valuenow={value ?? 0}
+                className="col-span-2 h-2.5 overflow-hidden rounded-full bg-slate-100 sm:col-span-1 sm:col-start-2 sm:row-start-1"
+              >
+                <div
+                  aria-hidden="true"
+                  className={`h-full rounded-full transition-[width] duration-700 motion-reduce:transition-none ${barTints[label] ?? "bg-sky-500"}`}
+                  style={{ width: `${width}%` }}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </figure>
   );
 }
 
