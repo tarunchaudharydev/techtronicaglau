@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
+import { AdminOverviewDonut } from "@/components/manage/AdminOverviewDonut";
 
 export const metadata: Metadata = { title: "Society management | Techtronica" };
 
@@ -143,14 +144,7 @@ export default async function ManageHomePage() {
             <p className="text-xs text-slate-500">Live totals from records visible to your admin account</p>
           </div>
           {overviewHasError && <p role="status" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Some overview totals are temporarily unavailable. Your management tools are still available.</p>}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {overviewStats.map(({ label, count, error: countError, href, icon: Icon, tint }) => <Link key={label} href={href} className="group flex min-h-28 items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
-              <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${tint}`}><Icon aria-hidden="true" className="size-5" /></span>
-              <span className="min-w-0"><span className="block text-2xl font-bold tabular-nums text-slate-950">{countError ? "—" : (count ?? 0).toLocaleString("en-IN")}</span><span className="mt-0.5 block text-sm text-slate-500">{label}</span></span>
-              <ArrowUpRight aria-hidden="true" className="ml-auto size-4 shrink-0 text-slate-300 transition group-hover:text-sky-700" />
-            </Link>)}
-          </div>
-          <OverviewChart stats={overviewStats} />
+<AdminOverviewDonut stats={overviewStats.map(({ label, count, error: statError }) => ({ label, count, unavailable: Boolean(statError) }))} />
         </section>}
 
         {isAdmin && !error && <section aria-labelledby="admin-shortcuts" className="mt-8 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-violet-50/80 p-5 shadow-sm sm:p-7">
