@@ -24,7 +24,7 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
     <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Draft, publish, cancel, and edit events. Public is selected by default. Private published events are visible only to signed-in users with an active society or club membership; Supabase enforces this on every read.</p>
     <ResultMessage result={result} />
     {(eventResult.error || clubResult.error) && <p className="mt-5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">Some event data could not be loaded. Refresh and check your event permissions.</p>}
-    <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+    <section id="add-event" className="mt-8 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
       <h2 className="text-xl font-semibold">Create an event</h2>
       <form action={createEvent} className="mt-5 grid gap-4 md:grid-cols-2">
         <Field label="Event title"><input name="title" required minLength={3} maxLength={160} className={inputClass} /></Field>

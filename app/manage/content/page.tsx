@@ -36,7 +36,7 @@ export default async function ManageContentPage({ searchParams }: { searchParams
       <Link href="/manage/content" className={`rounded-full border px-3 py-1.5 text-xs ${!type ? "border-sky-600 bg-sky-50 text-sky-800" : "border-slate-300"}`}>All</Link>
       {siteContentTypes.map((contentType) => <Link key={contentType} href={`/manage/content?type=${contentType}`} className={`rounded-full border px-3 py-1.5 text-xs ${type === contentType ? "border-sky-600 bg-sky-50 text-sky-800" : "border-slate-300"}`}>{labels[contentType]}</Link>)}
     </nav>
-    <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+    <section id="add-content" className="mt-8 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
       <h2 className="text-xl font-semibold">Add a content record</h2>
       <ContentForm action={createContentRecord} initialType={type ?? "faq"} />
     </section>
