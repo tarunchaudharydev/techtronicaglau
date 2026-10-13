@@ -56,8 +56,8 @@ export async function inviteMultipleUsers(_previousState: BulkInviteState, formD
   if (addresses.length === 0) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount, submissionId: Date.now() };
   if (addresses.length > 10) return { status: "error", message: "Send up to 10 unique invitations at a time. No invitations were sent; split the list into smaller batches.", results: [], duplicateCount, submissionId: Date.now() };
 
-  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const results: BulkInviteResult[] = addresses.map((email) => validEmail.test(email)
+  const validEmail = (value: string) => value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const results: BulkInviteResult[] = addresses.map((email) => validEmail(email)
     ? { email, status: "failed", message: "Not processed yet" }
     : { email, status: "invalid", message: "Invalid email address" });
   const queue = addresses.flatMap((email, index) => validEmail.test(email) ? [index] : []);
@@ -109,7 +109,7 @@ export async function inviteMultipleUsers(_previousState: BulkInviteState, formD
   ].filter(Boolean).join(" · ");
 
   revalidatePath(route);
-  return { status: "complete", message: summary, results, duplicateCount, submissionId: Date.now() };
+  return { status: sentCount === 0 && (invalidCount > 0 || failedCount > 0) ? "error" : "complete", message: summary, results, duplicateCount, submissionId: Date.now() };
 }
 
 export async function decideMembershipAction(
