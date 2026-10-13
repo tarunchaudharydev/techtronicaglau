@@ -1,40 +1,68 @@
 # Security Policy
 
-## Scope
+## Project maturity and version
 
-This policy covers the frontend application and source code in this repository, including its Next.js pages, server actions, route handlers, Supabase client integration, authentication flows, role-aware management UI, and deployment configuration maintained here.
+The application is currently **pre-1.0 / early-stage**, not a declared stable release. The frontend's `package.json` currently lists version `0.1.0`; that is application metadata and does not by itself identify a published release or guarantee compatibility. The repository has no published GitHub release or stated long-term support commitment.
 
-The Supabase schema, migrations, Row Level Security policies, database functions, Storage policies, and Edge Functions are maintained separately in the [Techtronica backend repository](https://github.com/tarunchaudharydev/techtronica-backend). Report a vulnerability in those components against that repository’s security policy. If an issue crosses both repositories, describe the frontend and backend impact in separate private reports and link them without including exploit details publicly.
+The website may be deployed while the source remains early-stage. A running deployment does not mean that features, database behavior, APIs, or availability are stable. Interfaces and database integrations may change; validate the project for your own use and keep appropriate backups. Do not depend on it for safety-critical or otherwise mission-critical workflows.
 
-Third-party services and dependencies are not controlled by this project. Report vulnerabilities in those products to their maintainers as well; contact the project owner privately if the application’s use or configuration creates an additional vulnerability.
+Until the project publishes a release and support matrix, security fixes are intended for the latest `main` branch and the currently maintained production deployment. Older commits, forks, and custom deployments may not receive fixes. When stable releases are introduced, this section should be updated with their tags and support windows.
 
-## Supported versions
+## Scope and system boundaries
 
-Security fixes are intended for the latest code on the `main` branch and the production deployment. This repository does not currently publish a separate list of supported release branches. Older commits, forks, and unannounced deployments may not receive fixes.
+This policy covers the frontend application and source code in this repository:
+
+- Next.js pages, server actions, and route handlers.
+- Supabase Auth and cookie-aware frontend integration.
+- Role-aware society management interfaces and frontend authorization checks.
+- Application deployment configuration maintained in this repository.
+
+The frontend uses a Supabase publishable key, which is designed to be visible to browsers. Access to protected data and management operations must be enforced by the backend, not by hiding buttons or pages in the UI.
+
+The Supabase schema, migrations, Row Level Security (RLS) policies, database functions, Storage policies, and Edge Functions are maintained separately in the [Techtronica backend repository](https://github.com/tarunchaudharydev/techtronica-backend). Report a vulnerability in those components against that repository's security policy. If an issue crosses both repositories, report each side privately and link the reports without putting exploit details in a public issue.
+
+Vercel, Supabase, npm packages, and other third-party services are outside this repository's direct control. Report vulnerabilities in those products to their respective security teams. Contact the project maintainer privately if the application's use or configuration creates an additional vulnerability.
+
+## What to report
+
+Examples of in-scope security issues include:
+
+- Unauthorized access to member, profile, contact, event-registration, or other private data.
+- Authentication or authorization bypass, including role or club-scope escalation.
+- Server-side input handling that enables injection, cross-site scripting, or unintended code execution.
+- Exposure of secrets, session tokens, or sensitive data through the frontend, logs, or shared caches.
+- A vulnerability in a frontend route or action that permits unauthorized reads or changes.
+- A privacy or access-control flaw involving the visitor IP display or opt-in network speed check.
+
+Do not report ordinary bugs, feature requests, visual issues, or availability problems as security vulnerabilities unless they create a security impact. If uncertain, report privately and explain the potential impact.
 
 ## Reporting a vulnerability
 
-Please do not report security vulnerabilities through public GitHub Issues, Discussions, pull requests, or social media.
+Please do not disclose security vulnerabilities through public GitHub Issues, Discussions, pull requests, or social media.
 
-1. If GitHub private vulnerability reporting is available for this repository, use **Security → Report a vulnerability** to create a private report.
-2. If private reporting is unavailable, contact the repository owner privately through [GitHub](https://github.com/tarunchaudharydev) and ask for a secure channel. Do not include exploit details in a public issue while arranging contact.
-3. For a vulnerability that also affects the backend repository, report it privately there too.
+1. When GitHub private vulnerability reporting is enabled, use **Security → Report a vulnerability** in this repository.
+2. If private reporting is unavailable, contact the repository owner privately through [GitHub](https://github.com/tarunchaudharydev) and ask for a secure channel. Do not post exploit details publicly while arranging contact.
+3. For an issue that also affects the backend, send a separate private report there and link the two reports without copying sensitive details into public comments.
 
-Include, when safe:
+**Repository owner:** before making this repository public, enable GitHub private vulnerability reporting in the repository's Security settings and confirm that the private reporting flow is available. Keep the private GitHub contact route as the fallback.
 
-- The affected page, route, component, or commit.
-- A concise description of the security impact and conditions required.
-- Reproduction steps or a minimal proof of concept using accounts and data you control.
-- Any suggested mitigation.
+When safe, include:
 
-Do not include passwords, session cookies, access tokens, Supabase keys, private member records, real student identifiers, or other people’s IP addresses in a report. Redact sensitive values from screenshots and logs. The footer’s IP display and speed check are user-requested diagnostics; report any unintended exposure, collection, or persistence of visitor data.
+- The affected page, route, component, dependency, or commit.
+- The security impact and conditions required to reproduce it.
+- Minimal reproduction steps or a proof of concept using accounts and data you control.
+- A suggested mitigation, if you have one.
 
-## Testing and disclosure
+Never include passwords, session cookies, access tokens, Supabase secret/service-role keys, private member records, real student identifiers, or another person's IP address. Redact sensitive values from screenshots, logs, and reproduction data.
 
-Only test systems and accounts you own or have explicit permission to assess. Avoid accessing, changing, or downloading real member data; avoid denial-of-service testing, automated high-volume scans, and actions that could interrupt the production service.
+## Safe testing
 
-Please allow the maintainer a reasonable opportunity to investigate and prepare a fix before public disclosure. Coordinate a disclosure date with the maintainer. The project does not currently promise a fixed acknowledgement or remediation SLA; response and prioritization depend on maintainer availability and severity.
+Only test systems and accounts you own or have explicit permission to assess. Use synthetic data. Do not access, alter, or download real member data. Do not run denial-of-service tests, high-volume automated scans, or tests likely to disrupt production or another user's account.
 
-## Maintainer handling
+If testing requires production access, stop and request written authorization from the maintainer first. Avoid changing roles, permissions, memberships, event registrations, or stored files outside accounts and records you control.
 
-The maintainer will review the report, assess impact and affected versions, and may request a focused reproduction. If confirmed, the maintainer will work on a fix and communicate any coordinated disclosure plan through the private report. Do not assume a report is resolved until the maintainer confirms it.
+## Triage and disclosure
+
+The maintainer will review reports as availability allows, assess their impact and affected versions, and may ask for a focused reproduction. If an issue is confirmed, the maintainer will work on a fix and coordinate a disclosure plan with the reporter.
+
+There is currently no guaranteed acknowledgement or remediation SLA, no published bug-bounty program, and no formal severity-response schedule. Severity and prioritization will be determined by the maintainer based on impact and exploitability. Please allow a reasonable opportunity to investigate and prepare a fix before public disclosure; coordinate a disclosure date with the maintainer. Do not assume a report is resolved until the maintainer confirms it.
