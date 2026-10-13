@@ -59,10 +59,11 @@ export default function Navbar() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  const authEventVersionRef = useRef(0);
+
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     let mounted = true;
-    let authEvents = 0;
     let supabase: ReturnType<typeof createClient>;
 
     try {
@@ -74,28 +75,43 @@ export default function Navbar() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      authEvents += 1;
+      authEventVersionRef.current += 1;
       if (mounted) setAccountState(accountStateFor(session?.user ?? null));
     });
-    const initialEventVersion = authEvents;
-
-    void supabase.auth
-      .getUser()
-      .then(({ data, error }) => {
-        if (mounted && authEvents === initialEventVersion) {
-          setAccountState(accountStateFor(error ? null : data.user));
-        }
-      })
-      .catch(() => {
-        if (mounted && authEvents === initialEventVersion)
-          setAccountState({ status: "signed-out" });
-      });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let mounted = true;
+    const eventVersionAtStart = authEventVersionRef.current;
+
+    try {
+      const supabase = createClient();
+      void supabase.auth
+        .getSession()
+        .then(({ data, error }) => {
+          if (mounted && authEventVersionRef.current === eventVersionAtStart) {
+            setAccountState(accountStateFor(error ? null : data.session?.user ?? null));
+          }
+        })
+        .catch(() => {
+          if (mounted && authEventVersionRef.current === eventVersionAtStart) {
+            setAccountState({ status: "signed-out" });
+          }
+        });
+    } catch {
+      setAccountState({ status: "signed-out" });
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (!isMobileOpen) return;

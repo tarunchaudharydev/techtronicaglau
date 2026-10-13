@@ -41,6 +41,7 @@ const HomeSlider = ({ clubs }: { clubs: Club[] }) => {
                   src={club.homepageImage}
                   alt={club.name}
                   fill
+                  sizes="(max-width: 639px) 100vw, (max-width: 767px) 72vw, (max-width: 1023px) 50vw, (max-width: 1279px) 22vw, 230px"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
