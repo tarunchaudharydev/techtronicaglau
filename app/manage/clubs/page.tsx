@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -29,7 +30,7 @@ function ClubForm({ action, club }: { action: (formData: FormData) => void | Pro
     <Field label="Sessions JSON (array of title/description)"><textarea name="sessions" rows={5} maxLength={12000} defaultValue={jsonText(club?.sessions ?? [])} className={`${inputClass} font-mono text-xs`} /></Field><Field label="Social/contact links JSON"><textarea name="contact_links" rows={5} maxLength={4000} defaultValue={jsonText(club?.contact_links ?? {})} className={`${inputClass} font-mono text-xs`} /></Field>
     <Field label="Homepage image URL or storage path"><input name="homepage_image_url" maxLength={2048} defaultValue={club?.homepage_image_url ?? ""} className={inputClass} /></Field><Field label="Homepage subtitle"><input name="homepage_subtitle" maxLength={180} defaultValue={club?.homepage_subtitle ?? ""} className={inputClass} /></Field>
     <Field label="Homepage badge"><input name="homepage_badge" maxLength={180} defaultValue={club?.homepage_badge ?? ""} className={inputClass} /></Field><Field label="Display order"><input name="display_order" type="number" min="-9999" max="9999" defaultValue={club?.display_order ?? 0} className={inputClass} /></Field>
-    <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked={club?.is_active ?? true} /> Active</label><button type="submit" className={buttonClass}>{club ? "Save club" : "Add club"}</button></form>;
+    <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked={club?.is_active ?? true} /> Active</label><PendingSubmitButton type="submit" className={buttonClass}>{club ? "Save club" : "Add club"}</PendingSubmitButton></form>;
 }
 function jsonText(value: unknown) { try { return JSON.stringify(value, null, 2); } catch { return "[]"; } }
 function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="text-sm font-medium">{label}{children}</label>; }

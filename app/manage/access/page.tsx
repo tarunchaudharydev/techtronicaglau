@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FiKey, FiPlus, FiShield, FiUserPlus, FiUsers } from "react-icons/fi";
@@ -141,7 +142,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
                     </label>
                   </div>
                   <PermissionChecklist permissions={permissions} name="permission_keys" />
-                  <button className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-50`} disabled={!permissions.length} type="submit">Create role</button>
+                  <PendingSubmitButton className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-50`} disabled={!permissions.length} type="submit">Create role</PendingSubmitButton>
                 </form>
               </div>
             </details>
@@ -195,7 +196,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
                         </div>
                         {role.is_system && <p className="text-xs leading-5 text-muted">This protected system role keeps its name and description. Its permissions can still be reviewed and configured.</p>}
                         <PermissionChecklist permissions={permissions} name="permission_keys" selectedKeys={keys} />
-                        <button className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-50`} disabled={!permissions.length} type="submit">Save role changes</button>
+                        <PendingSubmitButton className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-50`} disabled={!permissions.length} type="submit">Save role changes</PendingSubmitButton>
                       </form>
                       {!role.is_system && (
                         <details className="mt-5 rounded-xl border border-rose-200 p-4 dark:border-rose-900">
@@ -203,7 +204,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
                           <p className="mt-2 text-sm leading-6 text-muted">Deletion is allowed only when no user assignment or position uses this role.</p>
                           <form action={deleteRole} className="mt-3">
                             <input type="hidden" name="id" value={role.id} />
-                            <button className={dangerButtonClass} type="submit">Confirm delete {role.name}</button>
+                            <PendingSubmitButton className={dangerButtonClass} type="submit">Confirm delete {role.name}</PendingSubmitButton>
                           </form>
                         </details>
                       )}
@@ -248,7 +249,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
                         <p className="text-xs leading-5 text-muted">This removes {role?.name ?? "this role"} from {displayName} in this scope.</p>
                         <form action={revokeRole} className="mt-2">
                           <input type="hidden" name="id" value={assignment.id} />
-                          <button aria-label={`Confirm removal of ${role?.name ?? "role"} from ${displayName}`} className={dangerButtonClass} type="submit">Confirm remove</button>
+                          <PendingSubmitButton aria-label={`Confirm removal of ${role?.name ?? "role"} from ${displayName}`} className={dangerButtonClass} type="submit">Confirm remove</PendingSubmitButton>
                         </form>
                       </div>
                     </details>
@@ -272,7 +273,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
               <label className="block text-sm font-medium" htmlFor="invite-email">Email address
                 <input autoComplete="email" className={inputClass} id="invite-email" maxLength={254} name="email" placeholder="person@example.com" required type="email" />
               </label>
-              <button className={`${buttonClass} w-full`} type="submit">Send invitation</button>
+              <PendingSubmitButton className={`${buttonClass} w-full`} type="submit">Send invitation</PendingSubmitButton>
             </form>
           </section>
 
@@ -314,7 +315,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
                 </select>
               </label>
               <p className="text-xs leading-5 text-muted">For a club-scoped role, choose the club where this person should have access. The database rejects mismatched role and scope choices.</p>
-              <button className={`${buttonClass} w-full`} type="submit">Assign role</button>
+              <PendingSubmitButton className={`${buttonClass} w-full`} type="submit">Assign role</PendingSubmitButton>
             </form>
           </section>
 

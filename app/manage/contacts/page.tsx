@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -89,7 +90,7 @@ export default async function ManageContactsPage({
                 <select id={`contact-status-${submission.id}`} name="status" defaultValue={submission.status} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
                   {statusOptions.map((option) => <option key={option} value={option}>{formatStatus(option)}</option>)}
                 </select>
-                <button className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800" type="submit">Save status</button>
+                <PendingSubmitButton className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800" type="submit">Save status</PendingSubmitButton>
               </form>
             </article>
           );

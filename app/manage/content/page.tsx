@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -44,7 +45,7 @@ export default async function ManageContentPage({ searchParams }: { searchParams
       {records.map((record) => <article key={record.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
         <p className="mb-3 text-sm font-semibold">{record.title} <span className="font-normal text-muted">· {labels[record.content_type as SiteContentType]} · {record.is_public ? "Public" : "Private"} · {record.is_active ? "Active" : "Inactive"}</span></p>
         <ContentForm action={updateContentRecord} record={record} />
-        <form action={deleteContentRecord} className="mt-3"><input type="hidden" name="id" value={record.id} /><button type="submit" className="text-sm font-medium text-rose-700 underline">Delete record</button></form>
+        <form action={deleteContentRecord} className="mt-3"><input type="hidden" name="id" value={record.id} /><PendingSubmitButton type="submit" className="text-sm font-medium text-rose-700 underline">Delete record</PendingSubmitButton></form>
       </article>)}
       {!records.length && !error && <p className="rounded-xl border border-slate-200 p-5 text-sm text-muted">No matching content records found. Add one above.</p>}
     </section>
@@ -63,7 +64,7 @@ function ContentForm({ action, record, initialType }: { action: (formData: FormD
     <Field label="Content JSON (see examples below)"><textarea name="content" required maxLength={65536} rows={12} defaultValue={value} className={`${inputClass} font-mono text-xs md:col-span-2`} /></Field>
     <div className="md:col-span-2"><StorageImageUpload name="uploaded_asset_url" folder="content" folderScopeField="content_type" label="Upload one public image for this record" /></div>
     <div className="flex flex-wrap gap-5 md:col-span-2"><label className="flex items-center gap-2 text-sm"><input name="is_public" type="checkbox" defaultChecked={record?.is_public ?? true} /> Public</label><label className="flex items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked={record?.is_active ?? true} /> Active</label></div>
-    <button className={buttonClass} type="submit">{record ? "Save record" : "Add record"}</button>
+    <PendingSubmitButton className={buttonClass} type="submit">{record ? "Save record" : "Add record"}</PendingSubmitButton>
   </form>;
 }
 

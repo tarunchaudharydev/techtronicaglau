@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -88,9 +89,9 @@ export default async function AccountPage() {
             Manage society
           </Link>
           <form action={signOutAction}>
-            <button className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-700">
+            <PendingSubmitButton className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-700">
               Sign out
-            </button>
+            </PendingSubmitButton>
           </form>
         </div>
       </header>

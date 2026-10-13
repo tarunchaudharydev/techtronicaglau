@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 
 
 "use client";
@@ -584,13 +585,13 @@ function HeaderAccountLinks({
           Profile settings
         </Link>
         <form action={signOutAction}>
-          <button
+          <PendingSubmitButton
             onClick={onNavigate}
             type="submit"
             className="inline-flex min-h-11 w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 dark:text-rose-300 dark:hover:bg-rose-950/40"
           >
             <LogOut aria-hidden="true" className="size-4" /> Sign out
-          </button>
+          </PendingSubmitButton>
         </form>
       </div>
     );

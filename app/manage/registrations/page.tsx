@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import Link from "next/link";
 import ResultMessage from "@/components/manage/ResultMessage";
@@ -52,7 +53,7 @@ export default async function ManageRegistrationsPage({ searchParams }: { search
                 <option value="cancelled">Cancelled</option>
               </select>
             </label>
-            <button type="submit" className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Save</button>
+            <PendingSubmitButton type="submit" className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Save</PendingSubmitButton>
           </form>}
         </article>;
       })}

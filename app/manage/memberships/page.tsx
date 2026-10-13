@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -62,7 +63,7 @@ export default async function ManageMembershipsPage({
         <p className="mt-1 text-sm text-muted">The person must first create and verify an email account. Adding them here creates an active society membership; it does not grant an admin role.</p>
         <form action={addSocietyMember} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="flex-1 text-sm font-medium">Account email<input name="email" type="email" autoComplete="email" required maxLength={254} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
-          <button className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700" type="submit">Add society member</button>
+          <PendingSubmitButton className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700" type="submit">Add society member</PendingSubmitButton>
         </form>
       </section>}
       <p className="mt-3 max-w-3xl text-sm text-muted">Club managers can review applications only for clubs in their assigned scope. Database policies reject direct attempts to create society memberships without admin permission.</p>

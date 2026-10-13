@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -115,7 +116,7 @@ export default async function ManageTeamPage({ searchParams }: { searchParams: P
                 <input type="hidden" name="id" value={member.id} />
                 <input type="hidden" name="search" value={search} />
                 <input type="hidden" name="page" value={page} />
-                <button type="submit" className="min-h-10 rounded-lg px-2 text-sm font-semibold text-rose-700 underline underline-offset-2 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950">Delete profile</button>
+                <PendingSubmitButton type="submit" className="min-h-10 rounded-lg px-2 text-sm font-semibold text-rose-700 underline underline-offset-2 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950">Delete profile</PendingSubmitButton>
               </form>
             </div>
           </details>
@@ -169,7 +170,7 @@ function TeamForm({ action, clubs, member, search, page }: { action: (formData: 
       <label className="flex min-h-10 items-center gap-2 text-sm"><input name="is_public" type="checkbox" defaultChecked={member?.is_public ?? true} /> Public by default</label>
       <label className="flex min-h-10 items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked={member?.is_active ?? true} /> Active</label>
     </div>
-    <button className={`${buttonClass} min-h-11 w-full sm:w-auto`} type="submit">{member ? "Save profile" : "Add profile"}</button>
+    <PendingSubmitButton className={`${buttonClass} min-h-11 w-full sm:w-auto`} type="submit">{member ? "Save profile" : "Add profile"}</PendingSubmitButton>
   </form>;
 }
 
