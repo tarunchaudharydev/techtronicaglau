@@ -58,7 +58,7 @@ export default async function ManageMembershipsPage({
       <h1 className="mt-4 text-3xl font-bold">Membership requests</h1>
       <p className="mt-2 max-w-3xl text-sm text-muted">Society membership is assigned by a Society Admin. Club applications are shown in pages of 25; approve or reject only while a request is pending.</p>
       <ResultMessage result={params.result} />
-      {canAddSocietyMember && <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      {canAddSocietyMember && <section id="add-society-member" className="mt-6 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
         <h2 className="text-lg font-semibold">Add an existing account to the society</h2>
         <p className="mt-1 text-sm text-muted">The person must first create and verify an email account. Adding them here creates an active society membership; it does not grant an admin role.</p>
         <form action={addSocietyMember} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">

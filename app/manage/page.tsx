@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
   TicketCheck,
+  UserPlus,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -77,6 +78,27 @@ export default async function ManageHomePage() {
     sections: availableSections.filter((section) => section.group === name),
   })).filter((group) => group.sections.length > 0);
 
+  const overview = isAdmin && !error ? await Promise.all([
+    supabase.from("memberships").select("id", { count: "exact", head: true }).eq("status", "active"),
+    supabase.from("clubs").select("id", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "published").gte("starts_at", new Date().toISOString()),
+    supabase.from("contact_submissions").select("id", { count: "exact", head: true }).in("status", ["new", "in_progress"]),
+  ]) : null;
+  const overviewStats = overview ? [
+    { label: "Active memberships", count: overview[0].count, error: overview[0].error, href: "/manage/memberships", icon: UsersRound, tint: "bg-sky-50 text-sky-700" },
+    { label: "Active clubs", count: overview[1].count, error: overview[1].error, href: "/manage/clubs", icon: Layers3, tint: "bg-violet-50 text-violet-700" },
+    { label: "Upcoming events", count: overview[2].count, error: overview[2].error, href: "/manage/events", icon: CalendarDays, tint: "bg-emerald-50 text-emerald-700" },
+    { label: "Open enquiries", count: overview[3].count, error: overview[3].error, href: "/manage/contacts", icon: Inbox, tint: "bg-amber-50 text-amber-700" },
+  ] : [];
+  const overviewHasError = overviewStats.some((stat) => stat.error);
+  const adminActions = [
+    { title: "Add society member", detail: "Add a verified account to the society.", href: "/manage/memberships#add-society-member", icon: UsersRound, tint: "bg-sky-50 text-sky-700" },
+    { title: "Invite a manager", detail: "Invite a person and assign their role.", href: "/manage/access#invite-user", icon: UserPlus, tint: "bg-violet-50 text-violet-700" },
+    { title: "Create an event", detail: "Draft and publish a society or club event.", href: "/manage/events#add-event", icon: CalendarDays, tint: "bg-fuchsia-50 text-fuchsia-700" },
+    { title: "Add a club", detail: "Create a club page and set its details.", href: "/manage/clubs#add-club", icon: Layers3, tint: "bg-cyan-50 text-cyan-700" },
+    { title: "Create a position", detail: "Define a society or club position.", href: "/manage/positions#add-position", icon: ContactRound, tint: "bg-indigo-50 text-indigo-700" },
+    { title: "Update website content", detail: "Edit the site pages and resources.", href: "/manage/content#add-content", icon: Sparkles, tint: "bg-amber-50 text-amber-700" },
+  ] as const;
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-sky-50/70 via-slate-50 to-white px-4 py-6 sm:px-6 sm:py-10 lg:py-12">
       <div className="mx-auto max-w-7xl">
@@ -114,6 +136,35 @@ export default async function ManageHomePage() {
             <p>Changes are checked against your permissions when you save. You only see management areas assigned to your active society or club roles.</p>
           </div>
         </header>
+
+        {isAdmin && !error && <section aria-labelledby="admin-overview" className="mt-7">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Administrator overview</p><h2 id="admin-overview" className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">Society at a glance</h2></div>
+            <p className="text-xs text-slate-500">Live totals from records visible to your admin account</p>
+          </div>
+          {overviewHasError && <p role="status" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Some overview totals are temporarily unavailable. Your management tools are still available.</p>}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {overviewStats.map(({ label, count, error: countError, href, icon: Icon, tint }) => <Link key={label} href={href} className="group flex min-h-28 items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+              <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${tint}`}><Icon aria-hidden="true" className="size-5" /></span>
+              <span className="min-w-0"><span className="block text-2xl font-bold tabular-nums text-slate-950">{countError ? "—" : (count ?? 0).toLocaleString("en-IN")}</span><span className="mt-0.5 block text-sm text-slate-500">{label}</span></span>
+              <ArrowUpRight aria-hidden="true" className="ml-auto size-4 shrink-0 text-slate-300 transition group-hover:text-sky-700" />
+            </Link>)}
+          </div>
+        </section>}
+
+        {isAdmin && !error && <section aria-labelledby="admin-shortcuts" className="mt-8 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-violet-50/80 p-5 shadow-sm sm:p-7">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">Admin tools</p><h2 id="admin-shortcuts" className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">Common tasks</h2></div>
+            <p className="max-w-xl text-sm leading-6 text-slate-600">Jump straight to common setup and publishing actions. Each page checks your permissions before allowing changes.</p>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {adminActions.map(({ title, detail, href, icon: Icon, tint }) => <Link key={href} href={href} className="group flex min-h-20 items-center gap-3 rounded-2xl border border-white bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+              <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${tint}`}><Icon aria-hidden="true" className="size-5" /></span>
+              <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-slate-900">{title}</span><span className="mt-1 block text-xs leading-5 text-slate-500">{detail}</span></span>
+              <ArrowUpRight aria-hidden="true" className="size-4 shrink-0 text-slate-300 transition group-hover:text-sky-700" />
+            </Link>)}
+          </div>
+        </section>}
 
         {error && <div role="alert" className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
           <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-100"><ShieldCheck aria-hidden="true" className="size-4" /></span>
