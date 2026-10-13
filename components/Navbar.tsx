@@ -67,12 +67,13 @@ export default function Navbar() {
     let active = true;
     try {
       const supabase = createClient();
-      void supabase
-        .from("profiles")
-        .select("avatar_url")
-        .eq("id", accountUserId)
-        .maybeSingle()
-        .then(({ data, error }) => {
+      void (async () => {
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("avatar_url")
+            .eq("id", accountUserId)
+            .maybeSingle();
           if (active && !error) {
             setAccountState((current) =>
               current.status === "signed-in" && current.userId === accountUserId
@@ -80,10 +81,12 @@ export default function Navbar() {
                 : current,
             );
           }
-        })
-        .catch(() => undefined);
+        } catch {
+          // The initials avatar remains available if profile data cannot be read.
+        }
+      })();
     } catch {
-      // The initials avatar remains available if profile data cannot be read.
+      // The initials avatar remains available if the Supabase client cannot be created.
     }
     return () => { active = false; };
   }, [accountUserId]);
