@@ -20,6 +20,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
 import { AdminOverviewDonut } from "@/components/manage/AdminOverviewDonut";
+import { AdminDashboardRefresh } from "@/components/manage/AdminDashboardRefresh";
 
 export const metadata: Metadata = { title: "Society management | Techtronica" };
 
@@ -80,18 +81,37 @@ export default async function ManageHomePage() {
   })).filter((group) => group.sections.length > 0);
 
   const overview = isAdmin && !error ? await Promise.all([
-    supabase.from("memberships").select("id", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("clubs").select("id", { count: "exact", head: true }).eq("is_active", true),
-    supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "published").gte("starts_at", new Date().toISOString()),
-    supabase.from("contact_submissions").select("id", { count: "exact", head: true }).in("status", ["new", "in_progress"]),
+    supabase.from("memberships").select("id", { count: "exact", head: true }).not("club_id", "is", "null").eq("status", "pending"),
+    supabase.from("memberships").select("id", { count: "exact", head: true }).not("club_id", "is", "null").in("status", ["active", "inactive", "rejected"]),
+    supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "new"),
+    supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "in_progress"),
+    supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "resolved"),
+    supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "spam"),
+    supabase.from("event_registrations").select("id", { count: "exact", head: true }).in("status", ["registered", "waitlisted"]),
+    supabase.from("event_registrations").select("id", { count: "exact", head: true }).in("status", ["cancelled", "attended", "no_show"]),
   ]) : null;
   const overviewStats = overview ? [
-    { label: "Active memberships", count: overview[0].count, error: overview[0].error, href: "/manage/memberships", icon: UsersRound, tint: "bg-sky-50 text-sky-700" },
-    { label: "Active clubs", count: overview[1].count, error: overview[1].error, href: "/manage/clubs", icon: Layers3, tint: "bg-violet-50 text-violet-700" },
-    { label: "Upcoming events", count: overview[2].count, error: overview[2].error, href: "/manage/events", icon: CalendarDays, tint: "bg-emerald-50 text-emerald-700" },
-    { label: "Open enquiries", count: overview[3].count, error: overview[3].error, href: "/manage/contacts", icon: Inbox, tint: "bg-amber-50 text-amber-700" },
+    { label: "Club applications pending", count: overview[0].count, error: overview[0].error },
+    { label: "Club applications reviewed", count: overview[1].count, error: overview[1].error },
+    { label: "New enquiries", count: overview[2].count, error: overview[2].error },
+    { label: "Enquiries in progress", count: overview[3].count, error: overview[3].error },
+    { label: "Resolved enquiries", count: overview[4].count, error: overview[4].error },
+    { label: "Spam enquiries", count: overview[5].count, error: overview[5].error },
+    { label: "Active registrations", count: overview[6].count, error: overview[6].error },
+    { label: "Completed registrations", count: overview[7].count, error: overview[7].error },
   ] : [];
   const overviewHasError = overviewStats.some((stat) => stat.error);
+  const activity = isAdmin && !error ? await Promise.all([
+    supabase.from("memberships").select("id, created_at, profiles(full_name), clubs(name)").not("club_id", "is", "null").eq("status", "pending").order("created_at", { ascending: false }).limit(5),
+    supabase.from("contact_submissions").select("id, name, topic, created_at, clubs(name)").eq("status", "new").order("created_at", { ascending: false }).limit(5),
+    supabase.from("event_registrations").select("id, status, registered_at, events!event_registrations_event_id_fkey!inner(title), profiles!event_registrations_user_id_fkey!inner(full_name)").order("registered_at", { ascending: false }).limit(5),
+  ]) : null;
+  const activityItems = activity ? [
+    ...(activity[0].data ?? []).map((row) => ({ id: `membership-${row.id}`, title: one(row.profiles)?.full_name || "Someone", detail: `Applied to ${one(row.clubs)?.name || "a club"}`, date: row.created_at, href: "/manage/memberships", type: "Club application" })),
+    ...(activity[1].data ?? []).map((row) => ({ id: `contact-${row.id}`, title: row.name || "New enquiry", detail: row.topic || `Contact form · ${one(row.clubs)?.name || "Society-wide"}`, date: row.created_at, href: "/manage/contacts", type: "Contact form" })),
+    ...(activity[2].data ?? []).map((row) => ({ id: `registration-${row.id}`, title: one(row.profiles)?.full_name || "Member", detail: `Registration ${row.status.replaceAll("_", " ")} · ${one(row.events)?.title || "an event"}`, date: row.registered_at, href: "/manage/registrations", type: "Event registration" })),
+  ].sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf()).slice(0, 8) : [];
+  const activityHasError = activity?.some((result) => result.error) ?? false;
   const adminActions = [
     { title: "Add society member", detail: "Add a verified account to the society.", href: "/manage/memberships#add-society-member", icon: UsersRound, tint: "bg-sky-50 text-sky-700" },
     { title: "Invite a manager", detail: "Invite a person and assign their role.", href: "/manage/access#invite-user", icon: UserPlus, tint: "bg-violet-50 text-violet-700" },
@@ -140,11 +160,27 @@ export default async function ManageHomePage() {
 
         {isAdmin && !error && <section aria-labelledby="admin-overview" className="mt-7">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Administrator overview</p><h2 id="admin-overview" className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">Society at a glance</h2></div>
-            <p className="text-xs text-slate-500">Live totals from records visible to your admin account</p>
+            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Administrator overview</p><h2 id="admin-overview" className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">Incoming activity &amp; review status</h2></div>
+            <p className="text-xs text-slate-500">Current totals from records your admin account can access</p>
           </div>
-          {overviewHasError && <p role="status" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Some overview totals are temporarily unavailable. Your management tools are still available.</p>}
-<AdminOverviewDonut stats={overviewStats.map(({ label, count, error: statError }) => ({ label, count, unavailable: Boolean(statError) }))} />
+          {overviewHasError && <p role="status" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Some status totals are temporarily unavailable. Your management tools are still available.</p>}
+          <AdminOverviewDonut stats={overviewStats.map(({ label, count, error: statError }) => ({ label, count, unavailable: Boolean(statError) }))} />
+          <section aria-labelledby="incoming-activity" className="mt-5 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div><h3 id="incoming-activity" className="text-base font-bold text-slate-950 sm:text-lg">Recent incoming activity</h3><p className="mt-1 text-xs leading-5 text-slate-500">New club applications, contact forms, and event registrations.</p></div>
+              <AdminDashboardRefresh />
+            </div>
+            {activityHasError && <p role="status" className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Some activity could not be loaded. Refresh to try again.</p>}
+            {!activityHasError && activityItems.length === 0 && <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">No recent activity is waiting here.</p>}
+            <ul className="mt-4 divide-y divide-slate-100">
+              {activityItems.map((item) => <li key={item.id} className="flex flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:items-center sm:gap-4">
+                <span className="w-36 shrink-0 text-xs font-semibold text-sky-700">{item.type}</span>
+                <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-slate-900">{item.title}</span><span className="block truncate text-xs text-slate-500">{item.detail}</span></span>
+                <time className="shrink-0 text-xs text-slate-500" dateTime={item.date}>{formatActivityDate(item.date)}</time>
+                <Link href={item.href} className="shrink-0 text-xs font-semibold text-sky-700 hover:underline">Review</Link>
+              </li>)}
+            </ul>
+          </section>
         </section>}
 
         {isAdmin && !error && <section aria-labelledby="admin-shortcuts" className="mt-8 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-violet-50/80 p-5 shadow-sm sm:p-7">
@@ -219,4 +255,16 @@ function ManagementCard({ section, number }: { section: Section; number: number 
 
 function Unavailable({ message = "Connect the Supabase project to use society management." }: { message?: string }) {
   return <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-sky-50 via-white to-violet-50 px-4 py-24 text-center"><div className="mx-auto max-w-xl rounded-3xl border border-sky-100 bg-white/90 p-8 shadow-lg shadow-sky-950/5 sm:p-12"><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-sky-700"><Settings2 aria-hidden="true" className="size-6" /></div><h1 className="mt-5 text-2xl font-bold text-slate-950">Management unavailable</h1><p className="mt-3 text-sm leading-6 text-slate-600">{message}</p><Link className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-800" href="/account">Return to your account</Link></div></main>;
+}
+
+
+function one<T>(value: T | T[] | null | undefined): T | null {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+}
+
+function formatActivityDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf())
+    ? "Date unavailable"
+    : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
