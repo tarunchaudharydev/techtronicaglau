@@ -42,7 +42,7 @@ export async function inviteMultipleUsers(_previousState: BulkInviteState, formD
   const seen = new Set<string>();
   const addresses: string[] = [];
   let duplicateCount = 0;
-  for (const token of raw.split(/[\\s,;]+/)) {
+  for (const token of raw.split(/[\s,;]+/)) {
     const email = token.trim().toLowerCase();
     if (!email) continue;
     if (seen.has(email)) {
@@ -56,7 +56,7 @@ export async function inviteMultipleUsers(_previousState: BulkInviteState, formD
   if (addresses.length === 0) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount, submissionId: Date.now() };
   if (addresses.length > 10) return { status: "error", message: "Send up to 10 unique invitations at a time. No invitations were sent; split the list into smaller batches.", results: [], duplicateCount, submissionId: Date.now() };
 
-  const validEmail = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const results: BulkInviteResult[] = addresses.map((email) => validEmail.test(email)
     ? { email, status: "failed", message: "Not processed yet" }
     : { email, status: "invalid", message: "Invalid email address" });
