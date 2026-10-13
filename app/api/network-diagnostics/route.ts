@@ -55,13 +55,22 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   if (!supabase) return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
 
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError && authError.name !== "AuthSessionMissingError") {
-    return NextResponse.json({ error: "Could not verify the current account." }, { status: 401 });
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) {
+    return NextResponse.json({ error: "Could not read the current account session." }, { status: 401 });
+  }
+
+  let userId: string | null = null;
+  if (sessionData.session) {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      return NextResponse.json({ error: "Could not verify the current account." }, { status: 401 });
+    }
+    userId = authData.user.id;
   }
 
   const currentSessionCookie = request.cookies.get(sessionCookieName)?.value;
-  const ownerPrefix = authData.user ? "user:" + authData.user.id + ":" : "guest:";
+  const ownerPrefix = userId ? "user:" + userId + ":" : "guest:";
   const currentCookieSessionId = currentSessionCookie?.startsWith(ownerPrefix)
     ? currentSessionCookie.slice(ownerPrefix.length)
     : null;
@@ -72,7 +81,7 @@ export async function POST(request: NextRequest) {
 
   const { error } = await supabase.from("network_diagnostic_sessions").insert({
     session_id: sessionId,
-    user_id: authData.user?.id ?? null,
+    user_id: userId,
     country_code: countryCode,
     region_code: regionCode,
     effective_type: effectiveType,
