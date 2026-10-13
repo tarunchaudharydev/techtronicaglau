@@ -12,7 +12,7 @@ export function AdminDashboardRefresh() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") {
-        startTransition(() => router.refresh());
+        router.refresh();
       }
     }, refreshIntervalMs);
 
