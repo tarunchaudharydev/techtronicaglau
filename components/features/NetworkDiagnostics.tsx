@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 type NetworkState = {
   ip: string | null;
@@ -165,7 +166,7 @@ export default function NetworkDiagnostics() {
         <p className="mt-2 pl-5 text-[11px] leading-5 text-muted">
           The live speed is an estimate provided by your browser, refreshed locally every two seconds; it does not download a speed-test file.
           If you opt in, we save your account ID when signed in or a temporary guest-session ID, a broad speed category, connection type, and approximate country/region.
-          We do not save your IP address, city, or exact location. The summary is deleted after 30 days.
+          The diagnostics database excludes your IP address, city, and exact location. Hosting providers may process IP addresses to deliver the site. The summary is deleted after 30 days.
           {saveState === "saving" && " Saving…"}
           {saveState === "saved" && " Saved for this session."}
           {saveState === "error" && " We could not save it; you can retry by turning this option off and on."}
@@ -176,7 +177,7 @@ export default function NetworkDiagnostics() {
   );
 }
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/70">
       <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
