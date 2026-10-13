@@ -134,15 +134,19 @@ export async function updatePasswordAction(
   const supabase = await createClient();
   if (!supabase) return errorState("Password updates are temporarily unavailable.");
 
+  let authenticated = false;
   try {
     const { data, error: authError } = await supabase.auth.getUser();
-    if (authError || !data.user) redirect("/auth/sign-in?next=/account/settings");
+    authenticated = !authError && Boolean(data.user);
+  } catch {
+    return errorState("We could not verify your session. Refresh and sign in again.");
+  }
+  if (!authenticated) redirect("/auth/sign-in?next=/account/settings");
 
+  try {
     const { error } = await supabase.auth.updateUser({ password });
     if (error) return errorState("We could not update your password. Check the requirements and try again.");
-  } catch (error) {
-    // Next.js redirect() throws a control-flow error; let it complete.
-    if (error && typeof error === "object" && "digest" in error) throw error;
+  } catch {
     return errorState("Password updates are temporarily unavailable. Please try again.");
   }
 
