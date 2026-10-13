@@ -115,6 +115,45 @@ export async function updateAccountEmailAction(
   };
 }
 
+export async function updatePasswordAction(
+  _previousState: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  const password = formData.get("password");
+  const confirmPassword = formData.get("confirm_password");
+  if (typeof password !== "string" || typeof confirmPassword !== "string") {
+    return errorState("Enter and confirm your new password.");
+  }
+  if (password.length < 12 || password.length > 72) {
+    return errorState("Use a password between 12 and 72 characters.");
+  }
+  if (password !== confirmPassword) {
+    return errorState("The password fields do not match.");
+  }
+
+  const supabase = await createClient();
+  if (!supabase) return errorState("Password updates are temporarily unavailable.");
+
+  let authenticated = false;
+  try {
+    const { data, error: authError } = await supabase.auth.getUser();
+    authenticated = !authError && Boolean(data.user);
+  } catch {
+    return errorState("We could not verify your session. Refresh and sign in again.");
+  }
+  if (!authenticated) redirect("/auth/sign-in?next=/account/settings");
+
+  try {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return errorState("We could not update your password. Check the requirements and try again.");
+  } catch {
+    return errorState("Password updates are temporarily unavailable. Please try again.");
+  }
+
+  revalidatePath("/account/settings");
+  return { status: "success", message: "Your password has been updated." };
+}
+
 function isSafeAvatarUrl(value: string) {
   if (value.startsWith("/") && !value.startsWith("//")) return true;
   try {
