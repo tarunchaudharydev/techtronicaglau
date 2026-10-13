@@ -112,7 +112,7 @@ export default function NetworkDiagnostics() {
       </div>
 
       <p aria-live="polite" className="mt-3 text-[11px] leading-5 text-muted">
-        The speed check downloads 2 MiB only when you choose it and measures the connection to this website. {speedError ? "The check failed; please retry when your connection is available." : "Your IP is shown only in your browser and is not stored by this app."}
+        The speed check downloads 2 MiB only when you choose it and measures the connection to this website. {speedError ? "The check failed; please retry when your connection is available." : "Your IP is read for this display and is not saved to the app database."}
       </p>
     </section>
   );

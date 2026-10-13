@@ -15,7 +15,6 @@ export async function GET(request: Request) {
       headers: {
         "Cache-Control": "private, no-store, max-age=0",
         Pragma: "no-cache",
-        Vary: "Cookie",
         "X-Content-Type-Options": "nosniff",
       },
     },
