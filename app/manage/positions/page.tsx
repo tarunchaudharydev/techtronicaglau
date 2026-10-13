@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -142,7 +143,7 @@ function PositionCard({ position, clubs, roles, disabled }: { position: Position
         <form action={deletePosition} className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs leading-5 text-slate-500">Delete only if this position should no longer exist. Deactivation keeps its history.</p>
           <input type="hidden" name="id" value={position.id} />
-          <button className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-3.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 sm:w-auto" type="submit"><Trash2 aria-hidden="true" className="size-4" /> Delete position</button>
+          <PendingSubmitButton className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-3.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 sm:w-auto" type="submit"><Trash2 aria-hidden="true" className="size-4" /> Delete position</PendingSubmitButton>
         </form>
       </div>
     </details>
@@ -174,7 +175,7 @@ function PositionForm({ action, clubs, roles, position, disabled, mode }: { acti
     <Field label="Description"><textarea name="description" maxLength={500} rows={3} defaultValue={position?.description ?? ""} className={inputClass} placeholder="What this position is responsible for" disabled={disabled} /></Field>
     {mode === "edit" && <label className="flex min-h-12 items-center gap-3 self-start rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 sm:mt-6" aria-disabled={disabled}><input name="is_active" type="checkbox" defaultChecked={position?.is_active ?? true} disabled={disabled} className="size-4 accent-emerald-600" /><span className="flex items-center gap-2">Active{position?.is_active && <Check aria-hidden="true" className="size-4 text-emerald-600" />}</span></label>}
     <div className="sm:col-span-2">
-      <button className={`${buttonClass} min-h-11 w-full sm:w-auto`} type="submit" disabled={disabled}>{mode === "create" ? <><Plus aria-hidden="true" className="size-4" /> Create position</> : <><Check aria-hidden="true" className="size-4" /> Save changes</>}</button>
+      <PendingSubmitButton className={`${buttonClass} min-h-11 w-full sm:w-auto`} type="submit" disabled={disabled}>{mode === "create" ? <><Plus aria-hidden="true" className="size-4" /> Create position</> : <><Check aria-hidden="true" className="size-4" /> Save changes</>}</PendingSubmitButton>
       {disabled && <p className="mt-2 text-xs text-amber-800">This form is disabled until the role and club options load.</p>}
     </div>
   </form>;

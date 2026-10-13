@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -42,7 +43,7 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
         <Field label="Short summary"><textarea name="summary" maxLength={500} rows={2} className={inputClass} /></Field>
         <Field label="Full description"><textarea name="description" maxLength={12000} rows={3} className={inputClass} /></Field>
         <label className="flex items-center gap-2 text-sm md:col-span-2"><input name="is_public" type="checkbox" defaultChecked /> Public event <span className="text-muted">(uncheck for active society members only)</span></label>
-        <button type="submit" className={buttonClass}>Create event</button>
+        <PendingSubmitButton type="submit" className={buttonClass}>Create event</PendingSubmitButton>
       </form>
     </section>
     <section className="mt-8 space-y-4">
@@ -67,9 +68,9 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
           <Field label="Short summary"><textarea name="summary" maxLength={500} rows={2} defaultValue={event.summary ?? ""} className={inputClass} /></Field>
           <Field label="Full description"><textarea name="description" maxLength={12000} rows={3} defaultValue={event.description ?? ""} className={inputClass} /></Field>
           <label className="flex items-center gap-2 text-sm"><input name="is_public" type="checkbox" defaultChecked={event.is_public} /> Public event <span className="text-muted">(unchecked means active members only)</span></label>
-          <div><button type="submit" className={buttonClass}>Save event</button></div>
+          <div><PendingSubmitButton type="submit" className={buttonClass}>Save event</PendingSubmitButton></div>
         </form>
-        <form action={deleteEvent} className="mt-3"><input type="hidden" name="id" value={event.id} /><button type="submit" className="text-sm font-medium text-rose-700 underline">Delete event and its registrations</button></form>
+        <form action={deleteEvent} className="mt-3"><input type="hidden" name="id" value={event.id} /><PendingSubmitButton type="submit" className="text-sm font-medium text-rose-700 underline">Delete event and its registrations</PendingSubmitButton></form>
       </article>)}
       {!events.length && !eventResult.error && <p className="rounded-xl border border-slate-200 p-5 text-sm text-muted">No events are visible in your assigned scope yet.</p>}
     </section>

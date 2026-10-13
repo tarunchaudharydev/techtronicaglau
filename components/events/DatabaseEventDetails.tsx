@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import Image from "next/image";
 import Link from "next/link";
 import type { Tables } from "@/types/database";
@@ -24,8 +25,8 @@ export default function DatabaseEventDetails({ event, registration, result, back
           <ResultMessage result={result} />
           {result === "waitlisted" && <p className="mt-2 text-sm text-muted">We will move you into a seat when one becomes available.</p>}
           {registration && <p className="mt-3 text-sm font-semibold">Your current status: {registration.status.replaceAll("_", " ")}</p>}
-          {canCancel ? <form action={cancelEventRegistration} className="mt-4"><input type="hidden" name="registration_id" value={registration.id} /><input type="hidden" name="slug" value={event.slug} /><button type="submit" className="rounded-full border border-rose-300 px-5 py-2.5 text-sm font-semibold text-rose-800 hover:bg-rose-50">Cancel registration</button></form>
-            : !registration && windowOpen ? <form action={registerForEvent} className="mt-4"><input type="hidden" name="event_id" value={event.id} /><input type="hidden" name="slug" value={event.slug} /><button type="submit" className="rounded-full bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-700">Register for this event</button></form>
+          {canCancel ? <form action={cancelEventRegistration} className="mt-4"><input type="hidden" name="registration_id" value={registration.id} /><input type="hidden" name="slug" value={event.slug} /><PendingSubmitButton type="submit" className="rounded-full border border-rose-300 px-5 py-2.5 text-sm font-semibold text-rose-800 hover:bg-rose-50">Cancel registration</PendingSubmitButton></form>
+            : !registration && windowOpen ? <form action={registerForEvent} className="mt-4"><input type="hidden" name="event_id" value={event.id} /><input type="hidden" name="slug" value={event.slug} /><PendingSubmitButton type="submit" className="rounded-full bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-700">Register for this event</PendingSubmitButton></form>
             : !registration && <p className="mt-4 text-sm font-semibold text-muted">Registration is closed.</p>}
         </section>
         {event.description && <section className="space-y-3 rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-900"><h2 className="text-xl font-semibold">About this event</h2>{event.description.split(/\n+/).filter(Boolean).map((line, index) => <p key={index} className="text-sm leading-7 text-muted">{line}</p>)}</section>}

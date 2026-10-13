@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -26,7 +27,7 @@ export default async function ManageAlumniPage({ searchParams }: { searchParams:
     {(alumniResult.error || clubsResult.error) && <p className="mt-5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">Some alumni data could not be loaded. Refresh and check your access.</p>}
     <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><h2 className="text-xl font-semibold">Add an alumnus</h2><AlumniForm action={createAlumnus} clubs={clubs} /></section>
     <section className="mt-8 space-y-4"><h2 className="text-xl font-semibold">Profiles <span className="text-sm font-normal text-muted">({alumni.length}{alumni.length === 200 ? "+" : ""})</span></h2>
-      {alumni.map((person) => <article key={person.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"><p className="mb-4 text-sm font-semibold">{person.display_name} <span className="font-normal text-muted">· {person.cohort} · {person.is_active ? "Active" : "Inactive"}</span></p><AlumniForm person={person} action={updateAlumnus} clubs={clubs} /><form action={deleteAlumnus} className="mt-3"><input type="hidden" name="id" value={person.id} /><button type="submit" className="text-sm font-medium text-rose-700 underline">Delete profile</button></form></article>)}
+      {alumni.map((person) => <article key={person.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"><p className="mb-4 text-sm font-semibold">{person.display_name} <span className="font-normal text-muted">· {person.cohort} · {person.is_active ? "Active" : "Inactive"}</span></p><AlumniForm person={person} action={updateAlumnus} clubs={clubs} /><form action={deleteAlumnus} className="mt-3"><input type="hidden" name="id" value={person.id} /><PendingSubmitButton type="submit" className="text-sm font-medium text-rose-700 underline">Delete profile</PendingSubmitButton></form></article>)}
       {!alumni.length && !alumniResult.error && <p className="rounded-xl border border-slate-200 p-5 text-sm text-muted">No alumni profiles found.</p>}
     </section>
   </main>;
@@ -50,7 +51,7 @@ function AlumniForm({ action, clubs, person }: { action: (formData: FormData) =>
     <Field label="Achievements (one per line)"><textarea name="achievements" maxLength={3000} rows={3} defaultValue={person?.achievements.join("\n") ?? ""} className={inputClass} /></Field>
     <Field label="Message"><textarea name="message" maxLength={2000} rows={3} defaultValue={person?.message ?? ""} className={inputClass} /></Field>
     <div className="flex flex-wrap gap-5"><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_featured" defaultChecked={person?.is_featured ?? false} /> Featured</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked={person?.is_active ?? true} /> Active</label></div>
-    <button type="submit" className={buttonClass}>{person ? "Save profile" : "Add alumnus"}</button>
+    <PendingSubmitButton type="submit" className={buttonClass}>{person ? "Save profile" : "Add alumnus"}</PendingSubmitButton>
   </form>;
 }
 function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="text-sm font-medium">{label}{children}</label>; }
