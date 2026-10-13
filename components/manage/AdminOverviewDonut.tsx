@@ -8,7 +8,7 @@ type OverviewDatum = {
   unavailable: boolean;
 };
 
-const colors = ["#0284c7", "#7c3aed", "#059669", "#d97706"];
+const colors = ["#0284c7", "#7c3aed", "#059669", "#d97706", "#e11d48", "#0891b2", "#4f46e5", "#64748b"];
 const circumference = 2 * Math.PI * 76;
 
 export function AdminOverviewDonut({ stats }: { stats: OverviewDatum[] }) {
@@ -85,14 +85,14 @@ export function AdminOverviewDonut({ stats }: { stats: OverviewDatum[] }) {
             <span className="mx-auto mt-1 max-w-[9rem] text-xs font-semibold leading-4 text-slate-500">{active?.label ?? "Overview"}</span>
           </div>
         </div>
-        <p className="mt-3 text-center text-xs text-slate-500">Hover or focus a slice for details</p>
+        <p className="mt-3 text-center text-xs text-slate-500">Hover, focus, or tap a status for details</p>
       </div>
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-200/80 pb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-950">Society at a glance</h3>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Live totals from records visible to your admin account.</p>
+            <h3 className="text-base font-bold text-slate-950">Applications, enquiries &amp; registrations</h3>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Current records visible to your admin account.</p>
           </div>
           <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-500 ring-1 ring-slate-200">
             {total.toLocaleString("en-IN")} total
@@ -119,7 +119,7 @@ export function AdminOverviewDonut({ stats }: { stats: OverviewDatum[] }) {
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[11px] leading-4 text-slate-500">The chart compares the four displayed totals. Select a metric to keep its value in the center.</p>
+        <p className="mt-3 text-[11px] leading-4 text-slate-500">Club applications are split into pending and reviewed. Enquiries show their current workflow status; registrations show active or completed states.</p>
       </div>
     </div>
   );
