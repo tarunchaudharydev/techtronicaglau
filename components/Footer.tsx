@@ -182,8 +182,9 @@ function Footer() {
             </div>
           </div>
 
-
-
+          <div className="mx-auto max-w-6xl px-4 pb-6">
+            <NetworkDiagnostics />
+          </div>
 
           {/* Bottom */}
           <div className="relative overflow-hidden border-t border-slate-200 dark:border-slate-800 bg-slate-50">
@@ -202,7 +203,6 @@ function Footer() {
             {/* FOREGROUND COPYRIGHT */}
 
             <div className="relative mx-auto max-w-6xl px-4 py-8 text-[11px] text-muted text-center sm:text-left">
-              <NetworkDiagnostics />
               © {new Date().getFullYear()} Techtronica 
               {/* • GLA University • */}
               {/* Electronics & Communication Engineering */}
