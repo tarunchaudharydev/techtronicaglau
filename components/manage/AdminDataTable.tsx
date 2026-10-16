@@ -21,13 +21,14 @@ export type AdminDataRow = {
 
 type ViewMode = "auto" | "cards" | "table";
 type SortDirection = "asc" | "desc";
+const DEFAULT_PAGE_SIZES = [10, 25, 50];
 
 export default function AdminDataTable({
   id,
   columns,
   rows,
   emptyMessage = "No records found.",
-  pageSizes = [10, 25, 50],
+  pageSizes = DEFAULT_PAGE_SIZES,
 }: {
   id: string;
   columns: AdminDataColumn[];
@@ -45,26 +46,28 @@ export default function AdminDataTable({
   const [isNarrow, setIsNarrow] = useState(false);
   const [ready, setReady] = useState(false);
 
+  const columnKeys = columns.map((column) => column.key).join("|");
+  const pageSizeKey = pageSizes.join("|");
+
   useEffect(() => {
-    const saved = window.localStorage.getItem(`admin-table:${id}`);
+    let saved: string | null = null;
+    try { saved = window.localStorage.getItem(`admin-table:${id}`); } catch { /* Storage may be disabled. */ }
     if (saved) {
       try {
         const preference = JSON.parse(saved) as { view?: ViewMode; visibleKeys?: string[]; pageSize?: number };
         if (preference.view === "auto" || preference.view === "cards" || preference.view === "table") setView(preference.view);
-        if (Array.isArray(preference.visibleKeys)) {
-          setVisibleKeys(preference.visibleKeys.filter((key) => columns.some((column) => column.key === key)));
-        }
-        if (preference.pageSize && pageSizes.includes(preference.pageSize)) setPageSize(preference.pageSize);
+        if (Array.isArray(preference.visibleKeys)) setVisibleKeys(preference.visibleKeys.filter((key) => columnKeys.split("|").includes(key)));
+        if (preference.pageSize && pageSizeKey.split("|").map(Number).includes(preference.pageSize)) setPageSize(preference.pageSize);
       } catch {
-        window.localStorage.removeItem(`admin-table:${id}`);
+        try { window.localStorage.removeItem(`admin-table:${id}`); } catch { /* Ignore unavailable storage. */ }
       }
     }
     setReady(true);
-  }, [id, columns, pageSizes]);
+  }, [id, columnKeys, pageSizeKey]);
 
   useEffect(() => {
     if (!ready) return;
-    window.localStorage.setItem(`admin-table:${id}`, JSON.stringify({ view, visibleKeys, pageSize }));
+    try { window.localStorage.setItem(`admin-table:${id}`, JSON.stringify({ view, visibleKeys, pageSize })); } catch { /* Preferences remain usable for this session. */ }
   }, [id, pageSize, ready, view, visibleKeys]);
 
   useEffect(() => {
@@ -113,7 +116,11 @@ export default function AdminDataTable({
 
   function downloadCsv() {
     const csvColumns = columns.filter((column) => shownKeys.includes(column.key));
-    const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const quote = (value: unknown) => {
+      const text = String(value ?? "");
+      const safeText = /^[\\s\\u0000-\\u001f]*[=+@-]/.test(text) ? "'" + text : text;
+      return '"' + safeText.replaceAll('"', '""') + '"';
+    };
     const lines = [
       csvColumns.map((column) => quote(column.label)).join(","),
       ...filteredRows.map((row) => csvColumns.map((column) => quote(row.values[column.key])).join(",")),
