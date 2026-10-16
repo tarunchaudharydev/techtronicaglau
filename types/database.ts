@@ -953,13 +953,13 @@ export type Database = {
       }
       create_meeting_attendance_session: {
         Args: {
-          p_club_id: string
+          p_club_id: string | null
           p_meeting_date: string
-          p_meeting_time: string
+          p_meeting_time: string | null
           p_name: string
-          p_notes: string
+          p_notes: string | null
           p_scope: string
-          p_venue: string
+          p_venue: string | null
         }
         Returns: string
       }
