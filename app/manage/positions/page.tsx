@@ -20,6 +20,7 @@ import type { Tables } from "@/types/database";
 import { requireManager } from "@/lib/manage/server";
 import ResultMessage from "@/components/manage/ResultMessage";
 import { createPosition, deletePosition, updatePosition } from "./actions";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Positions | Techtronica management" };
 
@@ -36,6 +37,18 @@ export default async function PositionsPage({ searchParams }: { searchParams: Pr
   const clubs = clubResult.data ?? [];
   const hasLookupError = Boolean(roleResult.error || clubResult.error);
   const hasError = Boolean(positionResult.error || hasLookupError);
+  const positionColumns = [
+    { key: "position", label: "Position" }, { key: "scope", label: "Scope" }, { key: "role", label: "Access role" },
+    { key: "status", label: "Status" }, { key: "order", label: "Order", defaultVisible: false },
+    { key: "description", label: "Description", defaultVisible: false },
+  ];
+  const tableRows = !hasError ? positions.map((position) => {
+    const roleName = position.roles?.name ?? "Role unavailable";
+    const roleScope = position.roles?.scope ?? "role";
+    const location = position.clubs?.name ?? "Society-wide";
+    const values = { position: position.name, scope: location, role: roleName, status: position.is_active ? "Active" : "Inactive", order: position.display_order, description: position.description ?? "—" };
+    return { id: position.id, values, cells: values, searchText: Object.values(values).join(" "), actions: <a href={`#manage-position-${position.id}`} className="font-semibold text-sky-700 underline underline-offset-2">Edit</a>, card: <div id={`manage-position-${position.id}`} className="scroll-mt-24"><PositionCard position={position} clubs={clubs} roles={roles} disabled={hasLookupError} /></div> };
+  }) : [];
 
   return <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-sky-50/70 via-slate-50 to-white px-4 py-6 sm:px-6 sm:py-10">
     <div className="mx-auto max-w-7xl">
@@ -90,15 +103,7 @@ export default async function PositionsPage({ searchParams }: { searchParams: Pr
           <p className="text-sm text-slate-500">{positionResult.error ? "Position count unavailable" : `${positions.length}${positions.length === 200 ? "+" : ""} ${positions.length === 1 ? "position" : "positions"}`}</p>
         </div>
 
-        <div className="space-y-3">
-          {positions.map((position) => <PositionCard key={position.id} position={position} clubs={clubs} roles={roles} disabled={hasLookupError} />)}
-          {!positions.length && !positionResult.error && <div className="rounded-3xl border border-dashed border-slate-300 bg-white/80 px-5 py-12 text-center">
-            <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-violet-100 text-violet-700"><Sparkles aria-hidden="true" className="size-5" /></span>
-            <h3 className="mt-4 font-bold text-slate-900">No positions in your scope yet</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">Add the first society or club position to make your team structure clear.</p>
-            <a href="#add-position" className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800">Create a position <ArrowUpRight aria-hidden="true" className="size-4" /></a>
-          </div>}
-        </div>
+        {!positionResult.error && <AdminDataTable id="manage-positions" columns={positionColumns} rows={tableRows} emptyMessage="No positions in your scope yet." />}
       </section>
     </div>
   </main>;
