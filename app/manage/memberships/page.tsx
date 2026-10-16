@@ -8,9 +8,14 @@ import ResultMessage from "@/components/manage/ResultMessage";
 import { createClient } from "@/lib/supabase/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
 import { addSocietyMember } from "./actions";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Membership requests | Techtronica" };
 const pageSize = 25;
+const membershipColumns = [
+  { key: "member", label: "Member" }, { key: "scope", label: "Club / society" },
+  { key: "department", label: "Department" }, { key: "year", label: "Year" }, { key: "requested", label: "Requested" },
+];
 
 export default async function ManageMembershipsPage({
   searchParams,
@@ -52,6 +57,28 @@ export default async function ManageMembershipsPage({
   const hasMore = (data?.length ?? 0) > pageSize;
   const lastRequest = requests.at(-1);
   const nextCursor = hasMore && lastRequest ? `${lastRequest.created_at}|${lastRequest.id}` : null;
+  const tableRows = !error ? requests.map((request) => {
+    const profile = one(request.profiles);
+    const club = one(request.clubs);
+    const values = {
+      member: profile?.full_name || "Member",
+      scope: club?.name ?? "Society-wide membership",
+      department: profile?.department ?? "—",
+      year: profile?.year_of_study ? `Year ${profile.year_of_study}` : "—",
+      requested: formatDate(request.created_at),
+    };
+    return {
+      id: request.id,
+      searchText: Object.values(values).join(" "),
+      values,
+      cells: values,
+      actions: <MembershipDecision membershipId={request.id} />,
+      card: <article className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center dark:border-slate-800 dark:bg-slate-900">
+        <div><h2 className="font-semibold">{values.member}</h2><p className="mt-1 text-sm text-muted">{values.scope}{profile?.department ? ` · ${profile.department}` : ""}{profile?.year_of_study ? ` · Year ${profile.year_of_study}` : ""}</p><p className="mt-1 text-xs text-muted">Requested {values.requested}</p></div>
+        <MembershipDecision membershipId={request.id} />
+      </article>,
+    };
+  }) : [];
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -83,24 +110,7 @@ export default async function ManageMembershipsPage({
       <p className="mt-3 max-w-3xl text-sm text-muted">Club managers can review applications only for clubs in their assigned scope. Database policies reject direct attempts to create society memberships without admin permission.</p>
       {permissionError && <p className="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">We could not verify your current management permissions. Refresh the page to retry.</p>}
       {error && <p className="mt-6 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">The request list could not be loaded. Refresh the page to retry.</p>}
-      {!error && requests.length === 0 && <p className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-muted dark:border-slate-800 dark:bg-slate-900">There are no pending requests in your assigned scope.</p>}
-
-      <div className="mt-6 space-y-3">
-        {!error && requests.map((request) => {
-          const profile = one(request.profiles);
-          const club = one(request.clubs);
-          return (
-            <article className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center dark:border-slate-800 dark:bg-slate-900" key={request.id}>
-              <div>
-                <h2 className="font-semibold">{profile?.full_name || "Member"}</h2>
-                <p className="mt-1 text-sm text-muted">{club?.name ?? "Society-wide membership"}{profile?.department ? ` · ${profile.department}` : ""}{profile?.year_of_study ? ` · Year ${profile.year_of_study}` : ""}</p>
-                <p className="mt-1 text-xs text-muted">Requested {formatDate(request.created_at)}</p>
-              </div>
-              <MembershipDecision membershipId={request.id} />
-            </article>
-          );
-        })}
-      </div>
+      {!error && <AdminDataTable id="manage-memberships" columns={membershipColumns} rows={tableRows} emptyMessage="There are no pending requests in your assigned scope." />}
 
       {nextCursor && <Link className="mt-6 inline-flex rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold hover:border-sky-500" href={`/manage/memberships?before=${encodeURIComponent(nextCursor)}`}>Next 25 requests →</Link>}
     </main>

@@ -7,6 +7,7 @@ import ResultMessage from "@/components/manage/ResultMessage";
 import { requireManager } from "@/lib/manage/server";
 import { createTeamMember, deleteTeamMember, updateTeamMember } from "./actions";
 import StorageImageUpload from "@/components/manage/StorageImageUpload";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Team directory | Techtronica management" };
 
@@ -49,6 +50,36 @@ export default async function ManageTeamPage({ searchParams }: { searchParams: P
   const hasError = Boolean(countResult.error || membersResult.error || clubsResult.error);
   const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const end = Math.min(page * PAGE_SIZE, total);
+  const teamColumns = [
+    { key: "name", label: "Name" }, { key: "title", label: "Title" }, { key: "type", label: "Type" },
+    { key: "club", label: "Club scope" }, { key: "status", label: "Status" }, { key: "visibility", label: "Visibility" },
+    { key: "roles", label: "Roles", defaultVisible: false },
+  ];
+  const tableRows = !hasError ? members.map((member) => {
+    const club = clubs.find((item) => item.id === member.club_id);
+    const values = {
+      name: member.display_name, title: member.title, type: member.member_type,
+      club: club?.name ?? "Society-wide", status: member.is_active ? "Active" : "Inactive",
+      visibility: member.is_public ? "Public" : "Members only", roles: member.roles.join(", ") || "—",
+    };
+    return {
+      id: member.id, values, cells: values, searchText: Object.values(values).join(" "),
+      actions: <a href={`#team-member-${member.id}`} className="font-semibold text-sky-700 underline underline-offset-2">Edit</a>,
+      card: <article id={`team-member-${member.id}`} className="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <details>
+          <summary className="cursor-pointer list-none p-4 [&::-webkit-details-marker]:hidden sm:p-5">
+            <span className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><span className="min-w-0"><span className="block truncate text-base font-semibold">{member.display_name}</span><span className="mt-1 block truncate text-sm text-muted">{member.title} · {member.member_type}</span></span>
+              <span className="flex flex-wrap items-center gap-2 sm:justify-end"><StatusBadge active={member.is_active} /><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${member.is_public ? "bg-sky-50 text-sky-800 dark:bg-sky-950 dark:text-sky-200" : "bg-violet-50 text-violet-800 dark:bg-violet-950 dark:text-violet-200"}`}>{values.visibility}</span><span aria-hidden="true" className="ml-1 text-sm font-medium text-sky-700">Edit ↓</span></span>
+            </span>
+          </summary>
+          <div className="border-t border-slate-200 p-4 dark:border-slate-800 sm:p-5">
+            <TeamForm action={updateTeamMember} clubs={clubs} member={member} search={search} page={page} />
+            <form action={deleteTeamMember} className="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800"><input type="hidden" name="id" value={member.id} /><input type="hidden" name="search" value={search} /><input type="hidden" name="page" value={page} /><PendingSubmitButton type="submit" className="min-h-10 rounded-lg px-2 text-sm font-semibold text-rose-700 underline underline-offset-2 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950">Delete profile</PendingSubmitButton></form>
+          </div>
+        </details>
+      </article>,
+    };
+  }) : [];
 
   return <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
     <Link href="/manage" className="text-sm font-medium text-sky-700 hover:underline">← Management</Link>
@@ -94,39 +125,7 @@ export default async function ManageTeamPage({ searchParams }: { searchParams: P
         </form>
       </div>
 
-      <div className="mt-4 space-y-3">
-        {members.map((member) => <article key={member.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <details>
-            <summary className="cursor-pointer list-none p-4 [&::-webkit-details-marker]:hidden sm:p-5">
-              <span className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="min-w-0">
-                  <span className="block truncate text-base font-semibold">{member.display_name}</span>
-                  <span className="mt-1 block truncate text-sm text-muted">{member.title} · {member.member_type}</span>
-                </span>
-                <span className="flex flex-wrap items-center gap-2 sm:justify-end">
-                  <StatusBadge active={member.is_active} />
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${member.is_public ? "bg-sky-50 text-sky-800 dark:bg-sky-950 dark:text-sky-200" : "bg-violet-50 text-violet-800 dark:bg-violet-950 dark:text-violet-200"}`}>{member.is_public ? "Public" : "Members only"}</span>
-                  <span aria-hidden="true" className="ml-1 text-sm font-medium text-sky-700">Edit ↓</span>
-                </span>
-              </span>
-            </summary>
-            <div className="border-t border-slate-200 p-4 dark:border-slate-800 sm:p-5">
-              <TeamForm action={updateTeamMember} clubs={clubs} member={member} search={search} page={page} />
-              <form action={deleteTeamMember} className="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800">
-                <input type="hidden" name="id" value={member.id} />
-                <input type="hidden" name="search" value={search} />
-                <input type="hidden" name="page" value={page} />
-                <PendingSubmitButton type="submit" className="min-h-10 rounded-lg px-2 text-sm font-semibold text-rose-700 underline underline-offset-2 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950">Delete profile</PendingSubmitButton>
-              </form>
-            </div>
-          </details>
-        </article>)}
-        {!members.length && !hasError && <div className="rounded-2xl border border-dashed border-slate-300 px-5 py-12 text-center dark:border-slate-700">
-          <h3 className="font-semibold">{search ? "No matching profiles" : "No team profiles yet"}</h3>
-          <p className="mt-2 text-sm text-muted">{search ? "Try a different name or clear the search." : "Add a profile to get the directory started."}</p>
-          {search && <Link href="/manage/team" className="mt-4 inline-flex min-h-10 items-center rounded-xl border border-slate-300 px-4 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Clear search</Link>}
-        </div>}
-      </div>
+      <AdminDataTable id="manage-team" columns={teamColumns} rows={tableRows} emptyMessage={search ? "No matching profiles on this page." : "No team profiles yet. Add a profile to get the directory started."} />
 
       {!hasError && pageCount > 1 && <nav aria-label="Team profile pages" className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted">Page {page} of {pageCount.toLocaleString()}</p>

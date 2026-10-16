@@ -5,6 +5,7 @@ import { FiKey, FiPlus, FiShield, FiUserPlus, FiUsers } from "react-icons/fi";
 import ResultMessage from "@/components/manage/ResultMessage";
 import { requireManager } from "@/lib/manage/server";
 import { assignRole, createRole, deleteRole, inviteUser, revokeRole, updateRole } from "./actions";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Roles and access | Techtronica management" };
 
@@ -63,6 +64,97 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
     `${role.name} ${role.description ?? ""} ${role.scope}`.toLocaleLowerCase().includes(roleQuery.toLocaleLowerCase()),
   );
   const assignedRoleCount = new Set(assignments.map((assignment) => assignment.role_id)).size;
+  const assignmentColumns = [
+    { key: "person", label: "Person" }, { key: "role", label: "Role" },
+    { key: "scope", label: "Scope" }, { key: "granted", label: "Granted" }, { key: "account", label: "Account", defaultVisible: false },
+  ];
+  const assignmentRows = assignments.map((assignment) => {
+    const profile = one(assignment.profiles);
+    const role = one(assignment.roles);
+    const club = one(assignment.clubs);
+    const displayName = profile?.full_name?.trim() || "Unnamed account";
+    const roleName = role?.name ?? "Role unavailable";
+    const scope = club?.name ?? "Society-wide";
+    const values = { person: displayName, role: roleName, scope, granted: formatDate(assignment.created_at), account: `…${assignment.user_id.slice(-6)}` };
+    const action = <details className="shrink-0 rounded-xl border border-rose-200 px-3 py-2 dark:border-rose-900">
+      <summary className="cursor-pointer text-sm font-semibold text-rose-700">Remove access</summary>
+      <div className="mt-3 max-w-xs"><p className="text-xs leading-5 text-muted">This removes {roleName} from {displayName} in this scope.</p>
+        <form action={revokeRole} className="mt-2"><input type="hidden" name="id" value={assignment.id} /><PendingSubmitButton aria-label={`Confirm removal of ${roleName} from ${displayName}`} className={dangerButtonClass} type="submit">Confirm remove</PendingSubmitButton></form>
+      </div>
+    </details>;
+    return { id: assignment.id, values, cells: values, searchText: Object.values(values).join(" "), actions: action, card:
+      <article className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+        <div><p className="break-words font-semibold">{displayName}</p><p className="mt-1 text-sm text-muted">{roleName} · {scope}</p><p className="mt-1 text-xs text-muted">Granted {values.granted} · account {values.account}</p></div>{action}
+      </article> };
+  });
+
+  const roleColumns = [
+    { key: "name", label: "Role" }, { key: "scope", label: "Scope" }, { key: "permissions", label: "Permissions" },
+    { key: "system", label: "Type" }, { key: "description", label: "Description", defaultVisible: false },
+  ];
+  const roleRows = displayedRoles.map((role) => {
+    const keys = rolePermissions.filter((entry) => entry.role_id === role.id).map((entry) => entry.permission_key);
+    const selected = permissions.filter((permission) => keys.includes(permission.key));
+    const values = { name: role.name, scope: role.scope === "society" ? "Society-wide" : "Club-scoped", permissions: keys.length, system: role.is_system ? "System" : "Custom", description: role.description ?? "—" };
+    return { id: role.id, values, cells: values, searchText: Object.values(values).join(" "), actions: <a href={`#manage-role-${role.id}`} className="font-semibold text-sky-700 underline underline-offset-2">Edit</a>, card: <article id={`manage-role-${role.id}`} className="min-w-0 rounded-2xl border border-slate-200 p-4 dark:border-slate-800 sm:p-5" key={role.id}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="break-words text-lg font-semibold">{role.name}</h3>
+                          <ScopeBadge scope={role.scope} />
+                          {role.is_system && <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-800 dark:bg-violet-950 dark:text-violet-300">System role</span>}
+                        </div>
+                        <p className="mt-1 text-sm leading-6 text-muted">{role.description || "No description has been added yet."}</p>
+                      </div>
+                      <span className="shrink-0 text-xs font-medium text-muted">{keys.length} {keys.length === 1 ? "permission" : "permissions"}</span>
+                    </div>
+
+                    {selected.length ? (
+                      <ul aria-label={`Permissions in ${role.name}`} className="mt-4 flex flex-wrap gap-2">
+                        {selected.map((permission) => (
+                          <li className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200" key={permission.key} title={permission.description}>
+                            {permissionLabels[permission.key] ?? permission.description}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">No permissions are assigned. This role does not grant management capabilities.</p>
+                    )}
+
+                    <details className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+                      <summary className="cursor-pointer text-sm font-semibold text-sky-700 hover:underline">Edit role and permissions</summary>
+                      <form action={updateRole} className="mt-4 space-y-5">
+                        <input type="hidden" name="id" value={role.id} />
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <label className="text-sm font-medium" htmlFor={`role-name-${role.id}`}>Role name
+                            <input className={`${inputClass} read-only:opacity-70`} defaultValue={role.name} id={`role-name-${role.id}`} maxLength={80} name="name" readOnly={role.is_system} required />
+                          </label>
+                          <div>
+                            <span className="text-sm font-medium">Scope</span>
+                            <div className="mt-1 flex h-[43px] items-center"><ScopeBadge scope={role.scope} /></div>
+                            <p className="mt-1 text-xs text-muted">Scope cannot be changed after role creation.</p>
+                          </div>
+                          <label className="text-sm font-medium sm:col-span-2" htmlFor={`role-description-${role.id}`}>Description
+                            <textarea className={`${inputClass} read-only:opacity-70`} defaultValue={role.description ?? ""} id={`role-description-${role.id}`} maxLength={500} name="description" readOnly={role.is_system} rows={2} />
+                          </label>
+                        </div>
+                        {role.is_system && <p className="text-xs leading-5 text-muted">This protected system role keeps its name and description. Its permissions can still be reviewed and configured.</p>}
+                        <PermissionChecklist permissions={permissions} name="permission_keys" selectedKeys={keys} />
+                        <PendingSubmitButton className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-50`} disabled={!permissions.length} type="submit">Save role changes</PendingSubmitButton>
+                      </form>
+                      {!role.is_system && (
+                        <details className="mt-5 rounded-xl border border-rose-200 p-4 dark:border-rose-900">
+                          <summary className="cursor-pointer text-sm font-semibold text-rose-700">Delete this role</summary>
+                          <p className="mt-2 text-sm leading-6 text-muted">Deletion is allowed only when no user assignment or position uses this role.</p>
+                          <form action={deleteRole} className="mt-3">
+                            <input type="hidden" name="id" value={role.id} />
+                            <PendingSubmitButton className={dangerButtonClass} type="submit">Confirm delete {role.name}</PendingSubmitButton>
+                          </form>
+                        </details>
+                      )}
+                    </details>
+                  </article> };
+  });
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
@@ -147,73 +239,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
               </div>
             </details>
 
-            <div className="mt-5 space-y-4">
-              {displayedRoles.map((role) => {
-                const keys = rolePermissions.filter((entry) => entry.role_id === role.id).map((entry) => entry.permission_key);
-                const selected = permissions.filter((permission) => keys.includes(permission.key));
-                return (
-                  <article className="min-w-0 rounded-2xl border border-slate-200 p-4 dark:border-slate-800 sm:p-5" key={role.id}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="break-words text-lg font-semibold">{role.name}</h3>
-                          <ScopeBadge scope={role.scope} />
-                          {role.is_system && <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-800 dark:bg-violet-950 dark:text-violet-300">System role</span>}
-                        </div>
-                        <p className="mt-1 text-sm leading-6 text-muted">{role.description || "No description has been added yet."}</p>
-                      </div>
-                      <span className="shrink-0 text-xs font-medium text-muted">{keys.length} {keys.length === 1 ? "permission" : "permissions"}</span>
-                    </div>
-
-                    {selected.length ? (
-                      <ul aria-label={`Permissions in ${role.name}`} className="mt-4 flex flex-wrap gap-2">
-                        {selected.map((permission) => (
-                          <li className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200" key={permission.key} title={permission.description}>
-                            {permissionLabels[permission.key] ?? permission.description}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">No permissions are assigned. This role does not grant management capabilities.</p>
-                    )}
-
-                    <details className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
-                      <summary className="cursor-pointer text-sm font-semibold text-sky-700 hover:underline">Edit role and permissions</summary>
-                      <form action={updateRole} className="mt-4 space-y-5">
-                        <input type="hidden" name="id" value={role.id} />
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <label className="text-sm font-medium" htmlFor={`role-name-${role.id}`}>Role name
-                            <input className={`${inputClass} read-only:opacity-70`} defaultValue={role.name} id={`role-name-${role.id}`} maxLength={80} name="name" readOnly={role.is_system} required />
-                          </label>
-                          <div>
-                            <span className="text-sm font-medium">Scope</span>
-                            <div className="mt-1 flex h-[43px] items-center"><ScopeBadge scope={role.scope} /></div>
-                            <p className="mt-1 text-xs text-muted">Scope cannot be changed after role creation.</p>
-                          </div>
-                          <label className="text-sm font-medium sm:col-span-2" htmlFor={`role-description-${role.id}`}>Description
-                            <textarea className={`${inputClass} read-only:opacity-70`} defaultValue={role.description ?? ""} id={`role-description-${role.id}`} maxLength={500} name="description" readOnly={role.is_system} rows={2} />
-                          </label>
-                        </div>
-                        {role.is_system && <p className="text-xs leading-5 text-muted">This protected system role keeps its name and description. Its permissions can still be reviewed and configured.</p>}
-                        <PermissionChecklist permissions={permissions} name="permission_keys" selectedKeys={keys} />
-                        <PendingSubmitButton className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-50`} disabled={!permissions.length} type="submit">Save role changes</PendingSubmitButton>
-                      </form>
-                      {!role.is_system && (
-                        <details className="mt-5 rounded-xl border border-rose-200 p-4 dark:border-rose-900">
-                          <summary className="cursor-pointer text-sm font-semibold text-rose-700">Delete this role</summary>
-                          <p className="mt-2 text-sm leading-6 text-muted">Deletion is allowed only when no user assignment or position uses this role.</p>
-                          <form action={deleteRole} className="mt-3">
-                            <input type="hidden" name="id" value={role.id} />
-                            <PendingSubmitButton className={dangerButtonClass} type="submit">Confirm delete {role.name}</PendingSubmitButton>
-                          </form>
-                        </details>
-                      )}
-                    </details>
-                  </article>
-                );
-              })}
-              {!displayedRoles.length && !rolesResult.error && <p className="rounded-xl border border-dashed border-slate-300 p-6 text-sm text-muted">{roleQuery ? "No roles match that search." : "No roles are available yet."}</p>}
-            </div>
+            {rolesResult.error || permissionsResult.error || rolePermissionResult.error ? <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Roles or permissions could not be loaded.</p> : <AdminDataTable id="manage-access-roles" columns={roleColumns} rows={roleRows} emptyMessage={roleQuery ? "No roles match that search." : "No roles are available yet."} />}
           </section>
 
           <section id="assignments" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
@@ -225,39 +251,8 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Latest {assignments.length}{assignments.length === 100 ? "+" : ""}</span>
             </div>
-            <div className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
-              {assignments.map((assignment) => {
-                const profile = one(assignment.profiles);
-                const role = one(assignment.roles);
-                const club = one(assignment.clubs);
-                const displayName = profile?.full_name?.trim() || "Unnamed account";
-                return (
-                  <article className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between" key={assignment.id}>
-                    <div className="flex min-w-0 items-start gap-3">
-                      <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                        {displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]?.toLocaleUpperCase()).join("") || "?"}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="break-words font-semibold">{displayName}</p>
-                        <p className="mt-1 text-sm text-muted">{role?.name ?? "Role unavailable"} · {club?.name ?? "Society-wide"}</p>
-                        <p className="mt-1 text-xs text-muted">Granted {formatDate(assignment.created_at)} · account …{assignment.user_id.slice(-6)}</p>
-                      </div>
-                    </div>
-                    <details className="shrink-0 rounded-xl border border-rose-200 px-3 py-2 dark:border-rose-900">
-                      <summary className="cursor-pointer text-sm font-semibold text-rose-700">Remove access</summary>
-                      <div className="mt-3 max-w-xs">
-                        <p className="text-xs leading-5 text-muted">This removes {role?.name ?? "this role"} from {displayName} in this scope.</p>
-                        <form action={revokeRole} className="mt-2">
-                          <input type="hidden" name="id" value={assignment.id} />
-                          <PendingSubmitButton aria-label={`Confirm removal of ${role?.name ?? "role"} from ${displayName}`} className={dangerButtonClass} type="submit">Confirm remove</PendingSubmitButton>
-                        </form>
-                      </div>
-                    </details>
-                  </article>
-                );
-              })}
-              {!assignments.length && !assignmentsResult.error && <p className="py-6 text-sm text-muted">No role assignments have been made yet.</p>}
-            </div>
+            {assignmentsResult.error ? <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Assignments could not be loaded.</p> : <AdminDataTable id="manage-access-assignments" columns={assignmentColumns} rows={assignmentRows} emptyMessage="No role assignments have been made yet." />}
+
           </section>
         </div>
 

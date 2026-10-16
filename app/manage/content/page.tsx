@@ -8,6 +8,7 @@ import { siteContentTypes, type SiteContentType } from "@/lib/data/public-conten
 import ResultMessage from "@/components/manage/ResultMessage";
 import { createContentRecord, deleteContentRecord, updateContentRecord } from "./actions";
 import StorageImageUpload from "@/components/manage/StorageImageUpload";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Website content | Techtronica management" };
 const labels: Record<SiteContentType, string> = {
@@ -26,6 +27,21 @@ export default async function ManageContentPage({ searchParams }: { searchParams
   if (type) query = query.eq("content_type", type);
   const { data, error } = await query;
   const records = (data ?? []) as Tables<"site_content">[];
+  const contentColumns = [
+    { key: "title", label: "Title" }, { key: "type", label: "Type" }, { key: "slug", label: "Slug" },
+    { key: "visibility", label: "Visibility" }, { key: "status", label: "Status" }, { key: "order", label: "Order", defaultVisible: false },
+  ];
+  const tableRows = records.map((record) => {
+    const values = {
+      title: record.title, type: labels[record.content_type as SiteContentType], slug: record.slug,
+      visibility: record.is_public ? "Public" : "Private", status: record.is_active ? "Active" : "Inactive", order: record.display_order,
+    };
+    return { id: record.id, values, cells: values, searchText: Object.values(values).join(" "), actions: <a href={`#manage-content-${record.id}`} className="font-semibold text-sky-700 underline underline-offset-2">Edit</a>, card: <article id={`manage-content-${record.id}`} key={record.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <p className="mb-3 text-sm font-semibold">{record.title} <span className="font-normal text-muted">· {labels[record.content_type as SiteContentType]} · {record.is_public ? "Public" : "Private"} · {record.is_active ? "Active" : "Inactive"}</span></p>
+        <ContentForm action={updateContentRecord} record={record} />
+        <form action={deleteContentRecord} className="mt-3"><input type="hidden" name="id" value={record.id} /><PendingSubmitButton type="submit" className="text-sm font-medium text-rose-700 underline">Delete record</PendingSubmitButton></form>
+      </article> };
+  });
   return <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
     <Link href="/manage" className="text-sm font-medium text-sky-700 hover:underline">← Management</Link>
     <h1 className="mt-4 text-3xl font-bold">Website content</h1>
@@ -40,15 +56,7 @@ export default async function ManageContentPage({ searchParams }: { searchParams
       <h2 className="text-xl font-semibold">Add a content record</h2>
       <ContentForm action={createContentRecord} initialType={type ?? "faq"} />
     </section>
-    <section className="mt-8 space-y-4">
-      <h2 className="text-xl font-semibold">Records <span className="text-sm font-normal text-muted">({records.length}{records.length === 100 ? "+" : ""})</span></h2>
-      {records.map((record) => <article key={record.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-        <p className="mb-3 text-sm font-semibold">{record.title} <span className="font-normal text-muted">· {labels[record.content_type as SiteContentType]} · {record.is_public ? "Public" : "Private"} · {record.is_active ? "Active" : "Inactive"}</span></p>
-        <ContentForm action={updateContentRecord} record={record} />
-        <form action={deleteContentRecord} className="mt-3"><input type="hidden" name="id" value={record.id} /><PendingSubmitButton type="submit" className="text-sm font-medium text-rose-700 underline">Delete record</PendingSubmitButton></form>
-      </article>)}
-      {!records.length && !error && <p className="rounded-xl border border-slate-200 p-5 text-sm text-muted">No matching content records found. Add one above.</p>}
-    </section>
+    <section className="mt-8"><h2 className="text-xl font-semibold">Records <span className="text-sm font-normal text-muted">({records.length}{records.length === 100 ? "+" : ""})</span></h2>{error ? null : <AdminDataTable id="manage-content" columns={contentColumns} rows={tableRows} emptyMessage="No matching content records found. Add one above." />}</section>
   </main>;
 }
 

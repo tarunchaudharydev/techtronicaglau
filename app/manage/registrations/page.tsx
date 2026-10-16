@@ -2,11 +2,19 @@ import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import Link from "next/link";
 import ResultMessage from "@/components/manage/ResultMessage";
+import AdminDataTable, { type AdminDataColumn, type AdminDataRow } from "@/components/manage/AdminDataTable";
 import { requireManager } from "@/lib/manage/server";
 import { updateRegistrationStatus } from "./actions";
 
 export const metadata: Metadata = { title: "Event registrations | Techtronica management" };
 const pageSize = 25;
+const registrationColumns: AdminDataColumn[] = [
+  { key: "member", label: "Member" },
+  { key: "event", label: "Event" },
+  { key: "status", label: "Status" },
+  { key: "registered", label: "Registered" },
+  { key: "notes", label: "Notes", defaultVisible: false },
+];
 
 export default async function ManageRegistrationsPage({ searchParams }: { searchParams: Promise<{ before?: string; result?: string }> }) {
   const params = await searchParams;
@@ -24,6 +32,38 @@ export default async function ManageRegistrationsPage({ searchParams }: { search
   const hasMore = (data?.length ?? 0) > pageSize;
   const last = rows.at(-1);
   const nextCursor = hasMore && last ? `${last.registered_at}|${last.id}` : null;
+  const tableRows: AdminDataRow[] = !error ? rows.map((row) => {
+    const event = one(row.events);
+    const profile = one(row.profiles);
+    const member = profile?.full_name || "Member";
+    const eventTitle = event?.title || "Event";
+    const status = row.status.replaceAll("_", " ");
+    const registered = formatDate(row.registered_at);
+    const canUpdate = row.status === "registered" || row.status === "waitlisted";
+    const action = canUpdate ? <form action={updateRegistrationStatus} className="flex flex-wrap items-end gap-2">
+      <input type="hidden" name="id" value={row.id} />
+      <input type="hidden" name="current_status" value={row.status} />
+      <label className="text-xs font-medium">Set status
+        <select name="status" defaultValue={row.status === "registered" ? "attended" : "cancelled"} className="mt-1 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+          {row.status === "registered" && <><option value="attended">Attended</option><option value="no_show">No show</option></>}
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </label>
+      <PendingSubmitButton type="submit" className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Save</PendingSubmitButton>
+    </form> : null;
+    const values = { member, event: eventTitle, status, registered, notes: row.notes ?? "—" };
+    return {
+      id: row.id,
+      searchText: Object.values(values).join(" "),
+      values,
+      cells: values,
+      actions: action,
+      card: <article className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center dark:border-slate-800 dark:bg-slate-900">
+        <div><h2 className="font-semibold">{member}</h2><p className="mt-1 text-sm text-muted">{eventTitle} · <span className="capitalize">{status}</span></p><p className="mt-1 text-xs text-muted">Registered {registered}</p>{row.notes && <p className="mt-2 text-sm">{row.notes}</p>}</div>
+        {action}
+      </article>,
+    };
+  }) : [];
 
   return <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
     <Link href="/manage" className="text-sm font-medium text-sky-700 hover:underline">← Management</Link>
@@ -31,33 +71,7 @@ export default async function ManageRegistrationsPage({ searchParams }: { search
     <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Registrations are paged in groups of 25 and filtered by your database permissions. Cancelled seats may promote the next waitlisted member automatically.</p>
     <ResultMessage result={params.result} />
     {error && <p className="mt-5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">The registration list could not be loaded. Refresh and check your assigned scope.</p>}
-    {!error && rows.length === 0 && <p className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-muted dark:border-slate-800 dark:bg-slate-900">No registrations are visible in your assigned scope.</p>}
-    <div className="mt-6 space-y-3">
-      {!error && rows.map((row) => {
-        const event = one(row.events);
-        const profile = one(row.profiles);
-        const canUpdate = row.status === "registered" || row.status === "waitlisted";
-        return <article key={row.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center dark:border-slate-800 dark:bg-slate-900">
-          <div>
-            <h2 className="font-semibold">{profile?.full_name || "Member"}</h2>
-            <p className="mt-1 text-sm text-muted">{event?.title || "Event"} · <span className="capitalize">{row.status.replaceAll("_", " ")}</span></p>
-            <p className="mt-1 text-xs text-muted">Registered {formatDate(row.registered_at)}</p>
-            {row.notes && <p className="mt-2 text-sm">{row.notes}</p>}
-          </div>
-          {canUpdate && <form action={updateRegistrationStatus} className="flex flex-wrap items-end gap-2">
-            <input type="hidden" name="id" value={row.id} />
-            <input type="hidden" name="current_status" value={row.status} />
-            <label className="text-xs font-medium">Set status
-              <select name="status" defaultValue={row.status === "registered" ? "attended" : "cancelled"} className="mt-1 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-                {row.status === "registered" && <><option value="attended">Attended</option><option value="no_show">No show</option></>}
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </label>
-            <PendingSubmitButton type="submit" className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Save</PendingSubmitButton>
-          </form>}
-        </article>;
-      })}
-    </div>
+    {!error && <AdminDataTable id="manage-registrations" columns={registrationColumns} rows={tableRows} emptyMessage="No registrations are visible in your assigned scope." />}
     {nextCursor && <Link className="mt-6 inline-flex rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold hover:border-sky-500" href={`/manage/registrations?before=${encodeURIComponent(nextCursor)}`}>Next 25 registrations →</Link>}
   </main>;
 }

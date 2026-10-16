@@ -7,6 +7,7 @@ import ResultMessage from "@/components/manage/ResultMessage";
 import { requireManager } from "@/lib/manage/server";
 import { createAlumnus, deleteAlumnus, updateAlumnus } from "./actions";
 import StorageImageUpload from "@/components/manage/StorageImageUpload";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Alumni directory | Techtronica management" };
 
@@ -19,6 +20,32 @@ export default async function ManageAlumniPage({ searchParams }: { searchParams:
   ]);
   const alumni = alumniResult.data ?? [];
   const clubs = clubsResult.data ?? [];
+  const alumniColumns = [
+    { key: "name", label: "Name" }, { key: "cohort", label: "Cohort" }, { key: "role", label: "Society role" },
+    { key: "club", label: "Club" }, { key: "company", label: "Company" }, { key: "status", label: "Status" },
+    { key: "featured", label: "Featured", defaultVisible: false },
+  ];
+  const tableRows = alumni.map((person) => {
+    const club = clubs.find((item) => item.id === person.club_id);
+    const values = {
+      name: person.display_name,
+      cohort: person.cohort,
+      role: person.society_role,
+      club: club?.name ?? "Society-wide",
+      company: person.current_company ?? "—",
+      status: person.is_active ? "Active" : "Inactive",
+      featured: person.is_featured ? "Yes" : "No",
+    };
+    return {
+      id: person.id, values, cells: values, searchText: Object.values(values).join(" "),
+      actions: <a href={`#alumni-${person.id}`} className="font-semibold text-sky-700 underline underline-offset-2">Edit</a>,
+      card: <article id={`alumni-${person.id}`} className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <p className="mb-4 text-sm font-semibold">{person.display_name} <span className="font-normal text-muted">· {person.cohort} · {values.status}</span></p>
+        <AlumniForm person={person} action={updateAlumnus} clubs={clubs} />
+        <form action={deleteAlumnus} className="mt-3"><input type="hidden" name="id" value={person.id} /><PendingSubmitButton type="submit" className="text-sm font-medium text-rose-700 underline">Delete profile</PendingSubmitButton></form>
+      </article>,
+    };
+  });
   return <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
     <Link href="/manage" className="text-sm font-medium text-sky-700 hover:underline">← Management</Link>
     <h1 className="mt-4 text-3xl font-bold">Alumni directory</h1>
@@ -26,10 +53,8 @@ export default async function ManageAlumniPage({ searchParams }: { searchParams:
     <ResultMessage result={result} />
     {(alumniResult.error || clubsResult.error) && <p className="mt-5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">Some alumni data could not be loaded. Refresh and check your access.</p>}
     <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><h2 className="text-xl font-semibold">Add an alumnus</h2><AlumniForm action={createAlumnus} clubs={clubs} /></section>
-    <section className="mt-8 space-y-4"><h2 className="text-xl font-semibold">Profiles <span className="text-sm font-normal text-muted">({alumni.length}{alumni.length === 200 ? "+" : ""})</span></h2>
-      {alumni.map((person) => <article key={person.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"><p className="mb-4 text-sm font-semibold">{person.display_name} <span className="font-normal text-muted">· {person.cohort} · {person.is_active ? "Active" : "Inactive"}</span></p><AlumniForm person={person} action={updateAlumnus} clubs={clubs} /><form action={deleteAlumnus} className="mt-3"><input type="hidden" name="id" value={person.id} /><PendingSubmitButton type="submit" className="text-sm font-medium text-rose-700 underline">Delete profile</PendingSubmitButton></form></article>)}
-      {!alumni.length && !alumniResult.error && <p className="rounded-xl border border-slate-200 p-5 text-sm text-muted">No alumni profiles found.</p>}
-    </section>
+    <h2 className="mt-8 text-xl font-semibold">Profiles <span className="text-sm font-normal text-muted">({alumni.length}{alumni.length === 200 ? "+" : ""})</span></h2>
+    {(alumniResult.error || clubsResult.error) ? null : <AdminDataTable id="manage-alumni" columns={alumniColumns} rows={tableRows} emptyMessage="No alumni profiles found." />}
   </main>;
 }
 
