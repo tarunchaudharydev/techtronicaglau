@@ -5,10 +5,16 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
 import { updateContactStatus } from "./actions";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Contact inbox | Techtronica" };
 const pageSize = 25;
 const statusOptions = ["new", "in_progress", "resolved", "spam"] as const;
+const contactColumns = [
+  { key: "name", label: "Name" }, { key: "email", label: "Email" }, { key: "club", label: "Scope" },
+  { key: "status", label: "Status" }, { key: "received", label: "Received" },
+  { key: "topic", label: "Topic", defaultVisible: false }, { key: "message", label: "Message", defaultVisible: false },
+];
 
 export default async function ManageContactsPage({
   searchParams,
@@ -49,6 +55,42 @@ export default async function ManageContactsPage({
   const hasMore = (data?.length ?? 0) > pageSize;
   const last = submissions.at(-1);
   const nextCursor = hasMore && last ? `${last.created_at}|${last.id}` : null;
+  const tableRows = !error ? submissions.map((submission) => {
+    const club = one(submission.clubs);
+    const values = {
+      name: submission.name,
+      email: submission.email,
+      club: club?.name ?? "Society-wide",
+      status: formatStatus(submission.status),
+      received: formatDate(submission.created_at),
+      topic: submission.topic ?? "—",
+      message: submission.message,
+    };
+    const action = <form action={updateContactStatus} className="flex flex-wrap items-center gap-2">
+      <input type="hidden" name="id" value={submission.id} /><input type="hidden" name="current_status" value={submission.status} />
+      <label className="sr-only" htmlFor={`contact-status-${submission.id}`}>Update status for {submission.name}</label>
+      <select id={`contact-status-${submission.id}`} name="status" defaultValue={submission.status} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+        {statusOptions.map((option) => <option key={option} value={option}>{formatStatus(option)}</option>)}
+      </select>
+      <PendingSubmitButton className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800" type="submit">Save status</PendingSubmitButton>
+    </form>;
+    return {
+      id: submission.id,
+      searchText: Object.values(values).join(" "),
+      values,
+      cells: values,
+      actions: action,
+      card: <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-semibold">{submission.name}</h2>
+          <a className="mt-1 block text-sm text-sky-700 hover:underline" href={`mailto:${encodeURIComponent(submission.email)}`}>{submission.email}</a>
+          <p className="mt-1 text-xs text-muted">{values.club} · {values.received}</p></div>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold dark:bg-slate-800">{values.status}</span></div>
+        {submission.topic && <p className="mt-4 text-sm font-medium">{submission.topic}</p>}
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted">{submission.message}</p>
+        <div className="mt-5">{action}</div>
+      </article>,
+    };
+  }) : [];
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -66,36 +108,7 @@ export default async function ManageContactsPage({
       </nav>
 
       {error && <p className="mt-6 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">The inbox could not be loaded. Refresh and retry.</p>}
-      {!error && submissions.length === 0 && <p className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-muted dark:border-slate-800 dark:bg-slate-900">No messages match this filter in your assigned scope.</p>}
-
-      <div className="mt-6 space-y-4">
-        {!error && submissions.map((submission) => {
-          const club = one(submission.clubs);
-          return (
-            <article key={submission.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-semibold">{submission.name}</h2>
-                  <a className="mt-1 block text-sm text-sky-700 hover:underline" href={`mailto:${encodeURIComponent(submission.email)}`}>{submission.email}</a>
-                  <p className="mt-1 text-xs text-muted">{club?.name ?? "Society-wide"} · {formatDate(submission.created_at)}</p>
-                </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold dark:bg-slate-800">{formatStatus(submission.status)}</span>
-              </div>
-              {submission.topic && <p className="mt-4 text-sm font-medium">{submission.topic}</p>}
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted">{submission.message}</p>
-              <form action={updateContactStatus} className="mt-5 flex flex-wrap items-center gap-2">
-                <input type="hidden" name="id" value={submission.id} />
-                <input type="hidden" name="current_status" value={submission.status} />
-                <label className="sr-only" htmlFor={`contact-status-${submission.id}`}>Update status for {submission.name}</label>
-                <select id={`contact-status-${submission.id}`} name="status" defaultValue={submission.status} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-                  {statusOptions.map((option) => <option key={option} value={option}>{formatStatus(option)}</option>)}
-                </select>
-                <PendingSubmitButton className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800" type="submit">Save status</PendingSubmitButton>
-              </form>
-            </article>
-          );
-        })}
-      </div>
+      {!error && <AdminDataTable id="manage-contacts" columns={contactColumns} rows={tableRows} emptyMessage="No messages match this filter in your assigned scope." />}
 
       {nextCursor && <Link className="mt-6 inline-flex rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold hover:border-sky-500" href={`/manage/contacts?${status ? `status=${status}&` : ""}before=${encodeURIComponent(nextCursor)}`}>Next 25 messages →</Link>}
     </main>
