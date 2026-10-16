@@ -6,6 +6,7 @@ import ResultMessage from "@/components/manage/ResultMessage";
 import { requireManager } from "@/lib/manage/server";
 import { createEvent, deleteEvent, updateEvent } from "./actions";
 import StorageImageUpload from "@/components/manage/StorageImageUpload";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Events | Techtronica management" };
 
@@ -18,30 +19,39 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
   ]);
   const events = eventResult.data ?? [];
   const clubs = clubResult.data ?? [];
-  return <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-    <Link href="/manage" className="text-sm font-medium text-sky-700 hover:underline">← Management</Link>
-    <h1 className="mt-4 text-3xl font-bold">Events</h1>
-    <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Draft, publish, cancel, and edit events. New events start published and public by default. Published public events appear to everyone; completed events remain in Past, while drafts and cancelled events stay hidden. Supabase enforces private event access.</p>
-    <ResultMessage result={result} />
-    {(eventResult.error || clubResult.error) && <p className="mt-5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">Some event data could not be loaded. Refresh and check your event permissions.</p>}
-    <section id="add-event" className="mt-8 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-      <h2 className="text-xl font-semibold">Create an event</h2>
-      <form action={createEvent} className="mt-5 grid gap-4 md:grid-cols-2">
-        <Field label="Event title"><input name="title" required minLength={3} maxLength={160} className={inputClass} /></Field>
-        <Field label="URL slug"><input name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" maxLength={100} className={inputClass} placeholder="annual-hackathon" /></Field>
-        <Field label="Hosting club"><select name="club_id" className={inputClass}><option value="">Society-wide event</option>{clubs.map((club) => <option value={club.id} key={club.id}>{club.name}</option>)}</select></Field>
-        <Field label="Type"><input name="event_type" maxLength={80} className={inputClass} placeholder="Workshop" /></Field>
-        <Field label="Venue"><input name="venue" maxLength={240} className={inputClass} /></Field>
-        <Field label="Starts at (UTC)"><input name="starts_at" type="datetime-local" required className={inputClass} /></Field>
-        <Field label="Ends at (UTC)"><input name="ends_at" type="datetime-local" className={inputClass} /></Field>
-        <Field label="Capacity (blank means unlimited)"><input name="capacity" type="number" min="1" max="100000" className={inputClass} /></Field>
-        <Field label="Registration opens (UTC)"><input name="registration_opens_at" type="datetime-local" className={inputClass} /></Field>
-        <Field label="Registration closes (UTC)"><input name="registration_closes_at" type="datetime-local" className={inputClass} /></Field>
-        <Field label="Status"><select name="status" defaultValue="published" className={inputClass}><option value="draft">Draft</option><option value="published">Published</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select></Field>
-        <Field label="Cover image URL"><input name="cover_image_url" type="url" maxLength={2048} className={inputClass} /></Field>
-        <div><StorageImageUpload name="uploaded_asset_url" folder="events" folderScopeField="club_id" folderScopeOptions={Object.fromEntries(clubs.map((club) => [club.id, club.slug]))} label="Upload one event image" /></div>
-        <Field label="Short summary"><textarea name="summary" maxLength={500} rows={2} className={inputClass} /></Field>
-        <Field label="Full description"><textarea name="description" maxLength={12000} rows={3} className={inputClass} /></Field>
+  const eventColumns = [
+    { key: "title", label: "Event" }, { key: "club", label: "Club" }, { key: "type", label: "Type" },
+    { key: "starts", label: "Starts" }, { key: "status", label: "Status" }, { key: "visibility", label: "Visibility" },
+  ];
+  const tableRows = events.map((event) => {
+    const clubName = event.clubs && !Array.isArray(event.clubs) ? event.clubs.name : "Society-wide";
+    const values = {
+      title: event.title, club: clubName, type: event.event_type ?? "—", starts: formatDate(event.starts_at),
+      status: event.status, visibility: event.is_public ? "Public" : "Members only",
+    };
+    return {
+      id: event.id, values, cells: values, searchText: Object.values(values).join(" "),
+      actions: <a href={`#manage-event-${event.id}`} className="font-semibold text-sky-700 underline underline-offset-2">Edit</a>,
+      card: <article id={`manage-event-${event.id}`} key={event.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"><span className="font-semibold">{event.title}</span><span className="text-muted">{event.slug} · {event.clubs && !Array.isArray(event.clubs) ? event.clubs.name : "Society-wide"} · {event.is_public ? "Public" : "Members only"}</span></div>
+        <form action={updateEvent} className="grid gap-4 md:grid-cols-2">
+          <input type="hidden" name="id" value={event.id} />
+          <Field label="Title"><input name="title" required maxLength={160} defaultValue={event.title} className={inputClass} /></Field>
+          <Field label="URL slug"><input name="slug" required maxLength={100} defaultValue={event.slug} className={inputClass} /></Field>
+          <Field label="Hosting club"><select name="club_id" defaultValue={event.club_id ?? ""} className={inputClass}><option value="">Society-wide event</option>{clubs.map((club) => <option value={club.id} key={club.id}>{club.name}</option>)}</select></Field>
+          <Field label="Type"><input name="event_type" maxLength={80} defaultValue={event.event_type ?? ""} className={inputClass} /></Field>
+          <Field label="Venue"><input name="venue" maxLength={240} defaultValue={event.venue ?? ""} className={inputClass} /></Field>
+          <Field label="Starts at (UTC)"><input name="starts_at" type="datetime-local" required defaultValue={toDateTimeLocal(event.starts_at)} className={inputClass} /></Field>
+          <Field label="Ends at (UTC)"><input name="ends_at" type="datetime-local" defaultValue={toDateTimeLocal(event.ends_at)} className={inputClass} /></Field>
+          <Field label="Capacity (blank means unlimited)"><input name="capacity" type="number" min="1" max="100000" defaultValue={event.capacity ?? ""} className={inputClass} /></Field>
+          <Field label="Registration opens (UTC)"><input name="registration_opens_at" type="datetime-local" defaultValue={toDateTimeLocal(event.registration_opens_at)} className={inputClass} /></Field>
+          <Field label="Registration closes (UTC)"><input name="registration_closes_at" type="datetime-local" defaultValue={toDateTimeLocal(event.registration_closes_at)} className={inputClass} /></Field>
+          <Field label="Status"><select name="status" defaultValue={event.status} className={inputClass}><option value="draft">Draft</option><option value="published">Published</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select></Field>
+          <Field label="Cover image URL"><input name="cover_image_url" type="url" maxLength={2048} defaultValue={event.cover_image_url ?? ""} className={inputClass} /></Field>
+          <div><StorageImageUpload name="uploaded_asset_url" folde    <section className="mt-8">
+      <h2 className="text-xl font-semibold">Existing events <span className="text-sm font-normal text-muted">({events.length}{events.length === 100 ? "+" : ""})</span></h2>
+      {(eventResult.error || clubResult.error) ? null : <AdminDataTable id="manage-events" columns={eventColumns} rows={tableRows} emptyMessage="No events found." />}
+    </section>label="Full description"><textarea name="description" maxLength={12000} rows={3} className={inputClass} /></Field>
         <label className="flex items-center gap-2 text-sm md:col-span-2"><input name="is_public" type="checkbox" defaultChecked /> Public event <span className="text-muted">(uncheck for active society members only)</span></label>
         <PendingSubmitButton type="submit" className={buttonClass}>Create event</PendingSubmitButton>
       </form>
