@@ -14,51 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      network_diagnostic_sessions: {
-        Row: {
-          consent_version: string
-          country_code: string | null
-          created_at: string
-          downlink_bucket: string
-          effective_type: string
-          expires_at: string
-          region_code: string | null
-          session_id: string
-          user_id: string | null
-        }
-        Insert: {
-          consent_version: string
-          country_code?: string | null
-          created_at?: string
-          downlink_bucket: string
-          effective_type: string
-          expires_at?: never
-          region_code?: string | null
-          session_id: string
-          user_id?: string | null
-        }
-        Update: {
-          consent_version?: string
-          country_code?: string | null
-          created_at?: string
-          downlink_bucket?: string
-          effective_type?: string
-          expires_at?: never
-          region_code?: string | null
-          session_id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "network_diagnostic_sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-
       alumni: {
         Row: {
           achievements: string[]
@@ -140,8 +95,8 @@ export type Database = {
       clubs: {
         Row: {
           activities: string[]
-          created_at: string
           contact_links: Json
+          created_at: string
           description: string | null
           display_order: number
           focus_areas: string[]
@@ -157,17 +112,17 @@ export type Database = {
           promo_video_url: string | null
           purpose_description: string | null
           purpose_title: string | null
+          session_image_url: string | null
           sessions: Json
           slug: string
           tagline: string | null
           tracks: Json
-          session_image_url: string | null
           updated_at: string
         }
         Insert: {
           activities?: string[]
-          created_at?: string
           contact_links?: Json
+          created_at?: string
           description?: string | null
           display_order?: number
           focus_areas?: string[]
@@ -183,17 +138,17 @@ export type Database = {
           promo_video_url?: string | null
           purpose_description?: string | null
           purpose_title?: string | null
+          session_image_url?: string | null
           sessions?: Json
           slug: string
           tagline?: string | null
           tracks?: Json
-          session_image_url?: string | null
           updated_at?: string
         }
         Update: {
           activities?: string[]
-          created_at?: string
           contact_links?: Json
+          created_at?: string
           description?: string | null
           display_order?: number
           focus_areas?: string[]
@@ -209,74 +164,14 @@ export type Database = {
           promo_video_url?: string | null
           purpose_description?: string | null
           purpose_title?: string | null
+          session_image_url?: string | null
           sessions?: Json
           slug?: string
           tagline?: string | null
           tracks?: Json
-          session_image_url?: string | null
           updated_at?: string
         }
         Relationships: []
-      }
-      site_content: {
-        Row: {
-          content: Json
-          content_type: string
-          created_at: string
-          created_by: string | null
-          display_order: number
-          id: string
-          is_active: boolean
-          is_public: boolean
-          slug: string
-          title: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          content?: Json
-          content_type: string
-          created_at?: string
-          created_by?: string | null
-          display_order?: number
-          id?: string
-          is_active?: boolean
-          is_public?: boolean
-          slug: string
-          title: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          content?: Json
-          content_type?: string
-          created_at?: string
-          created_by?: string | null
-          display_order?: number
-          id?: string
-          is_active?: boolean
-          is_public?: boolean
-          slug?: string
-          title?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "site_content_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "site_content_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       contact_submissions: {
         Row: {
@@ -458,6 +353,109 @@ export type Database = {
           },
         ]
       }
+      meeting_attendance: {
+        Row: {
+          marked_at: string | null
+          marked_by: string | null
+          member_name: string
+          session_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          marked_at?: string | null
+          marked_by?: string | null
+          member_name: string
+          session_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          marked_at?: string | null
+          marked_by?: string | null
+          member_name?: string
+          session_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_attendance_marked_by_fkey"
+            columns: ["marked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_attendance_sessions: {
+        Row: {
+          club_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          meeting_date: string
+          meeting_time: string | null
+          name: string
+          notes: string | null
+          scope: string
+          venue: string | null
+        }
+        Insert: {
+          club_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          meeting_date: string
+          meeting_time?: string | null
+          name: string
+          notes?: string | null
+          scope: string
+          venue?: string | null
+        }
+        Update: {
+          club_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          meeting_date?: string
+          meeting_time?: string | null
+          name?: string
+          notes?: string | null
+          scope?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_attendance_sessions_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_attendance_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           club_id: string | null
@@ -503,6 +501,50 @@ export type Database = {
           },
           {
             foreignKeyName: "memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      network_diagnostic_sessions: {
+        Row: {
+          consent_version: string
+          country_code: string | null
+          created_at: string
+          downlink_bucket: string
+          effective_type: string
+          expires_at: string | null
+          region_code: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          consent_version: string
+          country_code?: string | null
+          created_at?: string
+          downlink_bucket: string
+          effective_type: string
+          expires_at?: never
+          region_code?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          consent_version?: string
+          country_code?: string | null
+          created_at?: string
+          downlink_bucket?: string
+          effective_type?: string
+          expires_at?: never
+          region_code?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_diagnostic_sessions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -689,6 +731,66 @@ export type Database = {
         }
         Relationships: []
       }
+      site_content: {
+        Row: {
+          content: Json
+          content_type: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_public: boolean
+          slug: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content?: Json
+          content_type: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: Json
+          content_type?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_content_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_content_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           avatar_url: string | null
@@ -834,6 +936,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_add_society_member: { Args: { p_email: string }; Returns: string }
       admin_create_role: {
         Args: {
           p_description: string
@@ -843,11 +946,22 @@ export type Database = {
         }
         Returns: string
       }
-      admin_add_society_member: { Args: { p_email: string }; Returns: string }
       admin_delete_role: { Args: { p_role_id: string }; Returns: undefined }
       admin_replace_role_permissions: {
         Args: { p_permission_keys: string[]; p_role_id: string }
         Returns: undefined
+      }
+      create_meeting_attendance_session: {
+        Args: {
+          p_club_id: string | null
+          p_meeting_date: string
+          p_meeting_time: string | null
+          p_name: string
+          p_notes: string | null
+          p_scope: string
+          p_venue: string | null
+        }
+        Returns: string
       }
     }
     Enums: {

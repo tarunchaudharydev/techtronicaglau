@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import {
   ArrowUpRight,
   CalendarDays,
+  ClipboardCheck,
   ContactRound,
   GraduationCap,
   Inbox,
@@ -32,6 +33,7 @@ const sections = [
   { title: "Clubs", href: "/manage/clubs", permission: "clubs.manage", group: "Clubs & events", description: "Keep club pages, details, and membership history up to date.", icon: Layers3, tone: "cyan" },
   { title: "Positions", href: "/manage/positions", permission: "positions.manage", group: "Clubs & events", description: "Create and maintain the positions held across the society.", icon: ContactRound, tone: "indigo" },
   { title: "Events", href: "/manage/events", permission: "events.manage", group: "Clubs & events", description: "Publish events and manage their dates, capacity, and visibility.", icon: CalendarDays, tone: "fuchsia" },
+  { title: "Meeting attendance", href: "/manage/attendance", permission: "attendance.manage", group: "Clubs & events", description: "Create meeting sheets, mark active members present, absent, or excused, and export attendance.", icon: ClipboardCheck, tone: "emerald" },
   { title: "Registrations", href: "/manage/registrations", permission: "registrations.manage", group: "Clubs & events", description: "Review attendees and record cancellations or attendance.", icon: TicketCheck, tone: "emerald" },
   { title: "Contact inbox", href: "/manage/contacts", permission: "contacts.manage", group: "Website & communication", description: "Read and follow up on messages in your assigned scope.", icon: Inbox, tone: "orange" },
   { title: "Website content", href: "/manage/content", permission: "content.manage", group: "Website & communication", description: "Update homepage sections, FAQs, resources, and site information.", icon: Sparkles, tone: "blue" },
@@ -116,6 +118,7 @@ export default async function ManageHomePage() {
     { title: "Add society member", detail: "Add a verified account to the society.", href: "/manage/memberships#add-society-member", icon: UsersRound, tint: "bg-sky-50 text-sky-700" },
     { title: "Invite a manager", detail: "Invite a person and assign their role.", href: "/manage/access#invite-user", icon: UserPlus, tint: "bg-violet-50 text-violet-700" },
     { title: "Create an event", detail: "Draft and publish a society or club event.", href: "/manage/events#add-event", icon: CalendarDays, tint: "bg-fuchsia-50 text-fuchsia-700" },
+    { title: "Take meeting attendance", detail: "Start a meeting sheet and record member presence.", href: "/manage/attendance#create-meeting", icon: ClipboardCheck, tint: "bg-emerald-50 text-emerald-700" },
     { title: "Add a club", detail: "Create a club page and set its details.", href: "/manage/clubs#add-club", icon: Layers3, tint: "bg-cyan-50 text-cyan-700" },
     { title: "Create a position", detail: "Define a society or club position.", href: "/manage/positions#add-position", icon: ContactRound, tint: "bg-indigo-50 text-indigo-700" },
     { title: "Update website content", detail: "Edit the site pages and resources.", href: "/manage/content#add-content", icon: Sparkles, tint: "bg-amber-50 text-amber-700" },
