@@ -191,10 +191,11 @@ function attendanceHref(id: string, search: string, status: string, page: number
 }
 
 function formatMeetingDate(value: string, time: string | null) {
-  const date = new Date(value + "T" + (time ?? "12:00:00") + "Z");
-  return Number.isNaN(date.valueOf())
-    ? "Date unavailable"
-    : new Intl.DateTimeFormat("en-IN", { dateStyle: "full", ...(time ? { timeStyle: "short" as const } : {}) }).format(date);
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
+  if (Number.isNaN(date.valueOf())) return "Date unavailable";
+  const label = new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeZone: "UTC" }).format(date);
+  return label + (time ? " · " + time.slice(0, 5) : "");
 }
 
 const pageButtonClass = "inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-semibold hover:border-sky-500 hover:text-sky-700 dark:border-slate-700";
