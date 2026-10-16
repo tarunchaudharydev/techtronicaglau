@@ -117,10 +117,11 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function formatDate(value: string, time: string | null) {
-  const date = new Date(value + "T" + (time ?? "12:00:00") + "Z");
-  return Number.isNaN(date.valueOf())
-    ? "Date unavailable"
-    : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", ...(time ? { timeStyle: "short" as const } : {}) }).format(date);
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
+  if (Number.isNaN(date.valueOf())) return "Date unavailable";
+  const label = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "UTC" }).format(date);
+  return label + (time ? " · " + time.slice(0, 5) : "");
 }
 
 function todayInIndia() {
