@@ -118,7 +118,7 @@ export default function AdminDataTable({
     const csvColumns = columns.filter((column) => shownKeys.includes(column.key));
     const quote = (value: unknown) => {
       const text = String(value ?? "");
-      const safeText = /^[\\s\\u0000-\\u001f]*[=+@-]/.test(text) ? "'" + text : text;
+      const safeText = /^[\s\u0000-\u001f]*[=+@-]/.test(text) ? "'" + text : text;
       return '"' + safeText.replaceAll('"', '""') + '"';
     };
     const lines = [
