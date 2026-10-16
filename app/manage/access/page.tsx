@@ -5,6 +5,7 @@ import { FiKey, FiPlus, FiShield, FiUserPlus, FiUsers } from "react-icons/fi";
 import ResultMessage from "@/components/manage/ResultMessage";
 import { requireManager } from "@/lib/manage/server";
 import { assignRole, createRole, deleteRole, inviteUser, revokeRole, updateRole } from "./actions";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Roles and access | Techtronica management" };
 
@@ -63,6 +64,29 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
     `${role.name} ${role.description ?? ""} ${role.scope}`.toLocaleLowerCase().includes(roleQuery.toLocaleLowerCase()),
   );
   const assignedRoleCount = new Set(assignments.map((assignment) => assignment.role_id)).size;
+  const assignmentColumns = [
+    { key: "person", label: "Person" }, { key: "role", label: "Role" },
+    { key: "scope", label: "Scope" }, { key: "granted", label: "Granted" }, { key: "account", label: "Account", defaultVisible: false },
+  ];
+  const assignmentRows = assignments.map((assignment) => {
+    const profile = one(assignment.profiles);
+    const role = one(assignment.roles);
+    const club = one(assignment.clubs);
+    const displayName = profile?.full_name?.trim() || "Unnamed account";
+    const roleName = role?.name ?? "Role unavailable";
+    const scope = club?.name ?? "Society-wide";
+    const values = { person: displayName, role: roleName, scope, granted: formatDate(assignment.created_at), account: `…${assignment.user_id.slice(-6)}` };
+    const action = <details className="shrink-0 rounded-xl border border-rose-200 px-3 py-2 dark:border-rose-900">
+      <summary className="cursor-pointer text-sm font-semibold text-rose-700">Remove access</summary>
+      <div className="mt-3 max-w-xs"><p className="text-xs leading-5 text-muted">This removes {roleName} from {displayName} in this scope.</p>
+        <form action={revokeRole} className="mt-2"><input type="hidden" name="id" value={assignment.id} /><PendingSubmitButton aria-label={`Confirm removal of ${roleName} from ${displayName}`} className={dangerButtonClass} type="submit">Confirm remove</PendingSubmitButton></form>
+      </div>
+    </details>;
+    return { id: assignment.id, values, cells: values, searchText: Object.values(values).join(" "), actions: action, card:
+      <article className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+        <div><p className="break-words font-semibold">{displayName}</p><p className="mt-1 text-sm text-muted">{roleName} · {scope}</p><p className="mt-1 text-xs text-muted">Granted {values.granted} · account {values.account}</p></div>{action}
+      </article> };
+  });
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
@@ -225,39 +249,8 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Latest {assignments.length}{assignments.length === 100 ? "+" : ""}</span>
             </div>
-            <div className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
-              {assignments.map((assignment) => {
-                const profile = one(assignment.profiles);
-                const role = one(assignment.roles);
-                const club = one(assignment.clubs);
-                const displayName = profile?.full_name?.trim() || "Unnamed account";
-                return (
-                  <article className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between" key={assignment.id}>
-                    <div className="flex min-w-0 items-start gap-3">
-                      <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                        {displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]?.toLocaleUpperCase()).join("") || "?"}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="break-words font-semibold">{displayName}</p>
-                        <p className="mt-1 text-sm text-muted">{role?.name ?? "Role unavailable"} · {club?.name ?? "Society-wide"}</p>
-                        <p className="mt-1 text-xs text-muted">Granted {formatDate(assignment.created_at)} · account …{assignment.user_id.slice(-6)}</p>
-                      </div>
-                    </div>
-                    <details className="shrink-0 rounded-xl border border-rose-200 px-3 py-2 dark:border-rose-900">
-                      <summary className="cursor-pointer text-sm font-semibold text-rose-700">Remove access</summary>
-                      <div className="mt-3 max-w-xs">
-                        <p className="text-xs leading-5 text-muted">This removes {role?.name ?? "this role"} from {displayName} in this scope.</p>
-                        <form action={revokeRole} className="mt-2">
-                          <input type="hidden" name="id" value={assignment.id} />
-                          <PendingSubmitButton aria-label={`Confirm removal of ${role?.name ?? "role"} from ${displayName}`} className={dangerButtonClass} type="submit">Confirm remove</PendingSubmitButton>
-                        </form>
-                      </div>
-                    </details>
-                  </article>
-                );
-              })}
-              {!assignments.length && !assignmentsResult.error && <p className="py-6 text-sm text-muted">No role assignments have been made yet.</p>}
-            </div>
+            {assignmentsResult.error ? <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Assignments could not be loaded.</p> : <AdminDataTable id="manage-access-assignments" columns={assignmentColumns} rows={assignmentRows} emptyMessage="No role assignments have been made yet." />}
+
           </section>
         </div>
 
