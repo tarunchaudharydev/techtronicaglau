@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Download, Search, SlidersHorizontal } from "lucide-react";
 
 export type AdminDataColumn = {
@@ -102,6 +102,28 @@ export default function AdminDataTable({
   const currentPage = Math.min(page, pageCount - 1);
   const visibleRows = filteredRows.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
   const resolvedView = view === "auto" ? (isNarrow ? "cards" : "table") : view;
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editingRow = editingId ? rows.find((row) => row.id === editingId) ?? null : null;
+
+  useEffect(() => {
+    if (!editingId) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setEditingId(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [editingId]);
+
+  function handleTableActionClick(event: MouseEvent<HTMLElement>) {
+    if (resolvedView !== "table" || !(event.target instanceof Element)) return;
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    const row = link.closest("[data-admin-row-id]");
+    const rowId = row?.getAttribute("data-admin-row-id");
+    if (!rowId || !rows.some((item) => item.id === rowId)) return;
+    event.preventDefault();
+    setEditingId(rowId);
+  }
 
   function toggleColumn(key: string) {
     setVisibleKeys((current) => {
@@ -143,7 +165,7 @@ export default function AdminDataTable({
   }
 
   return (
-    <section className="mt-6 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5" aria-label="Records">
+    <section className="mt-6 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5" aria-label="Records" onClick={handleTableActionClick}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <label className="relative block min-w-0 flex-1 lg:max-w-md">
           <span className="sr-only">Search records</span>
@@ -200,7 +222,7 @@ export default function AdminDataTable({
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {visibleRows.map((row) => (
-                <tr key={row.id} className="align-top hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                <tr key={row.id} data-admin-row-id={row.id} className="align-top hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                   {columns.filter((column) => shownKeys.includes(column.key)).map((column) => <td key={column.key} className="max-w-xs px-4 py-3">{row.cells[column.key] ?? row.values[column.key] ?? "—"}</td>)}
                   {rows.some((item) => item.actions) && <td className="px-4 py-3">{row.actions ?? "—"}</td>}
                 </tr>
@@ -213,6 +235,31 @@ export default function AdminDataTable({
         <div className="mt-4 space-y-3">
           {visibleRows.map((row) => <div key={row.id}>{row.card}</div>)}
           {!visibleRows.length && <p className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-muted dark:border-slate-700">{emptyMessage}</p>}
+        </div>
+      )}
+
+      {editingRow && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/60 p-3 pt-[8vh] sm:p-6"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setEditingId(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={id + "-edit-title"}
+            className="w-full max-w-4xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              <h2 id={id + "-edit-title"} className="text-lg font-semibold">Edit record</h2>
+              <button type="button" onClick={() => setEditingId(null)} className="min-h-10 rounded-lg border border-slate-300 px-3 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+                Close
+              </button>
+            </div>
+            <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-6">{editingRow.card}</div>
+          </section>
         </div>
       )}
 
