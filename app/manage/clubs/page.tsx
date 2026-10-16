@@ -6,15 +6,24 @@ import ResultMessage from "@/components/manage/ResultMessage";
 import { requireManager } from "@/lib/manage/server";
 import { createClub, updateClub } from "./actions";
 import StorageImageUpload from "@/components/manage/StorageImageUpload";
+import AdminDataTable from "@/components/manage/AdminDataTable";
 
 export const metadata: Metadata = { title: "Clubs | Techtronica management" };
 export default async function ClubsPage({ searchParams }: { searchParams: Promise<{ result?: string }> }) {
   const { result } = await searchParams;
   const { supabase } = await requireManager("clubs.manage");
   const { data: clubs, error } = await supabase.from("clubs").select("id, name, slug, tagline, description, focus_areas, logo_url, purpose_title, purpose_description, hero_image_url, gallery_image_url, session_image_url, promo_video_url, tracks, activities, sessions, contact_links, homepage_image_url, homepage_subtitle, homepage_badge, display_order, is_active").order("display_order").order("name").limit(50);
+  const clubColumns = [
+    { key: "name", label: "Club" }, { key: "slug", label: "Slug" }, { key: "tagline", label: "Tagline" },
+    { key: "focus", label: "Focus areas" }, { key: "status", label: "Status" }, { key: "order", label: "Order", defaultVisible: false },
+  ];
+  const tableRows = (clubs ?? []).map((club) => {
+    const values = { name: club.name, slug: club.slug, tagline: club.tagline ?? "—", focus: club.focus_areas.join(", ") || "—", status: club.is_active ? "Active" : "Archived", order: club.display_order };
+    return { id: club.id, values, cells: values, searchText: Object.values(values).join(" "), actions: <a href={`#manage-club-${club.id}`} className="font-semibold text-sky-700 underline underline-offset-2">Edit</a>, card: <article id={`manage-club-${club.id}`} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900" key={club.id}><ClubForm action={updateClub} club={club} /></article> };
+  });
   return <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6"><Link href="/manage" className="text-sm font-medium text-sky-700 hover:underline">← Management</Link><h1 className="mt-4 text-3xl font-bold">Clubs</h1><p className="mt-2 max-w-3xl text-sm text-muted">Edit club pages or archive a club to stop new applications while retaining memberships, roles, and event history.</p><ResultMessage result={result} />{error && <p className="mt-5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">Could not load clubs. Refresh and check your access.</p>}
     <section id="add-club" className="mt-8 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><h2 className="text-xl font-semibold">Add a club</h2><ClubForm action={createClub} /></section>
-    <section className="mt-8 space-y-4"><h2 className="text-xl font-semibold">Existing clubs</h2>{(clubs ?? []).map((club) => <article className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900" key={club.id}><ClubForm action={updateClub} club={club} /></article>)}{!clubs?.length && !error && <p className="rounded-xl border border-slate-200 p-5 text-sm text-muted">No clubs found.</p>}</section>
+    <section className="mt-8"><h2 className="text-xl font-semibold">Existing clubs</h2>{error ? null : <AdminDataTable id="manage-clubs" columns={clubColumns} rows={tableRows} emptyMessage="No clubs found." />}</section>
   </main>;
 }
 function ClubForm({ action, club }: { action: (formData: FormData) => void | Promise<void>; club?: { id: string; name: string; slug: string; tagline: string | null; description: string | null; focus_areas: string[]; logo_url: string | null; purpose_title: string | null; purpose_description: string | null; hero_image_url: string | null; gallery_image_url: string | null; session_image_url: string | null; promo_video_url: string | null; tracks: unknown; activities: string[]; sessions: unknown; contact_links: unknown; homepage_image_url: string | null; homepage_subtitle: string | null; homepage_badge: string | null; display_order: number; is_active: boolean } }) {
