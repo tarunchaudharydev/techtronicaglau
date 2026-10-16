@@ -508,6 +508,50 @@ export type Database = {
           },
         ]
       }
+      network_diagnostic_sessions: {
+        Row: {
+          consent_version: string
+          country_code: string | null
+          created_at: string
+          downlink_bucket: string
+          effective_type: string
+          expires_at: string | null
+          region_code: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          consent_version: string
+          country_code?: string | null
+          created_at?: string
+          downlink_bucket: string
+          effective_type: string
+          expires_at?: never
+          region_code?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          consent_version?: string
+          country_code?: string | null
+          created_at?: string
+          downlink_bucket?: string
+          effective_type?: string
+          expires_at?: never
+          region_code?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_diagnostic_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           description: string
