@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { FiArrowLeft, FiLock, FiUser, FiShield } from "react-icons/fi";
 import EmailSettingsForm from "@/components/account/EmailSettingsForm";
 import OtherSessionsSettings from "@/components/account/OtherSessionsSettings";
+import AccountSessionsList from "@/components/account/AccountSessionsList";
 import PasswordSettingsForm from "@/components/account/PasswordSettingsForm";
 import ProfileEditor from "@/components/account/ProfileEditor";
 import { createClient } from "@/lib/supabase/server";
@@ -27,11 +28,12 @@ export default async function AccountSettingsPage() {
   }
   if (!user) redirect("/auth/sign-in?next=/account/settings");
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("full_name, department, year_of_study, avatar_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [profileResult, sessionsResult] = await Promise.all([
+    supabase.from("profiles").select("full_name, department, year_of_study, avatar_url").eq("id", user.id).maybeSingle(),
+    supabase.rpc("list_my_auth_sessions"),
+  ]);
+  const profile = profileResult.data;
+  const profileError = profileResult.error;
 
   const currentProfile = profile ?? {
     full_name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "",
@@ -114,6 +116,7 @@ export default async function AccountSettingsPage() {
               <p className="mt-1 text-sm leading-6 text-muted">Review your signed-in device options and end sessions you do not recognize.</p>
             </div>
           </div>
+          <AccountSessionsList sessions={sessionsResult.data ?? []} unavailable={Boolean(sessionsResult.error)} />
           <OtherSessionsSettings />
         </section>
       </div>
