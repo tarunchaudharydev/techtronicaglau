@@ -30,13 +30,15 @@ export default async function ManageRegistrationsPage({
   const selectedEventId = validId(params.event ?? null) ? params.event! : null;
   const { supabase } = await requireManager("registrations.manage");
 
-  const [eventResult, registrationResult, totalResult, registeredResult, waitlistedResult, attendedResult] = await Promise.all([
+  const [eventResult, registrationResult, totalResult, registeredResult, waitlistedResult, attendedResult, noShowResult, cancelledResult] = await Promise.all([
     supabase.from("events").select("id, title, starts_at, status").order("starts_at", { ascending: false }).limit(250),
     loadRegistrations(supabase, selectedEventId, cursor),
     countRegistrations(supabase, selectedEventId),
     countRegistrations(supabase, selectedEventId, "registered"),
     countRegistrations(supabase, selectedEventId, "waitlisted"),
     countRegistrations(supabase, selectedEventId, "attended"),
+    countRegistrations(supabase, selectedEventId, "no_show"),
+    countRegistrations(supabase, selectedEventId, "cancelled"),
   ]);
 
   const events = eventResult.data ?? [];
@@ -111,10 +113,12 @@ export default async function ManageRegistrationsPage({
 
   const tableId = `manage-registrations-${selectedEventId ?? "all"}`;
   const stats = [
-    { label: "Total applications", count: totalResult.count ?? 0, color: "text-slate-950 dark:text-white" },
+    { label: "Total registrations", count: totalResult.count ?? 0, color: "text-slate-950 dark:text-white" },
     { label: "Registered", count: registeredResult.count ?? 0, color: "text-sky-700 dark:text-sky-300" },
     { label: "Waitlisted", count: waitlistedResult.count ?? 0, color: "text-amber-700 dark:text-amber-300" },
     { label: "Attended", count: attendedResult.count ?? 0, color: "text-emerald-700 dark:text-emerald-300" },
+    { label: "No-show", count: noShowResult.count ?? 0, color: "text-rose-700 dark:text-rose-300" },
+    { label: "Cancelled", count: cancelledResult.count ?? 0, color: "text-slate-600 dark:text-slate-300" },
   ];
 
   return <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -138,7 +142,7 @@ export default async function ManageRegistrationsPage({
     </section>
 
     {eventResult.error && <p role="status" className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">The event selector could not be loaded; you can still review registrations visible in your assigned scope.</p>}
-    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
       {stats.map((stat) => <article key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"><p className="text-sm text-muted">{stat.label}</p><p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.count.toLocaleString("en-IN")}</p></article>)}
     </div>
 
