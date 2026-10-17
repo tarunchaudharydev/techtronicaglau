@@ -115,12 +115,12 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-900 text-foreground dark:text-white transition-colors duration-300 lg:pl-64`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-900 text-foreground dark:text-white transition-colors duration-300 lg:pl-[4.5rem]`}
       >
         {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem> */}
         <Navbar />
 
-        <main className="min-h-screen pt-16 lg:pt-6 bg-gradient-to-br from-white dark:from-slate-950 via-sky-50 dark:via-slate-900 to-purple-100 dark:to-black dark:from-slate-900 dark:via-slate-800 dark:to-black transition-colors duration-300">
+        <main className="min-h-screen pt-16 lg:pt-20 bg-gradient-to-br from-white dark:from-slate-950 via-sky-50 dark:via-slate-900 to-purple-100 dark:to-black dark:from-slate-900 dark:via-slate-800 dark:to-black transition-colors duration-300">
           <Suspense fallback={null}><EventPopupLoader /></Suspense>
           {children}
         </main>

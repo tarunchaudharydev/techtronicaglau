@@ -41,9 +41,9 @@ export default function HomePageContent({ clubs, about, features, sponsors, stat
     return logo ? [{ name: row.title, logo }] : [];
   });
 
-  return <main className="flex min-h-screen items-start justify-center bg-gradient-to-br from-white via-sky-50 to-purple-100 dark:from-slate-950 dark:via-slate-900 dark:to-black">
-    <section className="w-full max-w-6xl space-y-16 px-3 pb-20 pt-8 text-slate-950 sm:space-y-20 sm:px-4 dark:text-white">
-      {about && <HomeHero heroRef={heroRef} clubs={clubs} title={heroTitle} tagline={tagline} description={heroDescription} />}
+  return <main className="min-h-screen bg-gradient-to-br from-white via-sky-50 to-purple-100 dark:from-slate-950 dark:via-slate-900 dark:to-black">
+    {about && <HomeHero heroRef={heroRef} clubs={clubs} title={heroTitle} tagline={tagline} description={heroDescription} />}
+    <section className="mx-auto w-full max-w-6xl space-y-16 px-3 pb-20 pt-12 text-slate-950 sm:space-y-20 sm:px-4 sm:pt-16 dark:text-white">
       {stats.length > 0 && <StatsGrid statsRef={statsRef} stats={stats} />}
       {about && paragraphs.length > 0 && <ClubsOverview aboutSociety={{ title, description: paragraphs }} setSectionRef={setSectionRef} />}
       {displayFeatures.map((feature, index) => {
