@@ -230,6 +230,50 @@ export type Database = {
           },
         ]
       }
+      event_registration_members: {
+        Row: {
+          branch: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          member_order: number
+          registration_id: string
+          section: string
+          year_of_study: number
+        }
+        Insert: {
+          branch: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          member_order: number
+          registration_id: string
+          section: string
+          year_of_study: number
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          member_order?: number
+          registration_id?: string
+          section?: string
+          year_of_study?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registration_members_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "event_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_registrations: {
         Row: {
           event_id: string
