@@ -1,38 +1,28 @@
 "use client";
 
 import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
-
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
-  AiOutlineHome,
-  AiOutlineAppstore,
-  AiOutlineCalendar,
-  AiOutlineUser,
-  AiOutlineMenu,
-} from "react-icons/ai";
-import { ChevronDown, LogIn, LogOut, UserPlus, UserRound } from "lucide-react";
+  CalendarDays, ChevronDown, ChevronRight, GraduationCap, House,
+  Info, Library, LogIn, LogOut, Mail, Menu, UserPlus, UserRound, Users, X,
+} from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/clubs", label: "Clubs" },
-  { href: "/about", label: "About us" },
-  { href: "/events", label: "Events" },
-  { href: "/library", label: "Library", badge: "NEW" },
-  { href: "/alumni", label: "Alumni" },
-  { href: "/contact", label: "Contact us" },
+  { href: "/", label: "Home", icon: House },
+  { href: "/clubs", label: "Clubs", icon: Users },
+  { href: "/about", label: "About us", icon: Info },
+  { href: "/events", label: "Events", icon: CalendarDays },
+  { href: "/library", label: "Library", icon: Library, badge: "NEW" },
+  { href: "/alumni", label: "Alumni", icon: GraduationCap },
+  { href: "/contact", label: "Contact us", icon: Mail },
 ];
-
-type HeaderAccountState =
-  | { status: "loading" }
-  | { status: "signed-out" }
-  | { status: "signed-in"; userId: string; name: string; initials: string; avatarUrl: string | null };
 
 const clubItems = [
   { href: "/clubs/code-e-phobia", label: "Code-E-Phobia" },
@@ -42,139 +32,91 @@ const clubItems = [
   { href: "/clubs/gizmo", label: "Gizmo" },
 ];
 
+type HeaderAccountState =
+  | { status: "loading" }
+  | { status: "signed-out" }
+  | { status: "signed-in"; userId: string; name: string; initials: string; avatarUrl: string | null };
+
 export default function Navbar() {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isClubsOpen, setIsClubsOpen] = useState(false);
-  const [accountState, setAccountState] = useState<HeaderAccountState>(() =>
+  const [account, setAccount] = useState<HeaderAccountState>(() =>
     isSupabaseConfigured ? { status: "loading" } : { status: "signed-out" },
   );
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [clubsOpen, setClubsOpen] = useState(false);
   const pathname = usePathname();
-  const navRef = useRef<HTMLDivElement | null>(null);
-  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileCloseRef = useRef<HTMLButtonElement | null>(null);
-  const mobileTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const clubsTriggerRef = useRef<HTMLAnchorElement | null>(null);
-  const suppressClubFocusRef = useRef(false);
+  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
-
-  const authEventVersionRef = useRef(0);
-  const accountUserId = accountState.status === "signed-in" ? accountState.userId : null;
-
-  useEffect(() => {
-    if (!isSupabaseConfigured || !accountUserId) return;
-    let active = true;
-    try {
-      const supabase = createClient();
-      void (async () => {
-        try {
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("avatar_url")
-            .eq("id", accountUserId)
-            .maybeSingle();
-          if (active && !error) {
-            setAccountState((current) =>
-              current.status === "signed-in" && current.userId === accountUserId
-                ? { ...current, avatarUrl: data?.avatar_url ?? null }
-                : current,
-            );
-          }
-        } catch {
-          // The initials avatar remains available if profile data cannot be read.
-        }
-      })();
-    } catch {
-      // The initials avatar remains available if the Supabase client cannot be created.
-    }
-    return () => { active = false; };
-  }, [accountUserId]);
+  const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const userId = account.status === "signed-in" ? account.userId : null;
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     let mounted = true;
     let supabase: ReturnType<typeof createClient>;
-
     try {
       supabase = createClient();
     } catch {
+      setAccount({ status: "signed-out" });
       return;
     }
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      authEventVersionRef.current += 1;
-      if (mounted) setAccountState(accountStateFor(session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setAccount(accountStateFor(session?.user ?? null));
+    });
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (mounted) setAccount(accountStateFor(error ? null : data.session?.user ?? null));
+    }).catch(() => {
+      if (mounted) setAccount({ status: "signed-out" });
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
-    let mounted = true;
-    const eventVersionAtStart = authEventVersionRef.current;
-
-    try {
-      const supabase = createClient();
-      void supabase.auth
-        .getSession()
-        .then(({ data, error }) => {
-          if (mounted && authEventVersionRef.current === eventVersionAtStart) {
-            setAccountState(accountStateFor(error ? null : data.session?.user ?? null));
-          }
-        })
-        .catch(() => {
-          if (mounted && authEventVersionRef.current === eventVersionAtStart) {
-            setAccountState({ status: "signed-out" });
-          }
-        });
-    } catch {
-      setAccountState({ status: "signed-out" });
-    }
-
-    return () => {
-      mounted = false;
-    };
   }, [pathname]);
 
   useEffect(() => {
-    if (!isMobileOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setIsMobileOpen(false);
+    if (!userId) return;
+    let active = true;
+    void (async () => {
+      try {
+        const { data, error } = await createClient()
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", userId)
+          .maybeSingle();
+        if (active && !error) {
+          setAccount((current) =>
+            current.status === "signed-in" && current.userId === userId
+              ? { ...current, avatarUrl: data?.avatar_url ?? null }
+              : current,
+          );
+        }
+      } catch {
+        // Keep the initials avatar if profile data is unavailable.
       }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [isMobileOpen]);
+    })();
+    return () => { active = false; };
+  }, [userId]);
 
   useEffect(() => {
-    if (!isMobileOpen) return;
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const panel = drawerRef.current;
+    const focusable = () => Array.from(
+      panel?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? [],
+    ).filter((element) => element.offsetParent !== null);
+    focusable()[0]?.focus();
 
-    const panel = mobileMenuRef.current;
-    const focusable = () =>
-      Array.from(
-        panel?.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ) ?? [],
-      ).filter((element) => element.offsetParent !== null);
-
-    mobileCloseRef.current?.focus();
-
-    const handler = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setIsMobileOpen(false);
+        setMenuOpen(false);
         return;
       }
       if (event.key !== "Tab") return;
-
       const elements = focusable();
       if (!elements.length) {
         event.preventDefault();
@@ -190,284 +132,157 @@ export default function Navbar() {
         first.focus();
       }
     };
-
-    document.addEventListener("keydown", handler);
-    return () => {
-      document.removeEventListener("keydown", handler);
-      mobileTriggerRef.current?.focus();
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (drawerRef.current && !drawerRef.current.contains(event.target as Node)) setMenuOpen(false);
     };
-  }, [isMobileOpen]);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      triggerRef.current?.focus();
+    };
+  }, [menuOpen]);
+
+  useEffect(() => setMenuOpen(false), [pathname]);
 
   return (
     <>
-      <header className="hidden lg:flex fixed inset-x-0 top-0 z-50 justify-center">
-        <div ref={navRef} className="mt-4 w-full max-w-6xl px-4">
-          <nav
-            className="
-              flex items-center justify-between
-              rounded-2xl
-              bg-white/70 dark:bg-slate-900/70
-              backdrop-blur-xl
-              border border-white/20 dark:border-white/10
-              shadow-[0_8px_30px_rgb(0,0,0,0.12)]
-              px-3 py-3 xl:px-6
-              transition-all duration-300
-              hover:shadow-[0_10px_40px_rgb(0,0,0,0.18)]
-            "
-          >
-            <Link href="/" className="flex items-center shrink-0">
-              <div className="relative h-12 w-36 rounded-xl overflow-hidden transition-transform duration-300 hover:scale-105">
-                <Image
-                  src="/logo.png"
-                  alt="Society Logo"
-                  fill
-                  sizes="160px"
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </Link>
-
-            <div className="flex items-center gap-3 text-xs font-medium xl:gap-5 xl:text-sm">
-              {navLinks.map((link) => {
-                const active = isActive(link.href);
-
-                if (link.href === "/clubs") {
-                  return (
-                    <div
-                      key={link.href}
-                      className="relative"
-                      onMouseEnter={() => setIsClubsOpen(true)}
-                      onMouseLeave={() => setIsClubsOpen(false)}
-                      onFocus={() => {
-                        if (!suppressClubFocusRef.current) setIsClubsOpen(true);
-                      }}
-                      onBlur={(event) => {
-                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsClubsOpen(false);
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape") {
-                          setIsClubsOpen(false);
-                          suppressClubFocusRef.current = true;
-                          clubsTriggerRef.current?.focus();
-                          suppressClubFocusRef.current = false;
-                        }
-                      }}
-                    >
-                      <Link
-                        ref={clubsTriggerRef}
-                        href="/clubs"
-                        aria-expanded={isClubsOpen}
-                        aria-controls="desktop-club-links"
-                        className={`relative group px-2 py-1 ${
-                          active
-                            ? "text-blue-600"
-                            : "text-gray-700 dark:text-gray-300 hover:text-blue-500"
-                        }`}
-                      >
-                        Clubs ▼
-                        <span
-                          className={`
-                            absolute left-0 -bottom-1 h-[2px] w-full
-                            bg-blue-500 origin-left scale-x-0
-                            transition-transform duration-300
-                            ${active ? "scale-x-100" : "group-hover:scale-x-100"}
-                          `}
-                        />
-                      </Link>
-
-                      {isClubsOpen && (
-                        <div id="desktop-club-links" className="absolute left-1/2 z-50 mt-2 w-60 -translate-x-1/2 rounded-xl border bg-white dark:bg-slate-900 shadow-xl">
-                          <ul className="py-2 text-xs">
-                            {clubItems.map((club) => (
-                              <li key={club.href}>
-                                <Link
-                                  href={club.href}
-                                  className="block rounded px-4 py-2 hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                                >
-                                  {club.label}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`relative group px-2 py-1 ${
-                      active
-                        ? "text-blue-600"
-                        : "text-gray-700 dark:text-gray-300 hover:text-blue-500"
-                    }`}
-                  >
-                    {link.label}
-
-                    {link.badge && (
-                      <span className="absolute -top-3 -right-3 rounded-full bg-gradient-to-r from-pink-500 to-red-500 px-1.5 py-[2px] text-[9px] text-white animate-pulse">
-                        {link.badge}
-                      </span>
-                    )}
-
-                    <span
-                      className={`
-                        absolute left-0 -bottom-1 h-[2px] w-full
-                        bg-blue-500 origin-left scale-x-0
-                        transition-transform duration-300
-                        ${active ? "scale-x-100" : "group-hover:scale-x-100"}
-                      `}
-                    />
+      <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-sky-100 bg-white/95 px-4 py-5 shadow-[8px_0_32px_rgba(15,23,42,.06)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 lg:flex">
+        <Link href="/" className="mb-7 flex h-14 items-center rounded-xl px-2" aria-label="Techtronica home">
+          <span className="relative h-12 w-40">
+            <Image src="/logo.png" alt="Techtronica Society" fill priority sizes="160px" className="object-contain object-left" />
+          </span>
+        </Link>
+        <p className="mb-3 px-3 text-[11px] font-bold uppercase tracking-[.16em] text-slate-400">Explore</p>
+        <nav aria-label="Main navigation" className="min-h-0 flex-1 space-y-1 overflow-y-auto">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const active = isActive(link.href);
+            return (
+              <div key={link.href}>
+                <div className={`flex items-center rounded-xl transition ${active ? "bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200" : "text-slate-600 hover:bg-slate-50 hover:text-sky-800 dark:text-slate-300 dark:hover:bg-slate-900"}`}>
+                  <Link href={link.href} aria-current={active ? "page" : undefined} className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+                    <Icon aria-hidden="true" className={`size-[18px] shrink-0 ${active ? "text-sky-600" : "text-slate-400"}`} />
+                    <span className="truncate">{link.label}</span>
+                    {link.badge && <span className="ml-auto rounded-full bg-pink-100 px-2 py-0.5 text-[9px] font-bold text-pink-700">{link.badge}</span>}
                   </Link>
+                  {link.href === "/clubs" && (
+                    <button type="button" onClick={() => setClubsOpen((open) => !open)} aria-label={clubsOpen ? "Collapse clubs" : "Expand clubs"} aria-expanded={clubsOpen} className="mr-2 rounded-lg p-2 text-slate-400 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:hover:bg-slate-800">
+                      {clubsOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                    </button>
+                  )}
+                </div>
+                {link.href === "/clubs" && clubsOpen && (
+                  <div className="ml-8 mt-1 space-y-1 border-l border-slate-200 pl-3 dark:border-slate-700">
+                    {clubItems.map((club) => (
+                      <Link key={club.href} href={club.href} aria-current={pathname === club.href ? "page" : undefined} className={`block rounded-lg px-3 py-2 text-xs transition hover:bg-sky-50 hover:text-sky-800 dark:hover:bg-slate-900 ${pathname === club.href ? "font-semibold text-sky-700" : "text-slate-500"}`}>
+                        {club.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+        <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
+          {account.status === "signed-in" ? (
+            <>
+              <Link href="/account" className="flex min-h-14 items-center gap-3 rounded-xl p-2 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:hover:bg-slate-900">
+                <Avatar account={account} size="size-10" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[11px] text-slate-400">Signed in as</span>
+                  <span className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{account.name}</span>
+                </span>
+                <ChevronRight className="size-4 text-slate-400" />
+              </Link>
+              <form action={signOutAction} className="mt-2">
+                <PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-slate-300 dark:hover:bg-rose-950/40">
+                  <LogOut aria-hidden="true" className="size-[18px]" /> Sign out
+                </PendingSubmitButton>
+              </form>
+            </>
+          ) : account.status === "loading" ? (
+            <div className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-900" aria-label="Loading account" />
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} className="inline-flex min-h-10 items-center justify-center gap-1 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-sky-50 dark:border-slate-700 dark:text-slate-100">
+                <LogIn className="size-4" /> Sign in
+              </Link>
+              <Link href="/auth/sign-up" className="inline-flex min-h-10 items-center justify-center gap-1 rounded-xl bg-sky-600 text-xs font-semibold text-white hover:bg-sky-700">
+                <UserPlus className="size-4" /> Sign up
+              </Link>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-sky-100 bg-white/90 px-3 py-2 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 lg:hidden">
+        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between gap-3">
+          <button ref={triggerRef} type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation menu" aria-expanded={menuOpen} aria-controls="mobile-navigation" className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 text-slate-700 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:bg-slate-800 dark:text-slate-100">
+            <Menu aria-hidden="true" className="size-5" />
+          </button>
+          <Link href="/" className="relative h-10 w-32 flex-1" aria-label="Techtronica home">
+            <Image src="/logo.png" alt="" fill sizes="128px" className="object-contain" priority />
+          </Link>
+          {account.status === "signed-in" ? (
+            <Link href="/account" aria-label={`Open ${account.name}'s profile`} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+              <Avatar account={account} size="size-10" />
+            </Link>
+          ) : account.status === "signed-out" ? (
+            <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} aria-label="Sign in" className="grid size-10 place-items-center rounded-full bg-sky-50 text-sky-700 dark:bg-slate-800 dark:text-sky-200"><LogIn className="size-5" /></Link>
+          ) : <span className="size-10 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" aria-label="Loading account" />}
+        </div>
+      </header>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-950/45 backdrop-blur-[2px] lg:hidden" role="presentation">
+          <div id="mobile-navigation" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Navigation menu" className="absolute inset-y-0 left-0 flex w-[min(86vw,340px)] flex-col overflow-y-auto bg-white p-4 shadow-2xl dark:bg-slate-950">
+            <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <Link href="/" onClick={() => setMenuOpen(false)} className="relative h-11 w-36"><Image src="/logo.png" alt="Techtronica" fill sizes="144px" className="object-contain object-left" /></Link>
+              <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close navigation menu" className="grid size-10 place-items-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100"><X className="size-5" /></button>
+            </div>
+            <nav aria-label="Mobile navigation" className="flex-1 space-y-1">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const active = isActive(link.href);
+                return (
+                  <div key={link.href}>
+                    <Link href={link.href} onClick={() => setMenuOpen(false)} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium ${active ? "bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200" : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"}`}>
+                      <Icon aria-hidden="true" className="size-5 text-sky-600" />{link.label}{link.badge && <span className="ml-auto rounded-full bg-pink-100 px-2 py-0.5 text-[9px] font-bold text-pink-700">{link.badge}</span>}
+                    </Link>
+                    {link.href === "/clubs" && (
+                      <div className="ml-8 mt-1 grid grid-cols-2 gap-1">
+                        {clubItems.map((club) => <Link key={club.href} href={club.href} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2 text-xs text-slate-500 hover:bg-sky-50 hover:text-sky-800 dark:hover:bg-slate-900">{club.label}</Link>)}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
-            </div>
-            <HeaderAccountLinks
-              account={accountState}
-              variant="desktop"
-              pathname={pathname}
-            />
-          </nav>
-        </div>
-      </header>
-
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between px-4 py-2">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <div className="relative h-10 w-28">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-1">
-            <HeaderAccountLinks
-              account={accountState}
-              variant="mobile"
-              pathname={pathname}
-            />
-            <button
-              onClick={(event) => {
-                mobileTriggerRef.current = event.currentTarget;
-                setIsMobileOpen(true);
-              }}
-              className="rounded-lg p-2 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:hover:bg-slate-800"
-              aria-label="Open navigation menu"
-              aria-expanded={isMobileOpen}
-              aria-controls="mobile-navigation-dialog"
-            >
-              <AiOutlineMenu size={22} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t shadow-lg">
-        <div className="flex justify-around py-2 text-xs">
-          <NavItem href="/" icon={<AiOutlineHome />} active={isActive("/")} />
-          <NavItem
-            href="/clubs"
-            icon={<AiOutlineAppstore />}
-            active={isActive("/clubs")}
-          />
-          <NavItem
-            href="/events"
-            icon={<AiOutlineCalendar />}
-            active={isActive("/events")}
-          />
-          <NavItem
-            href="/alumni"
-            icon={<AiOutlineUser />}
-            active={isActive("/alumni")}
-          />
-
-          <button
-            type="button"
-            onClick={(event) => {
-              mobileTriggerRef.current = event.currentTarget;
-              setIsMobileOpen(true);
-            }}
-            className="rounded-lg p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-            aria-label="Open navigation menu"
-            aria-expanded={isMobileOpen}
-            aria-controls="mobile-navigation-dialog"
-          >
-            <AiOutlineMenu size={22} />
-          </button>
-        </div>
-      </div>
-
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40">
-          <div
-            id="mobile-navigation-dialog"
-            ref={(element) => {
-              mobileMenuRef.current = element;
-              navRef.current = element;
-            }}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mobile-menu-title"
-            className="absolute bottom-0 w-full max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-4 dark:bg-slate-900"
-          >
-            <div className="mb-4 flex justify-between">
-              <h2 id="mobile-menu-title" className="font-semibold">Menu</h2>
-              <button
-                ref={mobileCloseRef}
-                type="button"
-                onClick={() => setIsMobileOpen(false)}
-                className="rounded-lg p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                aria-label="Close navigation menu"
-              >✕</button>
-            </div>
-
-            <div className="space-y-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsMobileOpen(false)}
-                  className="block"
-                >
-                  {link.label}
-                </Link>
-              ))}
-
-              <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
-                <HeaderAccountLinks
-                  account={accountState}
-                  variant="drawer"
-                  pathname={pathname}
-                  onNavigate={() => setIsMobileOpen(false)}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-medium mt-3">Clubs</p>
-                <div className="ml-3 mt-1 space-y-1 text-sm">
-                  {clubItems.map((club) => (
-                    <Link
-                      key={club.href}
-                      href={club.href}
-                      onClick={() => setIsMobileOpen(false)}
-                      className="block"
-                    >
-                      {club.label}
-                    </Link>
-                  ))}
+            </nav>
+            <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
+              {account.status === "signed-in" ? (
+                <>
+                  <Link href="/account" onClick={() => setMenuOpen(false)} className="mb-3 flex min-h-14 items-center gap-3 rounded-xl bg-gradient-to-r from-sky-50 to-violet-50 p-3 dark:from-slate-900 dark:to-slate-800">
+                    <Avatar account={account} size="size-11" />
+                    <span className="min-w-0 flex-1"><span className="block text-[11px] text-slate-500">Your account</span><span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">{account.name}</span></span><UserRound className="size-4 text-sky-700" />
+                  </Link>
+                  <Link href="/account/settings" onClick={() => setMenuOpen(false)} className="mb-2 block rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900">Profile settings</Link>
+                  <form action={signOutAction}><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 text-sm font-semibold text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-200"><LogOut className="size-4" />Sign out</PendingSubmitButton></form>
+                </>
+              ) : account.status === "loading" ? (
+                <div className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-900" aria-label="Loading account" />
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} onClick={() => setMenuOpen(false)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-100"><LogIn className="size-4" />Sign in</Link>
+                  <Link href="/auth/sign-up" onClick={() => setMenuOpen(false)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-600 text-sm font-semibold text-white"><UserPlus className="size-4" />Sign up</Link>
                 </div>
-              </div>
+              )}
             </div>
           </div>
+          <button type="button" className="absolute inset-0 -z-10 cursor-default" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)} />
         </div>
       )}
     </>
@@ -477,189 +292,18 @@ export default function Navbar() {
 function accountStateFor(user: User | null): HeaderAccountState {
   if (!user) return { status: "signed-out" };
   const metadataName = user.user_metadata?.full_name;
-  const name =
-    typeof metadataName === "string" && metadataName.trim()
-      ? metadataName.trim().replace(/\s+/g, " ")
-      : user.email?.split("@")[0] || "Techtronica member";
-  const initials =
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "")
-      .join("") || "T";
+  const name = typeof metadataName === "string" && metadataName.trim()
+    ? metadataName.trim().replace(/\s+/g, " ")
+    : user.email?.split("@")[0] || "Techtronica member";
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
+    .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "").join("") || "T";
   return { status: "signed-in", userId: user.id, name: name.slice(0, 40), initials, avatarUrl: null };
 }
 
-function HeaderAccountLinks({
-  account,
-  variant,
-  pathname,
-  onNavigate,
-}: {
-  account: HeaderAccountState;
-  variant: "desktop" | "mobile" | "drawer";
-  pathname: string;
-  onNavigate?: () => void;
-}) {
-  const signInHref = `/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`;
-
-  if (account.status === "loading") {
-    return (
-      <span
-        role="status"
-        aria-label="Loading account"
-        className={`inline-block animate-pulse rounded-full bg-slate-200/80 ${variant === "mobile" ? "size-9" : "h-10 w-24"}`}
-      />
-    );
-  }
-
-  if (account.status === "signed-out") {
-    if (variant === "mobile") {
-      return (
-        <Link
-          href={signInHref}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-sky-200 bg-white/80 px-3 text-xs font-semibold text-sky-800 shadow-sm transition hover:bg-sky-50"
-        >
-          <LogIn aria-hidden="true" className="size-3.5" /> Sign in
-        </Link>
-      );
-    }
-    if (variant === "drawer") {
-      return (
-        <div className="grid grid-cols-2 gap-3">
-          <Link
-            href={signInHref}
-            onClick={onNavigate}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50"
-          >
-            <LogIn aria-hidden="true" className="size-4" /> Sign in
-          </Link>
-          <Link
-            href="/auth/sign-up"
-            onClick={onNavigate}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800"
-          >
-            <UserPlus aria-hidden="true" className="size-4" /> Sign up
-          </Link>
-        </div>
-      );
-    }
-    return (
-      <div className="flex shrink-0 items-center gap-1.5 xl:gap-2">
-        <Link
-          href={signInHref}
-          className="inline-flex min-h-9 items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800 xl:px-3 xl:text-sm"
-        >
-          <LogIn aria-hidden="true" className="hidden size-3.5 xl:block" /> Sign
-          in
-        </Link>
-        <Link
-          href="/auth/sign-up"
-          className="inline-flex min-h-9 items-center gap-1 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-indigo-700 xl:gap-1.5 xl:px-3.5 xl:text-sm"
-        >
-          <UserPlus aria-hidden="true" className="hidden size-3.5 xl:block" />{" "}
-          Sign up
-        </Link>
-      </div>
-    );
-  }
-
-  const isProfileActive = pathname.startsWith("/account");
-  const profileLinkClass = `inline-flex min-h-11 min-w-0 items-center gap-2.5 rounded-full border px-2 py-1.5 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${isProfileActive ? "border-sky-300 bg-sky-50 text-sky-900 dark:border-sky-700 dark:bg-sky-950/70 dark:text-sky-100" : "border-slate-200 bg-white/90 text-slate-700 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-900 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:bg-slate-800"}`;
-
-  if (variant === "mobile") {
-    return (
-      <Link
-        href="/account"
-        aria-label={`Open ${account.name}'s profile`}
-        title="Profile"
-        className={`${profileLinkClass} size-10 justify-center p-0 sm:w-auto sm:justify-start sm:px-2.5`}
-      >
-        <span className="relative grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white ring-2 ring-white shadow-sm dark:ring-slate-900">
-          {account.avatarUrl ? <Image alt="" aria-hidden="true" className="object-cover" fill sizes="32px" src={account.avatarUrl} unoptimized /> : account.initials}
-        </span>
-        <span className="hidden sm:inline">Profile</span>
-      </Link>
-    );
-  }
-
-  if (variant === "drawer") {
-    return (
-      <div className="space-y-2">
-        <Link
-          href="/account"
-          onClick={onNavigate}
-          className="flex min-h-14 items-center gap-3 rounded-2xl bg-gradient-to-r from-sky-50 to-violet-50 p-3 text-slate-900"
-        >
-          <span className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-xs font-bold text-white ring-2 ring-white shadow-sm dark:ring-slate-900">
-            {account.avatarUrl ? <Image alt="" aria-hidden="true" className="object-cover" fill sizes="44px" src={account.avatarUrl} unoptimized /> : account.initials}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-bold">Profile</span>
-            <span className="block truncate text-xs text-slate-500">
-              {account.name}
-            </span>
-          </span>
-          <UserRound
-            aria-hidden="true"
-            className="size-4 shrink-0 text-sky-700"
-          />
-        </Link>
-        <Link
-          href="/account/settings"
-          onClick={onNavigate}
-          className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-sky-800"
-        >
-          Profile settings
-        </Link>
-        <form action={signOutAction} className="rounded-2xl border border-rose-200 bg-rose-50/80 p-3 dark:border-rose-900/70 dark:bg-rose-950/30">
-          <p className="px-1 text-xs leading-5 text-rose-900/80 dark:text-rose-200/80">Finished browsing? Sign out of your Techtronica account on this device.</p>
-          <PendingSubmitButton
-            type="submit"
-            pendingLabel="Signing out…"
-            className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700 disabled:cursor-wait disabled:opacity-70"
-          >
-            <LogOut aria-hidden="true" className="size-4" /> Sign out
-          </PendingSubmitButton>
-        </form>
-      </div>
-    );
-  }
-
+function Avatar({ account, size }: { account: Extract<HeaderAccountState, { status: "signed-in" }>; size: string }) {
   return (
-    <Link
-      href="/account"
-      className={profileLinkClass}
-      aria-current={isProfileActive ? "page" : undefined}
-      aria-label={`Open ${account.name}'s profile`}
-      title={account.name}
-    >
-      <span className="relative grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-[10px] font-bold text-white ring-2 ring-white shadow-sm dark:ring-slate-900">
-        {account.avatarUrl ? <Image alt="" aria-hidden="true" className="object-cover" fill sizes="32px" src={account.avatarUrl} unoptimized /> : account.initials}
-      </span>
-      <span className="hidden max-w-28 truncate xl:inline">{account.name}</span>
-      <span className="xl:hidden">Profile</span>
-      <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-slate-500" />
-    </Link>
-  );
-}
-
-function NavItem({
-  href,
-  icon,
-  active,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col items-center ${active ? "text-blue-600" : ""}`}
-    >
-      <div className="text-xl">{icon}</div>
-    </Link>
+    <span className={`relative grid ${size} shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-xs font-bold text-white ring-2 ring-white shadow-sm dark:ring-slate-900`}>
+      {account.avatarUrl ? <Image alt="" aria-hidden="true" className="object-cover" fill sizes="44px" src={account.avatarUrl} unoptimized /> : account.initials}
+    </span>
   );
 }

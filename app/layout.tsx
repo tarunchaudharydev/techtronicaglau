@@ -12,12 +12,11 @@ import DigitalClock from "../components/features/DigitalClock";
 // import { ThemeProvider } from "next-themes";
 
 import { Suspense } from "react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
 import EventPopup from "@/components/features/events/EventPopup";
 import { mapDatabaseEvent } from "@/lib/data/event-mappers";
 import { getPublicEvents } from "@/lib/data/public-content";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
+import CookieConsent from "@/components/CookieConsent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -116,21 +115,20 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-900 text-foreground dark:text-white dark:bg-black dark:text-white transition-colors duration-300`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-900 text-foreground dark:text-white transition-colors duration-300 lg:pl-64`}
       >
         {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem> */}
         <Navbar />
 
-        <main className="pt-28 min-h-screen bg-gradient-to-br from-white dark:from-slate-950 via-sky-50 dark:via-slate-900 to-purple-100 dark:to-black dark:from-slate-900 dark:via-slate-800 dark:to-black transition-colors duration-300">
+        <main className="min-h-screen pt-16 lg:pt-6 bg-gradient-to-br from-white dark:from-slate-950 via-sky-50 dark:via-slate-900 to-purple-100 dark:to-black dark:from-slate-900 dark:via-slate-800 dark:to-black transition-colors duration-300">
           <Suspense fallback={null}><EventPopupLoader /></Suspense>
           {children}
         </main>
 
-        <Analytics />
-        <SpeedInsights />
         <DigitalClock />
         <Footer />
         <PwaInstallPrompt />
+        <CookieConsent />
       
       </body>
     </html>
