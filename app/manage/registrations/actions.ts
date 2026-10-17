@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { formString, redirectResult, requireManager, validId } from "@/lib/manage/server";
+import { redirect } from "next/navigation";
+import { formString, requireManager, validId } from "@/lib/manage/server";
 
 const route = "/manage/registrations";
 const allowedTransitions: Record<string, string[]> = {
@@ -14,8 +15,10 @@ export async function updateRegistrationStatus(formData: FormData) {
   const id = formString(formData, "id", 36);
   const currentStatus = formString(formData, "current_status", 20);
   const nextStatus = formString(formData, "status", 20);
+  const selectedEvent = formString(formData, "event_id", 36);
+  const eventId = validId(selectedEvent) ? selectedEvent : null;
   if (!validId(id) || !currentStatus || !nextStatus || !allowedTransitions[currentStatus]?.includes(nextStatus)) {
-    return redirectResult(route, "invalid");
+    return redirectToList("invalid", eventId);
   }
 
   const { data, error } = await supabase
@@ -28,5 +31,11 @@ export async function updateRegistrationStatus(formData: FormData) {
 
   revalidatePath(route);
   revalidatePath("/events");
-  return redirectResult(route, error ? "error" : data ? "saved" : "conflict");
+  return redirectToList(error ? "error" : data ? "saved" : "conflict", eventId);
+}
+
+function redirectToList(result: "saved" | "error" | "invalid" | "conflict", eventId: string | null): never {
+  const params = new URLSearchParams({ result });
+  if (eventId) params.set("event", eventId);
+  redirect(`${route}?${params.toString()}`);
 }
