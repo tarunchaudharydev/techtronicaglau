@@ -91,6 +91,8 @@ export default async function ManageHomePage() {
     supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "spam"),
     supabase.from("event_registrations").select("id", { count: "exact", head: true }).in("status", ["registered", "waitlisted"]),
     supabase.from("event_registrations").select("id", { count: "exact", head: true }).in("status", ["cancelled", "attended", "no_show"]),
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase.from("memberships").select("user_id", { count: "exact", head: true }).is("club_id", null).eq("status", "active"),
   ]) : null;
   const overviewStats = overview ? [
     { label: "Club applications pending", count: overview[0].count, error: overview[0].error },
@@ -102,7 +104,9 @@ export default async function ManageHomePage() {
     { label: "Active registrations", count: overview[6].count, error: overview[6].error },
     { label: "Completed registrations", count: overview[7].count, error: overview[7].error },
   ] : [];
-  const overviewHasError = overviewStats.some((stat) => stat.error);
+  const memberTotals = overview ? { accounts: overview[8].count, members: overview[9].count, error: Boolean(overview[8].error || overview[9].error) } : null;
+  const nonMembers = memberTotals && !memberTotals.error && memberTotals.accounts !== null && memberTotals.members !== null ? Math.max(0, memberTotals.accounts - memberTotals.members) : null;
+  const overviewHasError = overviewStats.some((stat) => stat.error) || Boolean(memberTotals?.error);
   const activity = isAdmin && !error ? await Promise.all([
     supabase.from("memberships").select("id, created_at, profiles(full_name), clubs(name)").not("club_id", "is", "null").eq("status", "pending").order("created_at", { ascending: false }).limit(5),
     supabase.from("contact_submissions").select("id, name, topic, created_at, clubs(name)").eq("status", "new").order("created_at", { ascending: false }).limit(5),
@@ -167,6 +171,7 @@ export default async function ManageHomePage() {
             <p className="text-xs text-slate-500">Current totals from records your admin account can access</p>
           </div>
           {overviewHasError && <p role="status" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Some status totals are temporarily unavailable. Your management tools are still available.</p>}
+          <div className="mb-5 grid gap-3 min-[480px]:grid-cols-3"><MemberTotalCard label="Registered accounts" count={memberTotals?.error ? null : memberTotals?.accounts ?? null} detail="Accounts with a Techtronica profile" tone="sky" /><MemberTotalCard label="Active society members" count={memberTotals?.error ? null : memberTotals?.members ?? null} detail="Current society-wide memberships" tone="emerald" /><MemberTotalCard label="Not society members" count={nonMembers} detail="Registered accounts without active society membership" tone="violet" /></div>
           <AdminOverviewDonut stats={overviewStats.map(({ label, count, error: statError }) => ({ label, count, unavailable: Boolean(statError) }))} />
           <section aria-labelledby="incoming-activity" className="mt-5 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -270,4 +275,9 @@ function formatActivityDate(value: string) {
   return Number.isNaN(date.valueOf())
     ? "Date unavailable"
     : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function MemberTotalCard({ label, count, detail, tone }: { label: string; count: number | null; detail: string; tone: "sky" | "emerald" | "violet" }) {
+  const tones = { sky: "border-sky-100 bg-sky-50/70 text-sky-800", emerald: "border-emerald-100 bg-emerald-50/70 text-emerald-800", violet: "border-violet-100 bg-violet-50/70 text-violet-800" };
+  return <article className={`min-w-0 rounded-2xl border p-4 ${tones[tone]}`}><p className="text-xs font-bold uppercase tracking-wide">{label}</p><p className="mt-2 text-3xl font-bold tabular-nums text-slate-950">{count === null ? "—" : count.toLocaleString("en-IN")}</p><p className="mt-1 text-xs leading-5 text-slate-600">{detail}</p></article>;
 }
