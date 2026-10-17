@@ -6,8 +6,8 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
-  ArrowRight, BadgeCheck, CalendarDays, CheckCircle2, Clock3, Settings2,
-  ShieldCheck, Sparkles, Users, UserRound, LogOut, BriefcaseBusiness,
+  ArrowRight, BadgeCheck, CalendarDays, Clock3, Settings2,
+  ShieldCheck, Sparkles, Users, LogOut, BriefcaseBusiness,
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
@@ -65,7 +65,7 @@ export default async function AccountPage() {
   const now = Date.now();
   const upcomingRegistrations = registrations.filter((registration) => {
     const event = relation(registration.events);
-    return Boolean(event?.starts_at && new Date(event.starts_at).valueOf() >= now);
+    return Boolean(event?.starts_at && new Date(event.starts_at).valueOf() >= now && !["cancelled", "rejected", "no_show"].includes(registration.status));
   });
   const nextRegistration = [...upcomingRegistrations].sort((a, b) => {
     const eventA = relation(a.events)?.starts_at ?? "";
