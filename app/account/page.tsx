@@ -9,6 +9,7 @@ import { FiArrowRight, FiCalendar, FiSettings, FiUsers } from "react-icons/fi";
 import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
+import AccountSessionsList from "@/components/account/AccountSessionsList";
 
 const MANAGEMENT_PERMISSION_KEYS = [
   "admin.manage",
@@ -45,7 +46,7 @@ export default async function AccountPage() {
     permissionKeys: new Set<string>(),
     error: true,
   }));
-  const [profileResult, membershipsResult, registrationsResult, accessResult] = await Promise.all([
+  const [profileResult, membershipsResult, registrationsResult, accessResult, sessionsResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("full_name, department, year_of_study, avatar_url")
@@ -181,7 +182,7 @@ export default async function AccountPage() {
         </div>
       </section>
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-2">
+      <section className="mt-6 rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/60 to-sky-50/70 p-5 shadow-sm sm:p-6" aria-label="Signed-in devices"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Account security</p><h2 className="mt-1 text-lg font-bold text-slate-950">Devices signed in to your account</h2><p className="mt-1 text-sm text-slate-600">Review recent sessions and sign out devices you do not recognize.</p></div><Link className="inline-flex min-h-10 items-center justify-center rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50" href="/account/settings#session-settings">Manage sessions</Link></div><AccountSessionsList sessions={sessionsResult.data ?? []} unavailable={Boolean(sessionsResult.error)} compact /></section>\n\n      <div className="mt-8 grid gap-5 lg:grid-cols-2">
         <CollectionPanel
           title="Club memberships"
           description="Your positions and membership status across Techtronica clubs."
