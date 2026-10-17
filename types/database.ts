@@ -275,6 +275,8 @@ export type Database = {
       events: {
         Row: {
           capacity: number | null
+          min_team_members: number
+          max_team_members: number
           club_id: string | null
           cover_image_url: string | null
           created_at: string
@@ -296,6 +298,8 @@ export type Database = {
         }
         Insert: {
           capacity?: number | null
+          min_team_members?: number
+          max_team_members?: number
           club_id?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -317,6 +321,8 @@ export type Database = {
         }
         Update: {
           capacity?: number | null
+          min_team_members?: number
+          max_team_members?: number
           club_id?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -936,6 +942,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      register_event_with_team: { Args: { p_event_id: string; p_members: Json }; Returns: string }
       admin_add_society_member: { Args: { p_email: string }; Returns: string }
       admin_create_role: {
         Args: {
