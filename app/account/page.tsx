@@ -67,6 +67,7 @@ export default async function AccountPage() {
       .order("id", { ascending: false })
       .limit(25),
     accessPromise,
+    supabase.rpc("list_my_auth_sessions"),
   ]);
 
   const canManageSociety = !accessResult.error
