@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import ResultMessage from "@/components/manage/ResultMessage";
 import AdminDataTable, { type AdminDataColumn, type AdminDataRow } from "@/components/manage/AdminDataTable";
 import { requireManager } from "@/lib/manage/server";
@@ -66,7 +67,7 @@ export default async function ManageNotificationsPage({ searchParams }: { search
   </main>;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return <label className="block text-sm font-medium">{label}<span className="mt-1.5 block">{children}</span></label>;
 }
 const inputClass = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-sky-950";
