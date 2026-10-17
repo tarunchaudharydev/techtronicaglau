@@ -165,7 +165,9 @@ export default async function ManageHomePage() {
           </div>
         </header>
 
-        {!error && groups.length > 0 && <nav aria-label="Management areas" className="sticky top-24 z-20 mt-5 flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-sm backdrop-blur">{groups.map(({ name }) => <a key={name} href={`#group-${groupStyles[name].number}`} className="shrink-0 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-sky-50 hover:text-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">{name}</a>)}</nav>}\n\n        {isAdmin && !error && <section aria-labelledby="admin-overview" className="mt-7">
+        {!error && groups.length > 0 && <nav aria-label="Management areas" className="sticky top-24 z-20 mt-5 flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-sm backdrop-blur">{groups.map(({ name }) => <a key={name} href={`#group-${groupStyles[name].number}`} className="shrink-0 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-sky-50 hover:text-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">{name}</a>)}</nav>}
+
+        {isAdmin && !error && <section aria-labelledby="admin-overview" className="mt-7">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Administrator overview</p><h2 id="admin-overview" className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">Incoming activity &amp; review status</h2></div>
             <p className="text-xs text-slate-500">Current totals from records your admin account can access</p>
