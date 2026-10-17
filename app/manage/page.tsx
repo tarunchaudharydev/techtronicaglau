@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   ArrowUpRight,
+  BellRing,
   CalendarDays,
   ClipboardCheck,
   ContactRound,
@@ -37,6 +38,7 @@ const sections = [
   { title: "Registrations", href: "/manage/registrations", permission: "registrations.manage", group: "Clubs & events", description: "Review attendees and record cancellations or attendance.", icon: TicketCheck, tone: "emerald" },
   { title: "Contact inbox", href: "/manage/contacts", permission: "contacts.manage", group: "Website & communication", description: "Read and follow up on messages in your assigned scope.", icon: Inbox, tone: "orange" },
   { title: "Website content", href: "/manage/content", permission: "content.manage", group: "Website & communication", description: "Update homepage sections, FAQs, resources, and site information.", icon: Sparkles, tone: "blue" },
+  { title: "Notifications & updates", href: "/manage/notifications", permission: "content.manage", group: "Website & communication", description: "Publish deployment notes, version releases, and society updates.", icon: BellRing, tone: "orange" },
 ] as const;
 
 const groupStyles = {
