@@ -956,6 +956,7 @@ export type Database = {
         Returns: {
           is_current: boolean
           last_refreshed_at: string
+          total_sessions: number
           session_created_at: string
           user_agent: string | null
         }[]
