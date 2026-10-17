@@ -18,6 +18,8 @@ export default function ResultMessage({ result }: { result?: string }) {
     waitlisted: "You are on the waitlist.",
     cancelled: "Registration cancelled.",
     duplicate: "Your account already has a registration for this event.",
+    closed: "Registration has closed or has not opened yet. Check the published event's India time (IST) and try again during its registration window.",
+    team_size: "Your team details are incomplete or the number of members is outside this event's allowed range. Review the team form and try again.",
   };
   const message = messages[result];
   if (!message) return null;
