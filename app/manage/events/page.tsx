@@ -91,13 +91,13 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
         <Field label="Hosting club"><select name="club_id" defaultValue="" className={inputClass}><option value="">Society-wide event</option>{clubs.map((club) => <option value={club.id} key={club.id}>{club.name}</option>)}</select></Field>
         <Field label="Type"><input name="event_type" maxLength={80} className={inputClass} /></Field>
         <Field label="Venue"><input name="venue" maxLength={240} className={inputClass} /></Field>
-        <Field label="Starts at (UTC)"><input name="starts_at" type="datetime-local" required className={inputClass} /></Field>
-        <Field label="Ends at (UTC)"><input name="ends_at" type="datetime-local" className={inputClass} /></Field>
+        <Field label="Starts at (India time · IST)"><input name="starts_at" type="datetime-local" required className={inputClass} /></Field>
+        <Field label="Ends at (India time · IST)"><input name="ends_at" type="datetime-local" className={inputClass} /></Field>
         <Field label="Capacity (blank means unlimited)"><input name="capacity" type="number" min="1" max="100000" className={inputClass} /></Field>
         <Field label="Minimum team members (including you)"><input name="min_team_members" type="number" required min="1" max="50" defaultValue="1" className={inputClass} /></Field>
         <Field label="Maximum team members"><input name="max_team_members" type="number" required min="1" max="50" defaultValue="5" className={inputClass} /></Field>
-        <Field label="Registration opens (UTC)"><input name="registration_opens_at" type="datetime-local" className={inputClass} /></Field>
-        <Field label="Registration closes (UTC)"><input name="registration_closes_at" type="datetime-local" className={inputClass} /></Field>
+        <Field label="Registration opens (India time · IST)"><input name="registration_opens_at" type="datetime-local" className={inputClass} /></Field>
+        <Field label="Registration closes (India time · IST)"><input name="registration_closes_at" type="datetime-local" className={inputClass} /></Field>
         <Field label="Status"><select name="status" defaultValue="draft" className={inputClass}><option value="draft">Draft</option><option value="published">Published</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select></Field>
         <Field label="Cover image URL"><input name="cover_image_url" type="url" maxLength={2048} className={inputClass} /></Field>
         <div><StorageImageUpload name="uploaded_asset_url" folder="events" folderScopeField="club_id" folderScopeOptions={Object.fromEntries(clubs.map((club) => [club.id, club.slug]))} label="Upload event image" /></div>
