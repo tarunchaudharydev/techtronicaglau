@@ -31,14 +31,14 @@ export default function BulkInviteForm() {
           id="bulk-invite-emails"
           name="emails"
           required
-          maxLength={4096}
+          maxLength={20000}
           placeholder={"student1@example.com\nstudent2@example.com\nstudent3@example.com"}
           aria-describedby="bulk-invite-help"
           disabled={pending}
         />
       </label>
       <p id="bulk-invite-help" className="mt-2 text-xs leading-5 text-muted">
-        Add up to 10 email addresses, separated by new lines, commas, or semicolons. Duplicate addresses are sent once.
+        Add up to 50 email addresses, separated by new lines, commas, or semicolons. Duplicate addresses are sent once. Each person receives a private setup link and creates their own password; passwords are never sent to or shown to administrators. Delivery depends on your Supabase email provider and its sending limits.
       </p>
       <button
         className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 sm:w-auto"

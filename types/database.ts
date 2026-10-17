@@ -951,6 +951,16 @@ export type Database = {
         Args: { p_permission_keys: string[]; p_role_id: string }
         Returns: undefined
       }
+      list_my_auth_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          is_current: boolean
+          last_refreshed_at: string
+          total_sessions: number
+          session_created_at: string
+          user_agent: string | null
+        }[]
+      },
       create_meeting_attendance_session: {
         Args: {
           p_club_id: string | null

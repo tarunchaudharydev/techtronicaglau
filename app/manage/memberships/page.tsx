@@ -82,13 +82,13 @@ export default async function ManageMembershipsPage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <Link className="text-sm font-medium text-sky-700 hover:underline" href="/manage">← Management</Link>
+      <div className="sticky top-24 z-30 -mx-4 mb-4 border-b border-sky-100/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur sm:-mx-6 sm:px-6"><Link className="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-sky-800 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500" href="/manage">← Management</Link></div>
       <h1 className="mt-4 text-3xl font-bold">Membership requests</h1>
       <p className="mt-2 max-w-3xl text-sm text-muted">Society membership is assigned by a Society Admin. Club applications are shown in pages of 25; approve or reject only while a request is pending.</p>
       <ResultMessage result={params.result} />
       {canAddSocietyMember && <section id="add-society-member" className="mt-6 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         <h2 className="text-lg font-semibold">Add or invite society members</h2>
-        <p className="mt-1 text-sm leading-6 text-muted">Add an account that has already verified its email, or invite several people to create accounts. Invitations do not create memberships or grant roles; add new members after they verify and sign up.</p>
+        <p className="mt-1 text-sm leading-6 text-muted">Add an account that has already verified its email, or invite up to 50 people to create accounts. Invitations do not create memberships or grant roles; add new members after they verify and sign up. Each invitee gets a separate secure link and chooses their own password.</p>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <div className="min-w-0 rounded-2xl border border-slate-200 p-4 dark:border-slate-800 sm:p-5">
             <h3 className="font-semibold">Add a verified account</h3>
@@ -102,7 +102,7 @@ export default async function ManageMembershipsPage({
           </div>
           <div className="min-w-0 rounded-2xl border border-sky-100 bg-sky-50/50 p-4 dark:border-sky-900 dark:bg-sky-950/20 sm:p-5">
             <h3 className="font-semibold">Invite multiple people</h3>
-            <p className="mt-1 text-sm leading-5 text-muted">Send account setup emails in one batch. Each address is checked separately.</p>
+            <p className="mt-1 text-sm leading-5 text-muted">Send up to 50 account invitations in one batch. Each person receives their own secure setup link and creates a private password.</p>
             <BulkInviteForm />
           </div>
         </div>

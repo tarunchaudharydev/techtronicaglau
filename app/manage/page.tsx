@@ -40,9 +40,9 @@ const sections = [
 ] as const;
 
 const groupStyles = {
-  "People & access": { icon: UsersRound, tint: "bg-sky-50 text-sky-700 ring-sky-100", number: "01" },
-  "Clubs & events": { icon: CalendarDays, tint: "bg-violet-50 text-violet-700 ring-violet-100", number: "02" },
-  "Website & communication": { icon: Sparkles, tint: "bg-amber-50 text-amber-700 ring-amber-100", number: "03" },
+  "People & access": { icon: UsersRound, tint: "bg-sky-50 text-sky-700 ring-sky-100", number: "01", description: "Applications, member profiles, alumni, and the permissions behind them." },
+  "Clubs & events": { icon: CalendarDays, tint: "bg-violet-50 text-violet-700 ring-violet-100", number: "02", description: "Build the club structure, run events, and keep meeting records." },
+  "Website & communication": { icon: Sparkles, tint: "bg-amber-50 text-amber-700 ring-amber-100", number: "03", description: "Handle public enquiries and keep the society website current." },
 } as const;
 
 const toneStyles = {
@@ -91,6 +91,8 @@ export default async function ManageHomePage() {
     supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "spam"),
     supabase.from("event_registrations").select("id", { count: "exact", head: true }).in("status", ["registered", "waitlisted"]),
     supabase.from("event_registrations").select("id", { count: "exact", head: true }).in("status", ["cancelled", "attended", "no_show"]),
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase.from("memberships").select("user_id", { count: "exact", head: true }).is("club_id", null).eq("status", "active"),
   ]) : null;
   const overviewStats = overview ? [
     { label: "Club applications pending", count: overview[0].count, error: overview[0].error },
@@ -102,7 +104,9 @@ export default async function ManageHomePage() {
     { label: "Active registrations", count: overview[6].count, error: overview[6].error },
     { label: "Completed registrations", count: overview[7].count, error: overview[7].error },
   ] : [];
-  const overviewHasError = overviewStats.some((stat) => stat.error);
+  const memberTotals = overview ? { accounts: overview[8].count, members: overview[9].count, error: Boolean(overview[8].error || overview[9].error) } : null;
+  const nonMembers = memberTotals && !memberTotals.error && memberTotals.accounts !== null && memberTotals.members !== null ? Math.max(0, memberTotals.accounts - memberTotals.members) : null;
+  const overviewHasError = overviewStats.some((stat) => stat.error) || Boolean(memberTotals?.error);
   const activity = isAdmin && !error ? await Promise.all([
     supabase.from("memberships").select("id, created_at, profiles(full_name), clubs(name)").not("club_id", "is", "null").eq("status", "pending").order("created_at", { ascending: false }).limit(5),
     supabase.from("contact_submissions").select("id, name, topic, created_at, clubs(name)").eq("status", "new").order("created_at", { ascending: false }).limit(5),
@@ -161,12 +165,15 @@ export default async function ManageHomePage() {
           </div>
         </header>
 
+        {!error && groups.length > 0 && <nav aria-label="Management areas" className="sticky top-24 z-20 mt-5 flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-sm backdrop-blur">{groups.map(({ name }) => <a key={name} href={`#group-${groupStyles[name].number}`} className="shrink-0 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-sky-50 hover:text-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">{name}</a>)}</nav>}
+
         {isAdmin && !error && <section aria-labelledby="admin-overview" className="mt-7">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Administrator overview</p><h2 id="admin-overview" className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">Incoming activity &amp; review status</h2></div>
             <p className="text-xs text-slate-500">Current totals from records your admin account can access</p>
           </div>
           {overviewHasError && <p role="status" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Some status totals are temporarily unavailable. Your management tools are still available.</p>}
+          <div className="mb-5 grid gap-3 min-[480px]:grid-cols-3"><MemberTotalCard label="Registered accounts" count={memberTotals?.error ? null : memberTotals?.accounts ?? null} detail="Accounts with a Techtronica profile" tone="sky" /><MemberTotalCard label="Active society members" count={memberTotals?.error ? null : memberTotals?.members ?? null} detail="Current society-wide memberships" tone="emerald" /><MemberTotalCard label="Not society members" count={nonMembers} detail="Registered accounts without active society membership" tone="violet" /></div>
           <AdminOverviewDonut stats={overviewStats.map(({ label, count, error: statError }) => ({ label, count, unavailable: Boolean(statError) }))} />
           <section aria-labelledby="incoming-activity" className="mt-5 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -216,12 +223,12 @@ export default async function ManageHomePage() {
           {groups.map(({ name, sections: groupSections }) => {
             const style = groupStyles[name];
             const GroupIcon = style.icon;
-            return <section key={name} aria-labelledby={`group-${style.number}`}>
+            return <section key={name} id={`group-${style.number}`} aria-labelledby={`group-title-${style.number}`} className="scroll-mt-40 rounded-3xl border border-slate-200/80 bg-white/65 p-4 sm:p-6">
               <div className="mb-4 flex items-center gap-3 sm:mb-5">
                 <span className={`grid size-11 shrink-0 place-items-center rounded-2xl ring-1 ${style.tint}`}><GroupIcon aria-hidden="true" className="size-5" /></span>
                 <div>
                   <p className="text-[11px] font-bold tracking-[0.16em] text-slate-400">{style.number} / WORKSPACE</p>
-                  <h2 id={`group-${style.number}`} className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{name}</h2>
+                  <h2 id={`group-title-${style.number}`} className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{name}</h2><p className="mt-1 text-sm leading-5 text-slate-500">{style.description}</p>
                 </div>
                 <span className="ml-auto hidden rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500 sm:inline-flex">{groupSections.length} {groupSections.length === 1 ? "area" : "areas"}</span>
               </div>
@@ -270,4 +277,9 @@ function formatActivityDate(value: string) {
   return Number.isNaN(date.valueOf())
     ? "Date unavailable"
     : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function MemberTotalCard({ label, count, detail, tone }: { label: string; count: number | null; detail: string; tone: "sky" | "emerald" | "violet" }) {
+  const tones = { sky: "border-sky-100 bg-sky-50/70 text-sky-800", emerald: "border-emerald-100 bg-emerald-50/70 text-emerald-800", violet: "border-violet-100 bg-violet-50/70 text-violet-800" };
+  return <article className={`min-w-0 rounded-2xl border p-4 ${tones[tone]}`}><p className="text-xs font-bold uppercase tracking-wide">{label}</p><p className="mt-2 text-3xl font-bold tabular-nums text-slate-950">{count === null ? "—" : count.toLocaleString("en-IN")}</p><p className="mt-1 text-xs leading-5 text-slate-600">{detail}</p></article>;
 }
