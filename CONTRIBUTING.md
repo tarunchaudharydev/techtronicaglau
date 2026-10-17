@@ -1,25 +1,41 @@
 # Contributing
 
-## Development
+Thanks for considering a contribution to Techtronica's website. Contributions are welcome through focused issues and pull requests.
 
-1. Clone https://github.com/tarunchaudharydev/techtronicaglau.
-2. Install with npm ci.
-3. Configure local public Supabase URL/key and site URL in .env.local.
-4. Create a feature branch and keep changes scoped to the behavior being updated.
-5. Make database changes in the backend repository as a forward-only Supabase migration; update frontend generated types after schema changes.
-6. Update the relevant documentation when a route, permission, environment variable, or operational procedure changes.
+## Before starting
 
-## Review expectations
+- Search open issues and pull requests for related work.
+- For larger changes, open an issue first to agree on scope and avoid duplicated effort.
+- Keep one pull request focused on one behavior or maintenance goal.
+- Do not use real member data, production credentials, or private images in examples or screenshots.
 
-- Keep authorization checks in Postgres RLS and database permission functions. UI gating is for usability only.
-- Validate untrusted input at the server boundary and rely on database constraints as a second line of defense.
-- Keep private/membership-dependent responses out of shared public caches.
-- Never commit secrets, personal member data, build output, or local Supabase credentials.
-- Prefer bounded queries and keyset pagination for growing administrative lists.
-- Preserve history by deactivating records when a hard delete is unnecessary.
-- Keep the public brand's Geist typography and sky/indigo/violet palette consistent with existing page components.
+## Local setup
 
-## Before requesting review
+1. Install Node.js 20 or later and npm.
+2. Clone the frontend repository and run `npm ci`.
+3. Copy `.env.example` to `.env.local` and configure an authorized Supabase project.
+4. Start the application with `npm run dev`.
+
+See the [README](README.md) for environment variables and the [documentation index](docs/README.md) for system details.
+
+## Change guidelines
+
+- Keep authorization in Supabase RLS, permission functions, and server-side checks. Hiding a button is not access control.
+- Validate untrusted input at server boundaries and retain database constraints as a second defense.
+- Keep member-specific responses out of shared public caches.
+- Use bounded queries and stable pagination for growing directories and management tables.
+- Preserve history through deactivation when a hard delete is unnecessary.
+- Make accessible keyboard, focus, responsive, and reduced-motion behavior part of UI changes.
+- Keep the Techtronica brand's current Geist typography and sky/indigo/violet palette consistent.
+- Update documentation when routes, roles, environment variables, or operational behavior changes.
+
+### Database changes
+
+Database schema and policy changes belong in the [backend repository](https://github.com/tarunchaudharydev/techtronica-backend) as reviewed, forward-only Supabase migrations. Coordinate frontend and backend pull requests when they depend on each other. Regenerate `types/database.ts` after schema changes and ensure the frontend types match the migration.
+
+## Before opening a pull request
+
+Run the available checks:
 
 ~~~sh
 npm run lint
@@ -27,4 +43,13 @@ npx tsc --noEmit
 npm run build
 ~~~
 
-Describe visible behavior, database/schema requirements, setup changes, and checks in the pull request.
+There is no `npm test` script at this time. If you add or change a user flow, include a concise manual verification plan.
+
+## Pull request checklist
+
+- [ ] Explain the problem and the user-visible result.
+- [ ] Link related issues.
+- [ ] List database migrations, environment changes, and deployment requirements.
+- [ ] Report checks performed and any checks not run.
+- [ ] Add screenshots for visible UI changes.
+- [ ] Confirm no secrets, private member information, or unrelated changes are included.
