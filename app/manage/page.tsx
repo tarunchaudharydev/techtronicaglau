@@ -40,9 +40,9 @@ const sections = [
 ] as const;
 
 const groupStyles = {
-  "People & access": { icon: UsersRound, tint: "bg-sky-50 text-sky-700 ring-sky-100", number: "01" },
-  "Clubs & events": { icon: CalendarDays, tint: "bg-violet-50 text-violet-700 ring-violet-100", number: "02" },
-  "Website & communication": { icon: Sparkles, tint: "bg-amber-50 text-amber-700 ring-amber-100", number: "03" },
+  "People & access": { icon: UsersRound, tint: "bg-sky-50 text-sky-700 ring-sky-100", number: "01", description: "Applications, member profiles, alumni, and the permissions behind them." },
+  "Clubs & events": { icon: CalendarDays, tint: "bg-violet-50 text-violet-700 ring-violet-100", number: "02", description: "Build the club structure, run events, and keep meeting records." },
+  "Website & communication": { icon: Sparkles, tint: "bg-amber-50 text-amber-700 ring-amber-100", number: "03", description: "Handle public enquiries and keep the society website current." },
 } as const;
 
 const toneStyles = {
@@ -161,7 +161,7 @@ export default async function ManageHomePage() {
           </div>
         </header>
 
-        {isAdmin && !error && <section aria-labelledby="admin-overview" className="mt-7">
+        {!error && groups.length > 0 && <nav aria-label="Management areas" className="sticky top-24 z-20 mt-5 flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-sm backdrop-blur">{groups.map(({ name }) => <a key={name} href={`#group-${groupStyles[name].number}`} className="shrink-0 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-sky-50 hover:text-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">{name}</a>)}</nav>}\n\n        {isAdmin && !error && <section aria-labelledby="admin-overview" className="mt-7">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Administrator overview</p><h2 id="admin-overview" className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">Incoming activity &amp; review status</h2></div>
             <p className="text-xs text-slate-500">Current totals from records your admin account can access</p>
@@ -216,12 +216,12 @@ export default async function ManageHomePage() {
           {groups.map(({ name, sections: groupSections }) => {
             const style = groupStyles[name];
             const GroupIcon = style.icon;
-            return <section key={name} aria-labelledby={`group-${style.number}`}>
+            return <section key={name} id={`group-${style.number}`} aria-labelledby={`group-title-${style.number}`} className="scroll-mt-40 rounded-3xl border border-slate-200/80 bg-white/65 p-4 sm:p-6">
               <div className="mb-4 flex items-center gap-3 sm:mb-5">
                 <span className={`grid size-11 shrink-0 place-items-center rounded-2xl ring-1 ${style.tint}`}><GroupIcon aria-hidden="true" className="size-5" /></span>
                 <div>
                   <p className="text-[11px] font-bold tracking-[0.16em] text-slate-400">{style.number} / WORKSPACE</p>
-                  <h2 id={`group-${style.number}`} className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{name}</h2>
+                  <h2 id={`group-title-${style.number}`} className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{name}</h2><p className="mt-1 text-sm leading-5 text-slate-500">{style.description}</p>
                 </div>
                 <span className="ml-auto hidden rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500 sm:inline-flex">{groupSections.length} {groupSections.length === 1 ? "area" : "areas"}</span>
               </div>
