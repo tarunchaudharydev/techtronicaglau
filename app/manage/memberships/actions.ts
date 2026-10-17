@@ -8,6 +8,7 @@ export type MembershipDecisionState = { status: "idle" | "success" | "error"; me
 const fail = (message: string): MembershipDecisionState => ({ status: "error", message });
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const route = "/manage/memberships";
+const MAX_BULK_INVITES = 50;
 
 export async function addSocietyMember(formData: FormData) {
   const { supabase } = await requireManager("admin.manage");
@@ -36,7 +37,7 @@ export type BulkInviteState = {
 
 export async function inviteMultipleUsers(_previousState: BulkInviteState, formData: FormData): Promise<BulkInviteState> {
   const { supabase } = await requireManager("admin.manage");
-  const raw = formString(formData, "emails", 4096) ?? "";
+  const raw = formString(formData, "emails", 20000) ?? "";
   if (!raw) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount: 0, submissionId: Date.now() };
 
   const seen = new Set<string>();
@@ -54,7 +55,7 @@ export async function inviteMultipleUsers(_previousState: BulkInviteState, formD
   }
 
   if (addresses.length === 0) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount, submissionId: Date.now() };
-  if (addresses.length > 10) return { status: "error", message: "Send up to 10 unique invitations at a time. No invitations were sent; split the list into smaller batches.", results: [], duplicateCount, submissionId: Date.now() };
+  if (addresses.length > MAX_BULK_INVITES) return { status: "error", message: `Send up to ${MAX_BULK_INVITES} unique invitations at a time. No invitations were sent; split the list into smaller batches.`, results: [], duplicateCount, submissionId: Date.now() };
 
   const validEmail = (value: string) => value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   const results: BulkInviteResult[] = addresses.map((email) => validEmail(email)
