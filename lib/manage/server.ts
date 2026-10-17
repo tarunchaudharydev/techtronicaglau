@@ -34,8 +34,19 @@ export function safeSlug(value: string | null): value is string {
 
 export function parsedDate(value: string | null) {
   if (!value || value.length > 40) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.valueOf()) ? null : date.toISOString();
+  // datetime-local values have no timezone. Event forms are explicitly India-local,
+  // so attach IST rather than letting the server's timezone silently decide.
+  const localMatch = /^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})(?::(\\d{2}))?$/.exec(value);
+  const date = localMatch
+    ? new Date(`${value.length === 16 ? `${value}:00` : value}+05:30`)
+    : new Date(value);
+  if (Number.isNaN(date.valueOf())) return null;
+  if (localMatch) {
+    const [, year, month, day, hour, minute, second = "00"] = localMatch;
+    const check = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second)));
+    if (check.getUTCFullYear() !== Number(year) || check.getUTCMonth() !== Number(month) - 1 || check.getUTCDate() !== Number(day) || check.getUTCHours() !== Number(hour) || check.getUTCMinutes() !== Number(minute) || check.getUTCSeconds() !== Number(second)) return null;
+  }
+  return date.toISOString();
 }
 
 export function redirectResult(path: string, result: "saved" | "error" | "invalid" | "conflict" | "invited" | "member_added" | "member_exists" | "member_not_found" | "member_not_verified" | "scope_mismatch" | "role_exists" | "admin_required") {
