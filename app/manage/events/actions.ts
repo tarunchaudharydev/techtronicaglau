@@ -20,6 +20,10 @@ function readEvent(formData: FormData) {
   const registrationClosesAt = closesRaw ? parsedDate(closesRaw) : null;
   const capacityText = formString(formData, "capacity", 8) || "";
   const capacity = capacityText ? Number(capacityText) : null;
+  const minTeamText = formString(formData, "min_team_members", 2) || "1";
+  const maxTeamText = formString(formData, "max_team_members", 2) || "5";
+  const minTeamMembers = Number(minTeamText);
+  const maxTeamMembers = Number(maxTeamText);
   const status = formString(formData, "status", 20) || "draft";
   const image = formString(formData, "uploaded_asset_url", 2048) || formString(formData, "cover_image_url", 2048) || null;
   const imageOk = !image || validHttpUrl(image);
@@ -37,13 +41,15 @@ function readEvent(formData: FormData) {
     registration_opens_at: registrationOpensAt,
     registration_closes_at: registrationClosesAt,
     capacity,
+    min_team_members: minTeamMembers,
+    max_team_members: maxTeamMembers,
     cover_image_url: image,
     status,
     is_public: isPublic,
   };
   const datesValid = (!endsRaw || endsAt !== null) && (!opensRaw || registrationOpensAt !== null) && (!closesRaw || registrationClosesAt !== null);
   const rangesValid = (!endsAt || !startsAt || new Date(endsAt) >= new Date(startsAt)) && (!registrationClosesAt || !registrationOpensAt || new Date(registrationClosesAt) >= new Date(registrationOpensAt));
-  const valid = Boolean(title && title.length >= 3 && safeSlug(slug) && startsAt && datesValid && rangesValid && (capacity === null || (Number.isInteger(capacity) && capacity > 0 && capacity <= 100000)) && statuses.has(status) && (!clubId || validId(clubId)) && imageOk);
+  const valid = Boolean(title && title.length >= 3 && safeSlug(slug) && startsAt && datesValid && rangesValid && (capacity === null || (Number.isInteger(capacity) && capacity > 0 && capacity <= 100000)) && Number.isInteger(minTeamMembers) && Number.isInteger(maxTeamMembers) && minTeamMembers >= 1 && maxTeamMembers <= 50 && minTeamMembers <= maxTeamMembers && statuses.has(status) && (!clubId || validId(clubId)) && imageOk);
   return { payload, valid };
 }
 
