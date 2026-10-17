@@ -198,7 +198,7 @@ export const getPublicEvents = unstable_cache(
     const { data, error } = await supabase
       .from("events")
       .select(
-        "id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug), is_public",
+        "id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, min_team_members, max_team_members, cover_image_url, club_id, clubs(name, slug), is_public",
       )
       .eq("is_public", true)
       .in("status", ["published", "completed"])
@@ -225,7 +225,7 @@ export async function getVisibleEvents() {
   if (!auth.user) return getPublicEvents();
   const { data, error } = await supabase
     .from("events")
-    .select("id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug), is_public")
+    .select("id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, min_team_members, max_team_members, cover_image_url, club_id, clubs(name, slug), is_public")
     .in("status", ["published", "completed"])
     .order("starts_at", { ascending: false })
     .order("id", { ascending: false })
@@ -244,7 +244,7 @@ export async function getPublicEventBySlug(slug: string) {
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug)",
+      "id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, min_team_members, max_team_members, cover_image_url, club_id, clubs(name, slug)",
     )
     .eq("is_public", true)
     .eq("slug", slug)
@@ -266,7 +266,7 @@ export async function getVisibleEventBySlug(slug: string) {
   if (!auth.user) return getPublicEventBySlug(slug);
   const { data, error } = await supabase
     .from("events")
-    .select("id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, cover_image_url, club_id, clubs(name, slug), is_public")
+    .select("id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, min_team_members, max_team_members, cover_image_url, club_id, clubs(name, slug), is_public")
     .eq("slug", slug)
     .in("status", ["published", "completed"])
     .maybeSingle();

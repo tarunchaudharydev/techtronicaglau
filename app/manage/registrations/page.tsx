@@ -13,6 +13,7 @@ const registrationColumns: AdminDataColumn[] = [
   { key: "event", label: "Event" },
   { key: "status", label: "Status" },
   { key: "registered", label: "Registered" },
+  { key: "team", label: "Team members" },
   { key: "notes", label: "Notes", defaultVisible: false },
 ];
 
@@ -22,7 +23,7 @@ export default async function ManageRegistrationsPage({ searchParams }: { search
   const { supabase } = await requireManager("registrations.manage");
   let query = supabase
     .from("event_registrations")
-    .select("id, event_id, user_id, status, registered_at, notes, events!event_registrations_event_id_fkey!inner(title), profiles!event_registrations_user_id_fkey!inner(full_name)")
+    .select("id, event_id, user_id, status, registered_at, notes, events!event_registrations_event_id_fkey!inner(title), profiles!event_registrations_user_id_fkey!inner(full_name), event_registration_members(full_name,email,year_of_study,branch,section,member_order)")
     .order("registered_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(pageSize + 1);
@@ -39,6 +40,8 @@ export default async function ManageRegistrationsPage({ searchParams }: { search
     const eventTitle = event?.title || "Event";
     const status = row.status.replaceAll("_", " ");
     const registered = formatDate(row.registered_at);
+    const team = [...(row.event_registration_members ?? [])].sort((a, b) => a.member_order - b.member_order);
+    const teamSummary = team.length ? team.map((person) => person.full_name).join(", ") : "No team details (legacy registration)";
     const canUpdate = row.status === "registered" || row.status === "waitlisted";
     const action = canUpdate ? <form action={updateRegistrationStatus} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="id" value={row.id} />
@@ -51,7 +54,7 @@ export default async function ManageRegistrationsPage({ searchParams }: { search
       </label>
       <PendingSubmitButton type="submit" className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Save</PendingSubmitButton>
     </form> : null;
-    const values = { member, event: eventTitle, status, registered, notes: row.notes ?? "—" };
+    const values = { member, event: eventTitle, status, registered, team: teamSummary, notes: row.notes ?? "—" };
     return {
       id: row.id,
       searchText: Object.values(values).join(" "),
@@ -59,7 +62,7 @@ export default async function ManageRegistrationsPage({ searchParams }: { search
       cells: values,
       actions: action,
       card: <article className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center dark:border-slate-800 dark:bg-slate-900">
-        <div><h2 className="font-semibold">{member}</h2><p className="mt-1 text-sm text-muted">{eventTitle} · <span className="capitalize">{status}</span></p><p className="mt-1 text-xs text-muted">Registered {registered}</p>{row.notes && <p className="mt-2 text-sm">{row.notes}</p>}</div>
+        <div><h2 className="font-semibold">{member}</h2><p className="mt-1 text-sm text-muted">{eventTitle} · <span className="capitalize">{status}</span></p><p className="mt-1 text-xs text-muted">Registered {registered}</p>{team.length > 0 && <section className="mt-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-950"><h3 className="text-sm font-semibold">Team details ({team.length})</h3><ul className="mt-2 grid gap-2 text-sm sm:grid-cols-2">{team.map((person) => <li key={person.member_order} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900"><strong>{person.member_order}. {person.full_name}</strong><div className="text-muted">{person.email} · Year {person.year_of_study} · {person.branch} · Section {person.section}</div></li>)}</ul></section>}{row.notes && <p className="mt-2 text-sm">{row.notes}</p>}</div>
         {action}
       </article>,
     };
