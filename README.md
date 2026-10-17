@@ -1,72 +1,79 @@
-# Techtronica GLAU Society Website
+# Techtronica at GLA University
 
-The Next.js website for Techtronica Society at GLA University. This repository contains the public website, member account flows, and role-aware society management area. Supabase Auth and Postgres provide authentication and the content/permissions API.
+[![MIT License](https://img.shields.io/badge/license-MIT-4c9f70.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](package.json)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/backend-Supabase-3ecf8e.svg)](https://supabase.com/)
 
-[Production website](https://techtronicaglau.vercel.app/) · [Frontend repository](https://github.com/tarunchaudharydev/techtronicaglau) · [Backend repository](https://github.com/tarunchaudharydev/techtronica-backend) · [Supabase project](https://supabase.com/dashboard/project/erivblclxwtonwysgdle)
+The official website and member portal for Techtronica, the Electronics and Communication Engineering society at GLA University, Mathura. It brings the society's clubs, events, projects, team, alumni, and member services into one responsive application.
 
-## What the application supports
+> **Project status:** Early-stage, pre-1.0 software. The website is deployed, but this repository has no published stable release or compatibility promise. See [stability and releases](docs/open-source.md).
 
-- Public pages for the society, clubs, events, team, alumni, projects, academics, and resources.
-- Email/password sign-up, sign-in, email confirmation, password recovery, and profile management.
-- Membership applications and member access for private society content.
-- Database-backed roles, permissions, club/society scopes, positions, and membership review.
-- Persistent public contact forms with a private, scope-aware manager inbox.
-- Admin tools for clubs, positions, events, team and alumni directories, roles, invitations, member assignments, and event registrations.
-- Public/private visibility for events and team members. New records default to public. Supabase RLS filters private rows for active members and authorized managers.
-- A database-backed content manager for homepage/about content, FAQs, resources, gallery, projects, research, patents, and policies.
-- Supabase Storage buckets for public site media and private member media, with one image upload field per record form.
-- Server-rendered Supabase requests that carry the current visitor's cookies and JWT.
+[Visit the website](https://techtronicaglau.vercel.app/) · [Report a bug or request a feature](https://github.com/tarunchaudharydev/techtronicaglau/issues) · [Read the documentation](docs/README.md)
 
-The five seeded clubs are Technovation, Code-E-Phobia, Unnati, Gizmo, and Mindblogger.
+## Contents
 
-## Architecture
+- [What it includes](#what-it-includes)
+- [Architecture and security](#architecture-and-security)
+- [Technology](#technology)
+- [Run locally](#run-locally)
+- [Database and backend](#database-and-backend)
+- [Deploy](#deploy)
+- [Contribute](#contribute)
+- [Stability and support](#stability-and-support)
+- [License and third-party materials](#license-and-third-party-materials)
+
+## What it includes
+
+- Public pages for the society, five clubs, events, team, alumni, projects, research, gallery, and learning resources.
+- Email and password sign-up, sign-in, email verification, password recovery, and profile settings.
+- Club applications and member-only access to private events and team profiles.
+- Society and club roles, positions, scoped permissions, and membership review.
+- Admin workspaces for managing clubs, events, registrations, team members, alumni, roles, positions, memberships, invitations, website content, and contact enquiries.
+- Public/private visibility controls for events and team records. New records default to public.
+- Database-backed content and Supabase Storage for website and member media.
+- Installable Progressive Web App behavior using the responsive website.
+
+The seeded clubs are Technovation, Code-E-Phobia, Unnati, Gizmo, and Mindblogger.
+
+## Architecture and security
 
 ~~~mermaid
 flowchart LR
-  Visitor[Public visitor] --> Web[Next.js website]
-  Member[Society member] -->|Auth session cookie| Web
-  Web -->|publishable key + session JWT| Auth[Supabase Auth]
-  Web -->|scoped query or server action| API[Supabase Data API]
-  API --> RLS[Postgres RLS and permission functions]
-  RLS --> DB[(Society database)]
-  Web -->|admin invitation only| Invite[Supabase Edge Function]
+  Visitor[Visitor or member] --> Web[Next.js application]
+  Web -->|SSR session and publishable key| Auth[Supabase Auth]
+  Web -->|User-scoped requests| API[Supabase Data API]
+  Auth --> API
+  API --> RLS[Postgres RLS and permission checks]
+  RLS --> DB[(Supabase database)]
+  Web -->|Admin invitation flow| Invite[Supabase Edge Function]
   Invite --> Auth
 ~~~
 
-The browser publishable key is public by design. Access is enforced by Postgres policies and database functions, not just by hiding UI controls. The website never uses a service-role key. Read [the security guide](docs/security-and-access-control.md) before changing permissions or access policies.
+The frontend uses cookie-aware Supabase clients. The publishable key is intentionally public; database row-level security (RLS) and permission checks enforce access. The frontend does not use a service-role key. UI hiding is not an authorization boundary.
 
-### Public and private records
+Read [Architecture](docs/architecture.md), [Authentication and permissions](docs/authentication-and-permissions.md), and [Security and access control](docs/security-and-access-control.md) before changing data access or roles. Database schema, migrations, RLS policies, Storage policies, and Edge Functions live in the [backend repository](https://github.com/tarunchaudharydev/techtronica-backend).
 
-Events and team profiles have an is_public column that defaults to true. Public pages can read active public records. Authenticated people with an active society-wide or club membership can read private records. Relevant managers can read/manage records in their permitted scope. Cached public content never includes a member-specific private response.
+## Technology
 
-### Role model
-
-Roles group permissions and are assigned to society or club scopes. Active memberships can inherit the role of an assigned position. Managers only see and change rows allowed by the database for their scope.
-
-| Capability | Management area |
+| Area | Stack |
 | --- | --- |
-| admin.manage | Roles, permissions, invitations, and direct role assignments |
-| clubs.manage | Club information and activation |
-| positions.manage | Society and club positions |
-| members.manage | Membership application review |
-| events.manage | Event creation, editing, publication, and visibility |
-| registrations.manage | Registration status and attendance |
-| team.manage | Team directory |
-| alumni.manage | Alumni directory |
-| contacts.manage | Society and club contact inbox |
-| content.manage | Homepage and other editable website content |
+| Web | Next.js App Router, React, TypeScript |
+| Styling | Tailwind CSS and project component styles |
+| Auth and data | Supabase Auth, Postgres, RLS, Storage |
+| Hosting | Vercel |
 
-A Society Admin can access all management areas. New permissions are added through a reviewed database migration; do not grant a permission from user-editable Auth metadata.
+The exact dependency versions are defined in [package.json](package.json) and [package-lock.json](package-lock.json).
 
-## Quick start
+## Run locally
 
 ### Requirements
 
 - Node.js 20 or later
 - npm
-- Access to the Supabase project for a working local environment
+- Access to a configured Supabase project for authenticated and data-backed features
 
-### Install and configure
+### Setup
 
 ~~~sh
 git clone https://github.com/tarunchaudharydev/techtronicaglau.git
@@ -75,101 +82,60 @@ npm ci
 cp .env.example .env.local
 ~~~
 
-Set the public Supabase URL and publishable key in .env.local. Set NEXT_PUBLIC_SITE_URL to the local or deployed origin used for Auth redirects.
+Set these values in `.env.local`:
 
 ~~~dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://erivblclxwtonwysgdle.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ~~~
 
-Never put a Supabase secret or service-role key in a NEXT_PUBLIC_ variable, commit .env.local, or share it in issue text.
+The example file points to the society's Supabase project. Use credentials only for an environment you are authorized to access. Never commit `.env.local`, place a secret/service-role key in a `NEXT_PUBLIC_` variable, or paste credentials into an issue or pull request.
 
-### Run locally
+### Start the development server
 
-~~~
+~~~sh
 npm run dev
 ~~~
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Useful commands:
+### Available checks
 
-~~~
+~~~sh
 npm run lint
 npx tsc --noEmit
 npm run build
-npm start
 ~~~
 
-## Repository map
+There is currently no `npm test` script. For changes that affect authorization, database behavior, or user flows, include a clear manual verification plan in the pull request.
 
-~~~
-app/
-  (public)/       public about, alumni, and contact pages
-  account/        signed-in profile and membership view
-  auth/           sign-in, sign-up, confirmation, and recovery flows
-  clubs/          club pages and membership applications
-  events/         event list, details, registration, and cancellation
-  manage/         permission-scoped society management pages/actions
-components/       shared and feature-specific interface components
-docs/             architecture, security, setup, and operations guides
-lib/auth/         permission and session helpers
-lib/data/         typed content queries and mappers
-lib/manage/       server-side manager gates and validation helpers
-lib/supabase/     browser/server Supabase clients and cookie proxy
-proxy.ts           refreshes the Supabase session for requests
-types/database.ts generated Supabase schema types
-types/event.ts    application event display type
-~~~
+## Database and backend
 
-## Authentication setup
+The frontend's Supabase schema types are maintained in [types/database.ts](types/database.ts). Make schema changes in the backend repository as reviewed, forward-only migrations; then regenerate and review frontend types against the applied migration.
 
-1. In Supabase Auth, configure the site URL and allowed redirect URLs for local and production origins.
-2. Configure email confirmation, password recovery, sender, and templates.
-3. Have the intended administrator create and confirm an account.
-4. Assign the first Society Admin using the secure bootstrap procedure in the backend repository.
-5. Add the Vercel environment variables and deploy.
+Read [backend setup and database documentation](https://github.com/tarunchaudharydev/techtronica-backend) before applying migrations or changing RLS. A frontend deployment does not apply database migrations.
 
-Sign-up does not grant management access. The database creates the user's profile rows; role grants remain manager-controlled. See [Auth and permissions](docs/authentication-and-permissions.md) and [production operations](docs/operations.md).
+For the first local manager account, follow the protected bootstrap procedure in the backend repository. Public sign-up creates a normal account and does not grant society membership or management permissions.
 
-## Management pages
+## Deploy
 
-Open /manage after signing in with an assigned management permission. The dashboard only shows areas allowed by the current permission set. Database RLS independently checks every load and mutation.
+The production site is hosted on Vercel. Deployment requires the Supabase URL, publishable key, and correct site URL to be configured for the target environment. Supabase Auth must allow the matching callback and password-reset URLs.
 
-- Memberships: review club requests. A Society Admin can add an existing verified email account as a society member; this does not assign a role.
-- Clubs: edit public club details; deactivate a club to preserve membership history.
-- Positions: create, update, deactivate, or remove position definitions, subject to role and assignment constraints.
-- Events: set status, registration windows, capacity, club scope, and public/private visibility.
-- Registrations: view scoped sign-ups, cancel active registrations, and record attendance or no-shows.
-- Team and alumni: maintain active profiles and their public/private visibility where supported.
-- Roles and access: manage role capabilities, invitations, and user role assignments as a Society Admin.
-- Website content: edit the public pages and upload one image per record form.
+Use the checklist in [Operations and deployment](docs/operations.md). Preview deployments are not production releases. Verify public/private visibility and representative role scopes before promoting changes.
 
-Avoid deleting a row when deactivation preserves useful history. Event deletion also removes its registration records according to the database foreign-key behavior.
+## Contribute
 
-## Documentation
+Issues and pull requests are welcome. Start with the [contribution guide](CONTRIBUTING.md), read the [documentation index](docs/README.md), and check existing issues before opening a new one.
 
-- [Architecture and data model](docs/architecture.md)
-- [Authentication and permissions](docs/authentication-and-permissions.md)
-- [Content management and visibility](docs/content-management.md)
-- [Storage and image workflow](docs/storage-and-assets.md)
-- [Install Techtronica as an app](docs/installable-app.md)
-- [Security and access control](docs/security-and-access-control.md)
-- [Operations and deployment](docs/operations.md)
-- [Contributing and review](CONTRIBUTING.md)
-- [Supabase schema, migrations, and backend runbooks](https://github.com/tarunchaudharydev/techtronica-backend)
+Pull requests should describe the user-visible change, database or environment requirements, checks performed, and any screenshots needed to review UI changes. Keep fixes focused and avoid including real member records or credentials.
 
-## Operational notes
+## Stability and support
 
-- Website content, club details, events, team profiles, and alumni records come from Supabase. Keep authored content edits in the database manager workflow.
-- If Supabase environment variables are absent, data-backed features show a connection state and do not grant access.
-- Public cache helpers contain only anonymous public reads; member-specific requests remain request-scoped.
-- The repository has no production secrets. Vercel/Supabase dashboards own environment configuration.
-- Update generated database types after schema migrations and review them with the migration.
+The package version is currently `0.1.0`; it is application metadata, not a published release or a promise of API, schema, or deployment compatibility. The project does not currently publish a support window, service-level agreement, or bug-bounty program. Features and database integrations may change before a 1.0 release.
 
-## License
+See [release and support policy](docs/open-source.md) and [security reporting](SECURITY.md). Security vulnerabilities should not be reported in public issues.
 
-The original frontend source code and documentation in this repository are licensed under the [MIT License](LICENSE).
+## License and third-party materials
 
-Techtronica and GLA University names and logos, society/member data, photographs, and other branded media are not covered by that license. Third-party packages and assets remain under their respective licenses. Do not reuse those materials without permission from their respective rights holders.
+Original frontend source code and documentation are available under the [MIT License](LICENSE). The license does not grant rights to Techtronica or GLA University names, logos, photographs, member data, or other third-party materials. Review [NOTICE.md](NOTICE.md) before reusing visual assets or society content. Dependencies and other third-party files remain under their own licenses.
