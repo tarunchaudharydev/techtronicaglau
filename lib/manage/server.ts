@@ -36,7 +36,7 @@ export function parsedDate(value: string | null) {
   if (!value || value.length > 40) return null;
   // datetime-local values have no timezone. Event forms are explicitly India-local,
   // so attach IST rather than letting the server's timezone silently decide.
-  const localMatch = /^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})(?::(\\d{2}))?$/.exec(value);
+  const localMatch = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value);
   const date = localMatch
     ? new Date(`${value.length === 16 ? `${value}:00` : value}+05:30`)
     : new Date(value);
