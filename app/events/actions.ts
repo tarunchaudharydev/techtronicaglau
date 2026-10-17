@@ -29,6 +29,8 @@ export async function registerForEvent(formData: FormData) {
     section: fieldValue(sections[index], 50),
   }));
   if (members.some((member) => !member.full_name || !member.email || !member.year_of_study || !member.branch || !member.section)) redirect(`${destination}?registration=team_size`);
+  const uniqueEmails = new Set(members.map((member) => member.email.toLowerCase()));
+  if (uniqueEmails.size !== members.length) redirect(`${destination}?registration=team_size`);
   const { data, error } = await supabase.rpc("register_event_with_team", { p_event_id: eventId, p_members: members });
   revalidatePath(destination);
   revalidatePath("/account");
