@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Database } from "@/types/database";
 
 type AccountSession = Database["public"]["Functions"]["list_my_auth_sessions"]["Returns"][number];
