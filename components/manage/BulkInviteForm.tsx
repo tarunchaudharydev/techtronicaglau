@@ -38,7 +38,7 @@ export default function BulkInviteForm() {
         />
       </label>
       <p id="bulk-invite-help" className="mt-2 text-xs leading-5 text-muted">
-        Add up to 50 email addresses, separated by new lines, commas, or semicolons. Duplicate addresses are sent once. Each person gets a private setup link and chooses their own password; passwords are never shown to administrators.
+        Add up to 50 email addresses, separated by new lines, commas, or semicolons. Duplicate addresses are sent once. Each person receives a private setup link and creates their own password; passwords are never sent to or shown to administrators. Delivery depends on your Supabase email provider and its sending limits.
       </p>
       <button
         className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
