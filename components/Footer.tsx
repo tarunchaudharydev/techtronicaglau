@@ -118,6 +118,11 @@ function Footer() {
                         Refund Policy
                       </Link>
                     </li>
+                    <li>
+                      <button type="button" onClick={() => window.dispatchEvent(new Event("techtronica:cookie-settings"))} className="footer-link text-left">
+                        Cookie settings
+                      </button>
+                    </li>
                   </ul>
                 </div>
 
