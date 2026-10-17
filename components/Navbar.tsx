@@ -148,7 +148,7 @@ export default function Navbar() {
               ? <Image src="/logo.png" alt="Techtronica Society" fill priority sizes="160px" className="object-contain object-left" />
               : <span aria-hidden="true" className="grid size-full place-items-center text-sm font-black text-sky-700">T</span>}
           </Link>
-          {sidebarExpanded && <button type="button" onClick={() => setSidebarPinned(false)} aria-label="Collapse navigation sidebar" className="grid size-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><ChevronDown className="size-4 -rotate-90" /></button>}
+          {sidebarExpanded && <button type="button" onClick={() => { setSidebarPinned(false); setSidebarHovered(false); }} aria-label="Collapse navigation sidebar" className="grid size-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><ChevronDown className="size-4 -rotate-90" /></button>}
         </div>
         {sidebarExpanded && <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.16em] text-slate-400">Explore</p>}
         <nav aria-label="Main navigation" className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden">
