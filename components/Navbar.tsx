@@ -102,17 +102,45 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!menuOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const panel = drawerRef.current;
+    const focusable = () => Array.from(
+      panel?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? [],
+    ).filter((element) => element.offsetParent !== null);
+    focusable()[0]?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMenuOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const elements = focusable();
+      if (!elements.length) {
+        event.preventDefault();
+        return;
+      }
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    const closeOnOutsideClick = (event: MouseEvent) => {
+    const closeOnOutsideClick = (event: PointerEvent) => {
       if (drawerRef.current && !drawerRef.current.contains(event.target as Node)) setMenuOpen(false);
     };
-    document.addEventListener("keydown", closeOnEscape);
-    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", closeOnOutsideClick);
     return () => {
-      document.removeEventListener("keydown", closeOnEscape);
-      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
       triggerRef.current?.focus();
     };
   }, [menuOpen]);
