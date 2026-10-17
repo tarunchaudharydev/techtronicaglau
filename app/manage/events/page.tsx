@@ -62,7 +62,7 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
             <Field label="Minimum team members (including you)"><input name="min_team_members" type="number" required min="1" max="50" defaultValue={event.min_team_members} className={inputClass} /></Field>
             <Field label="Maximum team members"><input name="max_team_members" type="number" required min="1" max="50" defaultValue={event.max_team_members} className={inputClass} /></Field>
             <Field label="Registration opens (India time · IST)"><input name="registration_opens_at" type="datetime-local" defaultValue={toDateTimeLocal(event.registration_opens_at)} className={inputClass} /></Field>
-            <Field label="Registration closes (India time · IST)"><input name="registration_closes_at" type="datetime-local" defaultValue={toDateTimeLocal(event.registration_closes_at)} className={inputClass} /></Field>
+            <div><Field label="Registration closes (India time · IST)"><input name="registration_closes_at" type="datetime-local" defaultValue={toDateTimeLocal(event.registration_closes_at)} className={inputClass} /></Field><p className="mt-1 text-xs text-muted">For a final registration date, choose 11:59 PM to keep the full day open.</p></div>
             <Field label="Status"><select name="status" defaultValue={event.status} className={inputClass}><option value="draft">Draft</option><option value="published">Published</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select></Field>
             <Field label="Cover image URL"><input name="cover_image_url" type="url" maxLength={2048} defaultValue={event.cover_image_url ?? ""} className={inputClass} /></Field>
             <div><StorageImageUpload name="uploaded_asset_url" folder="events" folderScopeField="club_id" folderScopeOptions={Object.fromEntries(clubs.map((club) => [club.id, club.slug]))} label="Replace event image with one upload" /></div>
@@ -97,7 +97,7 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
         <Field label="Minimum team members (including you)"><input name="min_team_members" type="number" required min="1" max="50" defaultValue="1" className={inputClass} /></Field>
         <Field label="Maximum team members"><input name="max_team_members" type="number" required min="1" max="50" defaultValue="5" className={inputClass} /></Field>
         <Field label="Registration opens (India time · IST)"><input name="registration_opens_at" type="datetime-local" className={inputClass} /></Field>
-        <Field label="Registration closes (India time · IST)"><input name="registration_closes_at" type="datetime-local" className={inputClass} /></Field>
+        <div><Field label="Registration closes (India time · IST)"><input name="registration_closes_at" type="datetime-local" className={inputClass} /></Field><p className="mt-1 text-xs text-muted">For a final registration date, choose 11:59 PM to keep the full day open.</p></div>
         <Field label="Status"><select name="status" defaultValue="draft" className={inputClass}><option value="draft">Draft</option><option value="published">Published</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select></Field>
         <Field label="Cover image URL"><input name="cover_image_url" type="url" maxLength={2048} className={inputClass} /></Field>
         <div><StorageImageUpload name="uploaded_asset_url" folder="events" folderScopeField="club_id" folderScopeOptions={Object.fromEntries(clubs.map((club) => [club.id, club.slug]))} label="Upload event image" /></div>
@@ -121,5 +121,5 @@ function toDateTimeLocal(value: string | null) {
   return parts.replace(" ", "T");
 }
 const inputClass = "mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-950 dark:text-white";
-function formatDate(value: string | null) { if (!value) return "—"; const date = new Date(value); return Number.isNaN(date.valueOf()) ? "Date unavailable" : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(date); }
+function formatDate(value: string | null) { if (!value) return "—"; const date = new Date(value); return Number.isNaN(date.valueOf()) ? "Date unavailable" : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(date); }
 const buttonClass = "rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2";
