@@ -58,7 +58,7 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
             <Field label="Venue"><input name="venue" maxLength={240} defaultValue={event.venue ?? ""} className={inputClass} /></Field>
             <Field label="Starts at (India time · IST)"><input name="starts_at" type="datetime-local" required defaultValue={toDateTimeLocal(event.starts_at)} className={inputClass} /></Field>
             <Field label="Ends at (India time · IST)"><input name="ends_at" type="datetime-local" defaultValue={toDateTimeLocal(event.ends_at)} className={inputClass} /></Field>
-            <Field label="Capacity (blank means unlimited)"><input name="capacity" type="number" min="1" max="100000" defaultValue={event.capacity ?? ""} className={inputClass} /></Field>
+            <Field label="Maximum registered teams (blank means unlimited)"><input name="capacity" type="number" min="1" max="100000" defaultValue={event.capacity ?? ""} className={inputClass} /></Field>
             <Field label="Minimum team members (including you)"><input name="min_team_members" type="number" required min="1" max="50" defaultValue={event.min_team_members} className={inputClass} /></Field>
             <Field label="Maximum team members"><input name="max_team_members" type="number" required min="1" max="50" defaultValue={event.max_team_members} className={inputClass} /></Field>
             <Field label="Registration opens (India time · IST)"><input name="registration_opens_at" type="datetime-local" defaultValue={toDateTimeLocal(event.registration_opens_at)} className={inputClass} /></Field>
@@ -93,7 +93,7 @@ export default async function ManageEventsPage({ searchParams }: { searchParams:
         <Field label="Venue"><input name="venue" maxLength={240} className={inputClass} /></Field>
         <Field label="Starts at (India time · IST)"><input name="starts_at" type="datetime-local" required className={inputClass} /></Field>
         <Field label="Ends at (India time · IST)"><input name="ends_at" type="datetime-local" className={inputClass} /></Field>
-        <Field label="Capacity (blank means unlimited)"><input name="capacity" type="number" min="1" max="100000" className={inputClass} /></Field>
+        <Field label="Maximum registered teams (blank means unlimited)"><input name="capacity" type="number" min="1" max="100000" className={inputClass} /></Field>
         <Field label="Minimum team members (including you)"><input name="min_team_members" type="number" required min="1" max="50" defaultValue="1" className={inputClass} /></Field>
         <Field label="Maximum team members"><input name="max_team_members" type="number" required min="1" max="50" defaultValue="5" className={inputClass} /></Field>
         <Field label="Registration opens (India time · IST)"><input name="registration_opens_at" type="datetime-local" className={inputClass} /></Field>
