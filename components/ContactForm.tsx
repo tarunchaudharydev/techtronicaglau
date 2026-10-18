@@ -73,13 +73,9 @@ export default function ContactSection() {
         body: JSON.stringify(form),
       });
 
-      const result = await res.json().catch(() => ({}));
+      await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(
-          typeof result.error === "string"
-            ? result.error
-            : techtronicaErrorMessage.contactSubmit,
-        );
+        throw new Error(techtronicaErrorMessage.contactSubmit);
       }
 
       setSuccess(true);
@@ -87,7 +83,7 @@ export default function ContactSection() {
     } catch (submitError) {
       setError(
         submitError instanceof Error
-          ? submitError.message
+          ? techtronicaErrorMessage.contactSubmit
           : techtronicaErrorMessage.generic,
       );
     } finally {
