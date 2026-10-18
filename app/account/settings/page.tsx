@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default async function AccountSettingsPage() {
   const supabase = await createClient();
-  if (!supabase) return <Unavailable message="Connect the Supabase project to manage account settings." />;
+  if (!supabase) return <Unavailable message="Database is not available." />;
 
   let user: User | null = null;
   try {
