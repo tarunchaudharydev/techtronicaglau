@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { safeRedirectPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
+import {
+  techtronicaAuthMessage,
+  techtronicaErrorMessage,
+} from "@/lib/techtronica/messages";
 
 export type AuthActionState = {
   status: "idle" | "success" | "error";
@@ -40,21 +44,21 @@ export async function signInAction(
   );
 
   if (!emailPattern.test(email) || !password) {
-    return invalidInput("Enter a valid email address and password.");
+    return invalidInput(techtronicaAuthMessage.signInInput);
   }
 
   const supabase = await createClient();
   if (!supabase) {
-    return invalidInput("Account sign-in is temporarily unavailable. Please try again later.");
+    return invalidInput(techtronicaErrorMessage.signInUnavailable);
   }
 
   try {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      return invalidInput("We could not sign you in with those details. Check them and try again.");
+      return invalidInput(techtronicaErrorMessage.signInInvalid);
     }
   } catch {
-    return invalidInput("Sign-in is temporarily unavailable. Please try again.");
+    return invalidInput(techtronicaErrorMessage.signInUnavailable);
   }
 
   revalidatePath("/", "layout");
@@ -72,22 +76,22 @@ export async function signUpAction(
   const confirmPassword = readPassword(formData, "confirm_password");
 
   if (fullName.length < 2 || fullName.length > 120) {
-    return invalidInput("Enter your full name (2–120 characters).");
+    return invalidInput(techtronicaAuthMessage.signUpName);
   }
   if (!emailPattern.test(email) || email.length > 254) {
-    return invalidInput("Enter a valid email address.");
+    return invalidInput(techtronicaAuthMessage.emailInvalid);
   }
   const passwordBytes = new TextEncoder().encode(password).length;
   if (password.length < passwordMinLength || passwordBytes > passwordMaxLength) {
-    return invalidInput(`Use a password between ${passwordMinLength} and ${passwordMaxLength} characters.`);
+    return invalidInput(techtronicaErrorMessage.passwordLength(passwordMinLength, passwordMaxLength));
   }
   if (password !== confirmPassword) {
-    return invalidInput("The passwords do not match.");
+    return invalidInput(techtronicaErrorMessage.passwordMismatch);
   }
 
   const supabase = await createClient();
   if (!supabase) {
-    return invalidInput("Account registration is temporarily unavailable. Please try again later.");
+    return invalidInput(techtronicaErrorMessage.signUpUnavailable);
   }
 
   let signupFailed = false;
@@ -108,13 +112,13 @@ export async function signUpAction(
   if (signupFailed) {
     return {
       status: "success",
-      message: "If this address can be registered, you will receive an email with the next step.",
+      message: techtronicaAuthMessage.registrationPrivate,
     };
   }
 
   return {
     status: "success",
-    message: "Check your inbox for a verification link. You can sign in after confirming your email.",
+    message: techtronicaAuthMessage.verificationSent,
   };
 }
 
@@ -124,12 +128,12 @@ export async function requestPasswordResetAction(
 ): Promise<AuthActionState> {
   const email = readEmail(formData);
   if (!emailPattern.test(email) || email.length > 254) {
-    return invalidInput("Enter a valid email address.");
+    return invalidInput(techtronicaAuthMessage.emailInvalid);
   }
 
   const supabase = await createClient();
   if (!supabase) {
-    return invalidInput("Password recovery is temporarily unavailable. Please try again later.");
+    return invalidInput(techtronicaErrorMessage.recoveryUnavailable);
   }
 
   try {
@@ -142,7 +146,7 @@ export async function requestPasswordResetAction(
 
   return {
     status: "success",
-    message: "If an account uses that address, you will receive a password reset link.",
+    message: techtronicaAuthMessage.resetSent,
   };
 }
 
@@ -155,15 +159,15 @@ export async function updatePasswordAction(
 
   const passwordBytes = new TextEncoder().encode(password).length;
   if (password.length < passwordMinLength || passwordBytes > passwordMaxLength) {
-    return invalidInput(`Use a password between ${passwordMinLength} and ${passwordMaxLength} characters.`);
+    return invalidInput(techtronicaErrorMessage.passwordLength(passwordMinLength, passwordMaxLength));
   }
   if (password !== confirmPassword) {
-    return invalidInput("The passwords do not match.");
+    return invalidInput(techtronicaErrorMessage.passwordMismatch);
   }
 
   const supabase = await createClient();
   if (!supabase) {
-    return invalidInput("Password updates are temporarily unavailable. Please try again later.");
+    return invalidInput(techtronicaErrorMessage.passwordUpdateUnavailable);
   }
 
   let hasUser = false;
@@ -171,19 +175,19 @@ export async function updatePasswordAction(
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     hasUser = Boolean(user && !userError);
   } catch {
-    return invalidInput("We could not verify the reset link. Request a new one and try again.");
+    return invalidInput(techtronicaErrorMessage.resetLinkUnverified);
   }
   if (!hasUser) {
-    return invalidInput("This reset link is no longer valid. Request a new one and try again.");
+    return invalidInput(techtronicaErrorMessage.resetLinkInvalid);
   }
 
   try {
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
-      return invalidInput("We could not update your password. Request a new reset link and try again.");
+      return invalidInput(techtronicaErrorMessage.passwordUpdateFailed);
     }
   } catch {
-    return invalidInput("We could not update your password. Request a new reset link and try again.");
+    return invalidInput(techtronicaErrorMessage.passwordUpdateFailed);
   }
 
   revalidatePath("/", "layout");

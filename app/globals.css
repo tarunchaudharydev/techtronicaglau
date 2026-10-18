@@ -1,36 +1,100 @@
-
 @import "tailwindcss";
 
-
 @custom-variant dark (&:where(.dark, .dark *));
-
 @import "swiper/css";
 @import "swiper/css/navigation";
 @import "swiper/css/pagination";
 @import "swiper/css/effect-coverflow";
 
-/* Light Mode */
+/*
+ * Techtronica design tokens.
+ * Update the values here to change the site's shared palette, surfaces,
+ * typography, spacing, corners, shadows, and motion consistently.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #111827;
-  --muted: #64748b;
-  --card: #ffffff;
-  --border: #e2e8f0;
+  color-scheme: light;
+
+  --techtronica-color-background: #ffffff;
+  --techtronica-color-foreground: #111827;
+  --techtronica-color-muted: #64748b;
+  --techtronica-color-surface: #ffffff;
+  --techtronica-color-surface-subtle: #f8fafc;
+  --techtronica-color-border: #e2e8f0;
+
+  --techtronica-color-primary: #0284c7;
+  --techtronica-color-primary-hover: #0369a1;
+  --techtronica-color-primary-soft: #e0f2fe;
+  --techtronica-color-accent: #4f46e5;
+  --techtronica-color-accent-soft: #eef2ff;
+
+  --techtronica-color-success: #047857;
+  --techtronica-color-success-soft: #ecfdf5;
+  --techtronica-color-warning: #b45309;
+  --techtronica-color-warning-soft: #fffbeb;
+  --techtronica-color-error: #be123c;
+  --techtronica-color-error-soft: #fff1f2;
+  --techtronica-color-info: #0369a1;
+  --techtronica-color-info-soft: #f0f9ff;
+
+  --techtronica-font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --techtronica-font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --techtronica-text-xs: 0.75rem;
+  --techtronica-text-sm: 0.875rem;
+  --techtronica-text-base: 1rem;
+  --techtronica-text-lg: 1.125rem;
+
+  --techtronica-space-card: 1.5rem;
+  --techtronica-radius-control: 0.75rem;
+  --techtronica-radius-card: 1.25rem;
+  --techtronica-radius-panel: 1.75rem;
+  --techtronica-shadow-card: 0 8px 28px rgb(15 23 42 / 0.08);
+  --techtronica-shadow-popover: 0 18px 48px rgb(15 23 42 / 0.16);
+  --techtronica-transition-fast: 160ms ease;
+  --techtronica-transition-standard: 240ms ease;
+
+  /* Backward-compatible names used by existing Tailwind utilities. */
+  --background: var(--techtronica-color-background);
+  --foreground: var(--techtronica-color-foreground);
+  --muted: var(--techtronica-color-muted);
+  --card: var(--techtronica-color-surface);
+  --border: var(--techtronica-color-border);
   --brand-sky: #0ea5e9;
-  --brand-indigo: #4f46e5;
+  --brand-indigo: var(--techtronica-color-accent);
   --brand-violet: #8b5cf6;
 }
 
-/* Dark Mode */
 .dark {
-  --background: #020617; /* slate-950 */
-  --foreground: #f8fafc; /* near white */
-  --muted: #94a3b8; /* slate-400 */
-  --card: #0f172a; /* slate-900 */
-  --border: #1e293b; /* slate-800 */
+  color-scheme: dark;
+
+  --techtronica-color-background: #020617;
+  --techtronica-color-foreground: #f8fafc;
+  --techtronica-color-muted: #94a3b8;
+  --techtronica-color-surface: #0f172a;
+  --techtronica-color-surface-subtle: #111c30;
+  --techtronica-color-border: #1e293b;
+
+  --techtronica-color-primary: #38bdf8;
+  --techtronica-color-primary-hover: #7dd3fc;
+  --techtronica-color-primary-soft: #082f49;
+  --techtronica-color-accent: #a5b4fc;
+  --techtronica-color-accent-soft: #1e1b4b;
+
+  --techtronica-color-success: #6ee7b7;
+  --techtronica-color-success-soft: #064e3b;
+  --techtronica-color-warning: #fcd34d;
+  --techtronica-color-warning-soft: #451a03;
+  --techtronica-color-error: #fda4af;
+  --techtronica-color-error-soft: #4c0519;
+  --techtronica-color-info: #7dd3fc;
+  --techtronica-color-info-soft: #082f49;
+
+  --background: var(--techtronica-color-background);
+  --foreground: var(--techtronica-color-foreground);
+  --muted: var(--techtronica-color-muted);
+  --card: var(--techtronica-color-surface);
+  --border: var(--techtronica-color-border);
 }
 
-/* Make Tailwind aware of our custom tokens */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,74 +104,205 @@
   --color-brand-sky: var(--brand-sky);
   --color-brand-indigo: var(--brand-indigo);
   --color-brand-violet: var(--brand-violet);
-
+  --color-techtronica-primary: var(--techtronica-color-primary);
+  --color-techtronica-primary-hover: var(--techtronica-color-primary-hover);
+  --color-techtronica-primary-soft: var(--techtronica-color-primary-soft);
+  --color-techtronica-accent: var(--techtronica-color-accent);
+  --color-techtronica-success: var(--techtronica-color-success);
+  --color-techtronica-warning: var(--techtronica-color-warning);
+  --color-techtronica-error: var(--techtronica-color-error);
+  --color-techtronica-info: var(--techtronica-color-info);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* ===============================
-   GLOBAL BASE STYLES
-================================ */
-
-body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
+html {
+  scroll-behavior: smooth;
 }
 
-/* ===============================
-   REUSABLE UTILITY CLASSES
-================================ */
+body {
+  background-color: var(--techtronica-color-background);
+  color: var(--techtronica-color-foreground);
+  font-family: var(--techtronica-font-sans);
+  transition:
+    background-color var(--techtronica-transition-standard),
+    color var(--techtronica-transition-standard);
+}
 
 .theme-bg {
-  @apply bg-background;
+  background-color: var(--techtronica-color-background);
 }
 
 .theme-text {
-  @apply text-foreground;
+  color: var(--techtronica-color-foreground);
 }
 
 .theme-muted {
-  @apply text-muted;
+  color: var(--techtronica-color-muted);
 }
 
-.theme-card {
-  @apply bg-card border border-border;
+.theme-card,
+.techtronica-card {
+  border: 1px solid var(--techtronica-color-border);
+  border-radius: var(--techtronica-radius-card);
+  background-color: var(--techtronica-color-surface);
+  box-shadow: var(--techtronica-shadow-card);
 }
 
-/* ===============================
-   COMPONENT UTILITIES
-================================ */
+.techtronica-panel {
+  border: 1px solid var(--techtronica-color-border);
+  border-radius: var(--techtronica-radius-panel);
+  background-color: var(--techtronica-color-surface);
+}
+
+.techtronica-button-primary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--techtronica-radius-control);
+  background-color: var(--techtronica-color-primary);
+  padding: 0.625rem 1rem;
+  color: #fff;
+  font-size: var(--techtronica-text-sm);
+  font-weight: 600;
+  transition:
+    background-color var(--techtronica-transition-fast),
+    box-shadow var(--techtronica-transition-fast),
+    transform var(--techtronica-transition-fast);
+}
+
+.techtronica-button-primary:hover {
+  background-color: var(--techtronica-color-primary-hover);
+}
+
+.techtronica-button-primary:active {
+  transform: translateY(1px);
+}
+
+.techtronica-button-secondary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--techtronica-color-border);
+  border-radius: var(--techtronica-radius-control);
+  background-color: var(--techtronica-color-surface);
+  padding: 0.625rem 1rem;
+  color: var(--techtronica-color-foreground);
+  font-size: var(--techtronica-text-sm);
+  font-weight: 600;
+  transition:
+    background-color var(--techtronica-transition-fast),
+    border-color var(--techtronica-transition-fast);
+}
+
+.techtronica-button-secondary:hover {
+  border-color: var(--techtronica-color-primary);
+  background-color: var(--techtronica-color-primary-soft);
+}
+
+.techtronica-button-primary:focus-visible,
+.techtronica-button-secondary:focus-visible,
+.input:focus-visible,
+.contact-input:focus-visible {
+  outline: 2px solid var(--techtronica-color-primary);
+  outline-offset: 2px;
+}
 
 .footer-link {
-  @apply text-muted hover:text-sky-600 transition-colors;
+  color: var(--techtronica-color-muted);
+  transition: color var(--techtronica-transition-fast);
+}
+
+.footer-link:hover {
+  color: var(--techtronica-color-primary);
+}
+
+.input,
+.contact-input {
+  width: 100%;
+  border: 1px solid var(--techtronica-color-border);
+  background-color: var(--techtronica-color-surface);
+  color: var(--techtronica-color-foreground);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
 }
 
 .input {
-  @apply w-full rounded-lg border border-border
-  bg-card px-3 py-2 text-sm text-foreground shadow-sm
-  focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500;
+  border-radius: var(--techtronica-radius-control);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--techtronica-text-sm);
 }
 
 .contact-input {
-  @apply w-full rounded-xl border border-border
-  bg-card px-4 py-3 text-sm text-foreground
-  focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500;
+  border-radius: var(--techtronica-radius-control);
+  padding: 0.75rem 1rem;
+  font-size: var(--techtronica-text-sm);
+}
+
+.input:focus,
+.contact-input:focus {
+  border-color: var(--techtronica-color-primary);
+  outline: 2px solid color-mix(in srgb, var(--techtronica-color-primary) 22%, transparent);
+  outline-offset: 1px;
 }
 
 .floating-label {
-  @apply absolute left-4 top-3 text-muted text-sm pointer-events-none
-  transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm
-  peer-focus:-top-2 peer-focus:text-xs peer-focus:text-sky-500
-  bg-card px-1;
+  position: absolute;
+  pointer-events: none;
+  top: 0.75rem;
+  left: 1rem;
+  background-color: var(--techtronica-color-surface);
+  padding-inline: 0.25rem;
+  color: var(--techtronica-color-muted);
+  font-size: var(--techtronica-text-sm);
+  transition: all var(--techtronica-transition-fast);
 }
 
-/* ===============================
-   ANIMATIONS
-================================ */
+.peer:placeholder-shown ~ .floating-label {
+  top: 0.875rem;
+  font-size: var(--techtronica-text-sm);
+}
+
+.peer:focus ~ .floating-label {
+  top: -0.5rem;
+  color: var(--techtronica-color-primary);
+  font-size: var(--techtronica-text-xs);
+}
+
+.techtronica-message {
+  border: 1px solid transparent;
+  border-radius: var(--techtronica-radius-control);
+  padding: 0.875rem 1rem;
+  font-size: var(--techtronica-text-sm);
+}
+
+.techtronica-message-error {
+  border-color: color-mix(in srgb, var(--techtronica-color-error) 25%, transparent);
+  background-color: var(--techtronica-color-error-soft);
+  color: var(--techtronica-color-error);
+}
+
+.techtronica-message-success {
+  border-color: color-mix(in srgb, var(--techtronica-color-success) 25%, transparent);
+  background-color: var(--techtronica-color-success-soft);
+  color: var(--techtronica-color-success);
+}
+
+.techtronica-message-warning {
+  border-color: color-mix(in srgb, var(--techtronica-color-warning) 25%, transparent);
+  background-color: var(--techtronica-color-warning-soft);
+  color: var(--techtronica-color-warning);
+}
+
+.techtronica-message-info {
+  border-color: color-mix(in srgb, var(--techtronica-color-info) 25%, transparent);
+  background-color: var(--techtronica-color-info-soft);
+  color: var(--techtronica-color-info);
+}
 
 .marquee {
   width: max-content;
@@ -122,6 +317,7 @@ body {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -132,6 +328,7 @@ body {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

@@ -15,6 +15,10 @@ import {
 } from "react-icons/fi";
 
 import contactAnimation from "@/public/contact.json";
+import {
+  techtronicaErrorMessage,
+  techtronicaSuccessMessage,
+} from "@/lib/techtronica/messages";
 
 const socialLinks = [
   {
@@ -69,13 +73,19 @@ export default function ContactSection() {
         body: JSON.stringify(form),
       });
 
-      const result = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(result.error || "Failed to send your message.");
+      await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(techtronicaErrorMessage.contactSubmit);
+      }
 
       setSuccess(true);
       setForm({ name: "", email: "", topic: "", message: "", website: "" });
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Something went wrong. Please try again.");
+      setError(
+        submitError instanceof Error
+          ? techtronicaErrorMessage.contactSubmit
+          : techtronicaErrorMessage.generic,
+      );
     } finally {
       setLoading(false);
     }
@@ -185,7 +195,7 @@ export default function ContactSection() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 py-3 text-sm font-semibold text-white hover:bg-sky-700 transition disabled:opacity-60"
+              className="techtronica-button-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (
                 "Sending..."
@@ -197,12 +207,14 @@ export default function ContactSection() {
             </button>
 
             {success && (
-              <p className="text-green-600 text-sm text-center">
-                Message sent successfully!
+              <p role="status" className="techtronica-message techtronica-message-success text-center">
+                {techtronicaSuccessMessage.contactSent}
               </p>
             )}
             {error && (
-              <p className="text-red-600 text-sm text-center">{error}</p>
+              <p role="alert" className="techtronica-message techtronica-message-error text-center">
+                {error}
+              </p>
             )}
           </form>
         </motion.div>
