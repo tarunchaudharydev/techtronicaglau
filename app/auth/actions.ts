@@ -75,13 +75,8 @@ export async function signUpAction(
   const password = readPassword(formData);
   const confirmPassword = readPassword(formData, "confirm_password");
 
-<<<<<<< HEAD
   if (fullName.length < 2 || fullName.length > 120) {
     return invalidInput(techtronicaAuthMessage.signUpName);
-=======
-  if (fullName.length < 3 || fullName.length > 120) {
-    return invalidInput("Enter your full name (3–120 characters).");
->>>>>>> b4cb357 (update docs)
   }
   if (!emailPattern.test(email) || email.length > 254) {
     return invalidInput(techtronicaAuthMessage.emailInvalid);
