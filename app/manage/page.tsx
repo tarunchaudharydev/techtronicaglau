@@ -454,7 +454,7 @@ export default async function ManageHomePage() {
       detail: "Draft and publish a society or club event.",
       href: "/manage/events#add-event",
       icon: CalendarDays,
-      tint: "bg-fuchsia-50 text-fuchsia-700",
+      tint: "bg-cyan-50 text-cyan-800",
     },
     {
       title: "Take meeting attendance",
@@ -475,7 +475,7 @@ export default async function ManageHomePage() {
       detail: "Define a society or club position.",
       href: "/manage/positions#add-position",
       icon: ContactRound,
-      tint: "bg-indigo-50 text-indigo-700",
+      tint: "bg-blue-50 text-blue-700",
     },
     {
       title: "Update website content",
@@ -608,7 +608,6 @@ export default async function ManageHomePage() {
                   </h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
                     Search, sort, switch views, and export recent applications, enquiries, and registrations.
-
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
