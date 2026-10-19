@@ -27,7 +27,7 @@ const sections = [
 
 export default function AccessibilityPage() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
         Website information
       </p>
@@ -70,6 +70,6 @@ export default function AccessibilityPage() {
           </section>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
