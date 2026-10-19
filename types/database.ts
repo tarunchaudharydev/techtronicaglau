@@ -232,6 +232,7 @@ export type Database = {
       }
       notifications: {
         Row: {
+          activity_key: string | null
           audience: string
           created_at: string
           created_by: string | null
@@ -244,6 +245,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          activity_key?: string | null
           audience?: string
           created_at?: string
           created_by?: string | null
@@ -256,6 +258,7 @@ export type Database = {
           title: string
         }
         Update: {
+          activity_key?: string | null
           audience?: string
           created_at?: string
           created_by?: string | null

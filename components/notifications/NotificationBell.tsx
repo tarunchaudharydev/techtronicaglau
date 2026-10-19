@@ -14,6 +14,8 @@ type Notice = {
   published_at: string;
 };
 
+const PAGE_SIZE = 30;
+
 export default function NotificationBell({ userId }: { userId: string }) {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
@@ -21,6 +23,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [backendAvailable, setBackendAvailable] = useState<boolean | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadedPagesRef = useRef(1);
+  const hasMoreRef = useRef(true);
+  const loadingMoreRef = useRef(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -29,11 +36,12 @@ export default function NotificationBell({ userId }: { userId: string }) {
   const refresh = useCallback(async (): Promise<boolean> => {
     try {
       const supabase = createClient();
+      const pageLimit = Math.max(PAGE_SIZE, loadedPagesRef.current * PAGE_SIZE);
       const { data, error } = await supabase
         .from("notifications")
         .select("id, kind, title, message, href, published_at")
         .order("published_at", { ascending: false })
-        .limit(30);
+        .range(0, pageLimit - 1);
 
       // The table may not exist until the backend migration is deployed. Treat
       // that as an unavailable feed instead of letting it break the whole page.
@@ -44,6 +52,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
       setBackendAvailable(true);
       setNotices(data);
+      hasMoreRef.current = data.length === pageLimit;
+      setHasMore(hasMoreRef.current);
       if (!data.length) {
         setReadIds(new Set());
         return true;
@@ -180,12 +190,12 @@ export default function NotificationBell({ userId }: { userId: string }) {
       if (!panelRef.current?.contains(target) && !triggerRef.current?.contains(target)) setOpen(false);
     };
     document.addEventListener("keydown", closeOnEscape);
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
     closeRef.current?.focus();
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
-      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
       triggerRef.current?.focus();
     };
   }, [open]);
@@ -219,6 +229,46 @@ export default function NotificationBell({ userId }: { userId: string }) {
       // Leave the current read state intact if the request fails.
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function loadOlderNotifications() {
+    if (!hasMoreRef.current || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const supabase = createClient();
+      const start = notices.length;
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, kind, title, message, href, published_at")
+        .order("published_at", { ascending: false })
+        .range(start, start + PAGE_SIZE - 1);
+
+      if (error || !data) return;
+      setNotices((current) => {
+        const seen = new Set(current.map((notice) => notice.id));
+        return [...current, ...data.filter((notice) => !seen.has(notice.id))];
+      });
+      loadedPagesRef.current += 1;
+      hasMoreRef.current = data.length === PAGE_SIZE;
+      setHasMore(hasMoreRef.current);
+
+      if (data.length) {
+        const { data: reads, error: readsError } = await supabase
+          .from("notification_reads")
+          .select("notification_id")
+          .eq("user_id", userId)
+          .in("notification_id", data.map((notice) => notice.id));
+        if (!readsError) {
+          setReadIds((current) => new Set([...current, ...(reads ?? []).map((read) => read.notification_id)]));
+        }
+      }
+    } catch {
+      // Existing notices remain usable if loading an older page fails.
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
     }
   }
 
@@ -273,16 +323,38 @@ export default function NotificationBell({ userId }: { userId: string }) {
               </div>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div
+              className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-y-contain"
+              style={{ WebkitOverflowScrolling: "touch" }}
+              onScroll={(event) => {
+                const element = event.currentTarget;
+                if (element.scrollHeight - element.scrollTop - element.clientHeight < 140) {
+                  void loadOlderNotifications();
+                }
+              }}
+            >
               {loading ? <p className="p-8 text-center text-sm text-slate-500"><LoaderCircle className="mx-auto mb-2 size-5 animate-spin" />Loading notifications…</p> : notices.length ? notices.map((notice) => {
                 const isRead = readIds.has(notice.id);
                 return <Link key={notice.id} href={notice.href} onClick={() => { void markRead(notice.id); setOpen(false); }} className={`block border-b border-slate-100 px-4 py-4 transition hover:bg-sky-50/70 dark:border-slate-800 dark:hover:bg-slate-800/70 ${isRead ? "" : "bg-sky-50/50 dark:bg-sky-950/20"}`}>
                   <span className="flex items-start gap-3"><span className={`mt-1 size-2 shrink-0 rounded-full ${isRead ? "bg-slate-300 dark:bg-slate-600" : "bg-sky-600"}`} /><span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-3"><strong className="line-clamp-1 text-sm">{notice.title}</strong><span className="shrink-0 text-[10px] capitalize text-slate-500">{notice.kind}</span></span><span className="mt-1 block line-clamp-3 text-xs leading-5 text-slate-600 dark:text-slate-300">{notice.message}</span><time className="mt-1 block text-[10px] text-slate-400" dateTime={notice.published_at}>{formatDate(notice.published_at)}</time></span></span>
                 </Link>;
-              }) : <div className="p-8 text-center"><Bell className="mx-auto size-6 text-slate-300" /><p className="mt-2 text-sm font-medium">{backendAvailable === false ? "Notifications are being set up" : "You’re all caught up"}</p><p className="mt-1 text-xs text-slate-500">{backendAvailable === false ? "The notification service is not available yet. This page will retry automatically." : "New events and society updates will appear here."}</p></div>}
+              }) : <div className="p-8 text-center"><Bell className="mx-auto size-6 text-slate-300" /><p className="mt-2 text-sm font-medium">{backendAvailable === false ? "Notifications are being set up" : "You’re all caught up"}</p><p className="mt-1 text-xs text-slate-500">{backendAvailable === false ? "The notification service is not available yet. This page will retry automatically." : "New society activity will appear here."}</p></div>}
+              {notices.length > 0 && hasMore && (
+                <button
+                  type="button"
+                  onClick={() => void loadOlderNotifications()}
+                  disabled={loadingMore}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 px-4 py-3 text-xs font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60 dark:text-sky-300 dark:hover:bg-slate-800"
+                >
+                  {loadingMore && <LoaderCircle className="size-3.5 animate-spin" />}
+                  {loadingMore ? "Loading older updates…" : "Load older notifications"}
+                </button>
+              )}
             </div>
 
-            <footer className="shrink-0 border-t border-slate-100 bg-slate-50 px-4 py-2 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-950">Showing the latest 30 updates</footer>
+            <footer className="shrink-0 border-t border-slate-100 bg-slate-50 px-4 py-2 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-950">
+              Showing {notices.length} updates {hasMore ? "· scroll or load more" : "· all available updates"}
+            </footer>
           </section>
         </>
       )}

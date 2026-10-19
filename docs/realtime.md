@@ -53,3 +53,8 @@ Subscriptions are batched, scoped to the current route class, and reconciled aft
 - **Updates appear after returning to a tab:** the app reconciles on visibility change and after reconnect; check network restrictions if the socket cannot stay connected.
 
 Supabase references: [listen to database changes](https://supabase.com/docs/guides/realtime/subscribing-to-database-changes) and [Realtime authorization](https://supabase.com/docs/guides/realtime/authorization).
+
+
+## Society notification feed
+
+The notification bell listens for published member-only notices and read-receipt changes. The panel loads notices in pages of 30, supports loading older entries, and closes on outside pointer input or Escape. The database policy allows reads only to active society members; event and management notifications follow that same audience rule. See the [notification and activity guide](notifications.md).
