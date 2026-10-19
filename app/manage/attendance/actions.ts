@@ -60,8 +60,8 @@ export async function updateMeetingAttendanceStatus(
     return { ok: false as const, message: "Attendance was not saved. Check your access and try again." };
   }
 
-  revalidatePath("/manage/attendance/" + sessionId);
-  revalidatePath("/manage/attendance");
+  // The client updates each row optimistically and debounces the visible refresh,
+  // so this action does not invalidate the page for every individual roster click.
   return { ok: true as const };
 }
 

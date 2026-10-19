@@ -41,6 +41,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
         .from("notifications")
         .select("id, kind, title, message, href, published_at")
         .order("published_at", { ascending: false })
+        .order("id", { ascending: false })
         .range(0, pageLimit - 1);
 
       // The table may not exist until the backend migration is deployed. Treat
@@ -243,6 +244,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
         .from("notifications")
         .select("id, kind, title, message, href, published_at")
         .order("published_at", { ascending: false })
+        .order("id", { ascending: false })
         .range(start, start + PAGE_SIZE - 1);
 
       if (error || !data) return;
