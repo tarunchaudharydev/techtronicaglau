@@ -64,3 +64,10 @@ docs/                architecture, security, setup, and operations guides
 - [Security and access control](security-and-access-control.md)
 - [Operations and deployment](operations.md)
 - [Backend schema and migrations](https://github.com/tarunchaudharydev/techtronica-backend)
+
+
+## Live database updates
+
+The root layout mounts a browser Realtime listener. It subscribes to shared site/member tables on public routes and adds role, contact, and attendance tables only under `/manage`. Insert and update notifications trigger a debounced Next.js route refresh; the browser then re-runs server queries under the current session and RLS policies. The notification bell has a separate feed/read-state subscription. Offline recovery and tab visibility changes trigger a reconciliation refresh.
+
+Realtime delivery does not replace RLS or Next.js cache invalidation. Sensitive private profile and network diagnostic tables are not published. The current client listens to inserts and updates; write actions must invalidate paths/tags for deletes. See the [live update guide](realtime.md) for table scope, publication setup, troubleshooting, and privacy requirements.
