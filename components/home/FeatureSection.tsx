@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 type FeatureSectionProps = {
-  setSectionRef: (el: HTMLDivElement | null, index: number) => void;
+  setSectionRef: (el: HTMLElement | null, index: number) => void;
   index: number;
   title: string;
   p1: string;
