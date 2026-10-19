@@ -1,7 +1,7 @@
 import { RefObject } from "react";
 
 type StatsGridProps = {
-  statsRef: RefObject<HTMLDivElement | null>;
+  statsRef: RefObject<HTMLElement | null>;
   stats: { value: string; label: string; description: string }[];
 };
 
