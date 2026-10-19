@@ -2,22 +2,22 @@ import Link from "next/link";
 
 const CoreTeamCTA = ({ title, description, buttonLabel, href }: { title: string; description: string; buttonLabel: string; href: string }) => {
   return (
-    <div className="rounded-3xl border border-sky-100 bg-white dark:bg-slate-900/80 shadow-md px-5 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <h2 className="text-base sm:text-lg font-semibold text-sky-900">
+    <section className="flex flex-col gap-5 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,23,42,0.05)] sm:p-9 md:flex-row md:items-center md:justify-between lg:p-10">
+      <div className="max-w-2xl space-y-2">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
           {title}
         </h2>
-        <p className="text-xs sm:text-sm text-slate-700 max-w-xl">
+        <p className="text-sm leading-7 text-slate-600 sm:text-base">
           {description}
         </p>
       </div>
       <Link
         href={href}
-        className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-white bg-sky-700 hover:bg-sky-800 transition-colors shadow-sm"
+        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-offset-2"
       >
         {buttonLabel}
       </Link>
-    </div>
+    </section>
   );
 };
 
