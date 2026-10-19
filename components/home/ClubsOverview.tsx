@@ -10,7 +10,7 @@ type AboutSociety = {
 
 type ClubsOverviewProps = {
   aboutSociety: AboutSociety;
-  setSectionRef: (el: HTMLDivElement | null, index: number) => void;
+  setSectionRef: (el: HTMLElement | null, index: number) => void;
 };
 
 const ClubsOverview = ({ aboutSociety, setSectionRef }: ClubsOverviewProps) => {
