@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { formString, redirectResult, requireManager, validId } from "@/lib/manage/server";
 
 const route = "/manage/alumni";
@@ -63,4 +63,4 @@ export async function deleteAlumnus(formData: FormData) {
   return redirectResult(route, error ? "error" : data ? "saved" : "error");
 }
 
-function revalidateAlumni() { revalidatePath(route); revalidatePath("/alumni"); }
+function revalidateAlumni() { updateTag("public-alumni"); revalidatePath(route); revalidatePath("/alumni"); }
