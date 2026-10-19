@@ -75,7 +75,8 @@ export default function HomeHero({ heroRef, clubs, title, tagline, description }
           <h1 className="mt-5 text-[clamp(2.65rem,5.2vw,5.15rem)] font-black leading-[1.02] tracking-[-.045em] text-slate-950">
             {title}
             {tagline && (
-              <span className="mt-1 block bg-gradient-to-r from-sky-600 via-blue-600 to-amber-500 bg-clip-text text-transparent">
+              <span className="mt-1 block bg-clip-text text-transparent"
+                style={{ backgroundImage: "linear-gradient(90deg, #168bff 0%, #6858ff 35%, #aa57ef 55%, #e69a9c 78%, #ffc900 100%)" }}>
                 {tagline}
               </span>
             )}
