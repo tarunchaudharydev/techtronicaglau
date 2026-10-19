@@ -76,3 +76,10 @@ A frontend deployment does not apply database migrations. Apply backend migratio
 - Public and private paths are checked as a visitor, non-member, and active member.
 - Admin tasks are checked with allowed and denied scopes.
 - A rollback owner and database backup/recovery path are known.
+
+
+## Realtime operations
+
+The backend migration publishes the supported application tables. Use the [backend Realtime runbook](https://github.com/tarunchaudharydev/techtronica-backend/blob/main/docs/realtime.md) when adding a table or verifying publication membership. Do not toggle publication membership manually as a production fix; make reviewed, forward-only migrations.
+
+When a page is stale, check both the Realtime channel and the server cache. A successful database write should invalidate any Next.js tags or paths used by cached public content. The browser retries its channel after errors and refreshes on reconnect or when a hidden tab becomes visible. See [Live database updates](realtime.md) for the data scope and troubleshooting steps.
