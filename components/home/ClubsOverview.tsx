@@ -15,38 +15,38 @@ type ClubsOverviewProps = {
 
 const ClubsOverview = ({ aboutSociety, setSectionRef }: ClubsOverviewProps) => {
   return (
-    <div className="max-w-6xl mx-auto px-2 sm:px-4">
-      <div
-        ref={(el) => setSectionRef(el, 0)}
-        className="flex flex-col md:flex-row gap-8 items-center"
-      >
-        <div className="w-full md:w-1/2 space-y-3 mb-4 md:mb-0">
-          <h2 className="text-xl sm:text-3xl md:text-4xl font-bold text-sky-900">
-            {aboutSociety.title}
-          </h2>
+    <section
+      ref={(el) => setSectionRef(el, 0)}
+      className="grid items-center gap-8 rounded-[1.75rem] border border-slate-200/80 bg-white p-4 shadow-[0_12px_40px_rgba(15,23,42,0.05)] sm:gap-10 sm:p-7 lg:grid-cols-2 lg:p-10"
+    >
+      <div className="space-y-4 sm:space-y-5">
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl lg:text-4xl">
+          {aboutSociety.title}
+        </h2>
 
+        <div className="space-y-3">
           {aboutSociety.description.map((para: ReactNode, index: Key) => (
             <p
               key={index}
-              className="text-sm sm:text-base text-slate-700 leading-relaxed"
+              className="text-sm leading-7 text-slate-600 sm:text-base"
             >
               {para}
             </p>
           ))}
         </div>
-
-        <div className="w-full md:w-1/2">
-          <Image
-            src="/homeImages/team_image.JPG"
-            alt="Students collaborating in different clubs"
-            width={800}
-            height={500}
-            className="w-full h-52 sm:h-64 md:h-72 rounded-3xl object-cover shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
-            priority
-          />
-        </div>
       </div>
-    </div>
+
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+        <Image
+          src="/homeImages/team_image.JPG"
+          alt="Students collaborating in different clubs"
+          width={800}
+          height={500}
+          className="aspect-[4/3] h-full w-full object-cover"
+          priority
+        />
+      </div>
+    </section>
   );
 };
 
