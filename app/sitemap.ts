@@ -23,6 +23,8 @@ const publicPages = [
   ["/privacy-policy", 0.2],
   ["/terms", 0.2],
   ["/refund-policy", 0.2],
+  ["/accessibility", 0.3],
+  ["/site-map", 0.3],
 ] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
