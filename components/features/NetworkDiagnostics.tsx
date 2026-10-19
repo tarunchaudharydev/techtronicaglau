@@ -143,8 +143,8 @@ export default function NetworkDiagnostics() {
         const response = await fetch("/logo.png", {
           method: "HEAD",
           cache: "no-store",
-          credentials: "same-origin",
-          referrerPolicy: "same-origin",
+          credentials: "omit",
+          referrerPolicy: "no-referrer",
           signal: requestController.signal,
         });
         if (!response.ok) throw new Error("Ping request failed");
