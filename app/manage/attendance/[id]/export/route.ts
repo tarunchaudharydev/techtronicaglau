@@ -32,6 +32,9 @@ export async function GET(
     if (!data || data.length < pageSize) break;
   }
 
+  rows.sort((a, b) => Number(a.status === "unmarked") - Number(b.status === "unmarked")
+    || a.member_name.localeCompare(b.member_name, "en", { sensitivity: "base" }));
+
   const club = session.clubs && !Array.isArray(session.clubs) ? session.clubs.name : "";
   const meetingDate = session.meeting_date;
   const meetingTime = session.meeting_time ?? "";
@@ -39,7 +42,7 @@ export async function GET(
     ["Meeting", "Date", "Time", "Scope", "Club", "Venue", "Member", "Attendance", "Marked at"],
     ...rows.map((row) => [
       session.name, meetingDate, meetingTime, session.scope, club,
-      session.venue ?? "", row.member_name, row.status, row.marked_at ?? "",
+      session.venue ?? "", row.member_name, formatAttendanceStatus(row.status), row.marked_at ?? "",
     ]),
   ].map((line) => line.map(quoteCsv).join(",")).join("\r\n");
 
@@ -51,6 +54,11 @@ export async function GET(
       "Cache-Control": "private, no-store",
     },
   });
+}
+
+function formatAttendanceStatus(status: AttendanceExportRow["status"]) {
+  if (status === "unmarked") return "Not in meeting (unmarked)";
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function quoteCsv(value: string) {

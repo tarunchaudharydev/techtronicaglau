@@ -45,6 +45,7 @@ export default async function AttendanceSessionPage({
   let rosterQuery = supabase.from("meeting_attendance")
     .select("session_id, user_id, member_name, status, marked_by, marked_at", { count: "exact" })
     .eq("session_id", session.id)
+    .order("status", { ascending: true })
     .order("member_name", { ascending: true })
     .order("user_id", { ascending: true });
   if (search) rosterQuery = rosterQuery.ilike("member_name", "%" + escapeSearch(search) + "%");
@@ -79,20 +80,21 @@ export default async function AttendanceSessionPage({
         <a href={"/manage/attendance/" + session.id + "/export"} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold hover:border-sky-500 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900">Export full attendance CSV</a>
       </header>
 
-      {queryParams.created === "1" && <p role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">Attendance sheet created with the active members in this scope. Mark each person below; changes save as you select them.</p>}
+      {queryParams.created === "1" && <p role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">The sheet starts with every active member in this scope. Choose Present, Absent, or Excused for people this meeting applies to. Leave everyone else as “Not in meeting”; those names appear at the end of the export.</p>}
 
       <section className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-label="Attendance totals">
         <Summary label="Roster" value={total} tone="sky" />
         <Summary label="Present" value={presentCount.count ?? 0} tone="emerald" />
         <Summary label="Absent" value={absentCount.count ?? 0} tone="rose" />
         <Summary label="Excused" value={excusedCount.count ?? 0} tone="amber" />
-        <Summary label="Unmarked" value={unmarkedCount.count ?? 0} tone="slate" />
+        <Summary label="Not in meeting" value={unmarkedCount.count ?? 0} tone="slate" />
       </section>
 
       <section className="mt-8" aria-labelledby="roster-title">
         <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 id="roster-title" className="text-xl font-semibold">Member attendance</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">All active members are listed automatically. “Not in meeting” means the meeting does not apply to that person; use Present, Absent, or Excused only for people included in this meeting.</p>
             <p className="mt-1 text-sm text-muted">{rosterError ? "Roster unavailable" : "Showing " + start + "–" + end + " of " + filteredTotal.toLocaleString() + " filtered members · " + PAGE_SIZE + " per page"}</p>
           </div>
           <form action={"/manage/attendance/" + session.id} method="get" role="search" className="grid w-full gap-2 sm:grid-cols-[minmax(0,1fr)_11rem_auto] lg:max-w-2xl">
@@ -102,7 +104,7 @@ export default async function AttendanceSessionPage({
               <span className="sr-only">Filter attendance status</span>
               <select name="status" defaultValue={statusFilter} className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-950">
                 <option value="all">All statuses</option>
-                <option value="unmarked">Unmarked</option>
+                <option value="unmarked">Not in meeting</option>
                 <option value="present">Present</option>
                 <option value="absent">Absent</option>
                 <option value="excused">Excused</option>

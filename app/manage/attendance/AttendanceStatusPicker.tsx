@@ -11,7 +11,7 @@ const OPTIONS: { value: AttendanceStatus; label: string; active: string }[] = [
   { value: "present", label: "Present", active: "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" },
   { value: "absent", label: "Absent", active: "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-200" },
   { value: "excused", label: "Excused", active: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200" },
-  { value: "unmarked", label: "Unmarked", active: "border-slate-400 bg-slate-100 text-slate-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" },
+  { value: "unmarked", label: "Not in meeting", active: "border-slate-400 bg-slate-100 text-slate-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" },
 ];
 
 let attendanceRefreshTimer: ReturnType<typeof setTimeout> | null = null;
