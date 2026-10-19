@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Club } from "@/lib/config/clubs";
 
 type HomeHeroProps = {
-  heroRef: RefObject<HTMLDivElement | null>;
+  heroRef: RefObject<HTMLElement | null>;
   clubs: Club[];
   title: string;
   tagline: string;
