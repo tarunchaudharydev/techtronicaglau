@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
+import AdminDataTable, { type AdminDataColumn, type AdminDataRow } from "@/components/manage/AdminDataTable";
 import { AdminOverviewDonut } from "@/components/manage/AdminOverviewDonut";
 import { AdminDashboardRefresh } from "@/components/manage/AdminDashboardRefresh";
 
@@ -45,7 +46,7 @@ const sections = [
     description:
       "Update team, mentor, and faculty profiles and their visibility.",
     icon: Network,
-    tone: "violet",
+    tone: "slate",
   },
   {
     title: "Alumni directory",
@@ -153,7 +154,7 @@ const groupStyles = {
   },
   "Clubs & events": {
     icon: CalendarDays,
-    tint: "bg-violet-50 text-violet-700 ring-violet-100",
+    tint: "bg-sky-50 text-sky-700 ring-sky-100",
     number: "02",
     description:
       "Build the club structure, run events, and keep meeting records.",
@@ -169,16 +170,15 @@ const groupStyles = {
 
 const toneStyles = {
   sky: "bg-sky-50 text-sky-700 group-hover:bg-sky-600 group-hover:text-white",
-  violet:
-    "bg-violet-50 text-violet-700 group-hover:bg-violet-600 group-hover:text-white",
+  slate: "bg-slate-100 text-slate-700 group-hover:bg-slate-700 group-hover:text-white",
   amber:
     "bg-amber-50 text-amber-700 group-hover:bg-amber-500 group-hover:text-white",
   rose: "bg-rose-50 text-rose-700 group-hover:bg-rose-600 group-hover:text-white",
   cyan: "bg-cyan-50 text-cyan-700 group-hover:bg-cyan-600 group-hover:text-white",
   indigo:
-    "bg-indigo-50 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white",
+    "bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white",
   fuchsia:
-    "bg-fuchsia-50 text-fuchsia-700 group-hover:bg-fuchsia-600 group-hover:text-white",
+    "bg-cyan-50 text-cyan-800 group-hover:bg-cyan-700 group-hover:text-white",
   emerald:
     "bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white",
   orange:
@@ -332,20 +332,20 @@ export default async function ManageHomePage() {
             .not("club_id", "is", "null")
             .eq("status", "pending")
             .order("created_at", { ascending: false })
-            .limit(5),
+            .limit(10),
           supabase
             .from("contact_submissions")
             .select("id, name, topic, created_at, clubs(name)")
             .eq("status", "new")
             .order("created_at", { ascending: false })
-            .limit(5),
+            .limit(10),
           supabase
             .from("event_registrations")
             .select(
               "id, status, registered_at, events!event_registrations_event_id_fkey!inner(title), profiles!event_registrations_user_id_fkey!inner(full_name)",
             )
             .order("registered_at", { ascending: false })
-            .limit(5),
+            .limit(10),
         ])
       : null;
   const activityItems = activity
@@ -357,6 +357,7 @@ export default async function ManageHomePage() {
           date: row.created_at,
           href: "/manage/memberships",
           type: "Club application",
+          status: "Needs review",
         })),
         ...(activity[1].data ?? []).map((row) => ({
           id: `contact-${row.id}`,
@@ -367,6 +368,7 @@ export default async function ManageHomePage() {
           date: row.created_at,
           href: "/manage/contacts",
           type: "Contact form",
+          status: "Needs reply",
         })),
         ...(activity[2].data ?? []).map((row) => ({
           id: `registration-${row.id}`,
@@ -375,12 +377,63 @@ export default async function ManageHomePage() {
           date: row.registered_at,
           href: "/manage/registrations",
           type: "Event registration",
+          status: row.status.replaceAll("_", " "),
         })),
       ]
         .sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf())
-        .slice(0, 8)
+        .slice(0, 30)
     : [];
   const activityHasError = activity?.some((result) => result.error) ?? false;
+  const activityColumns: AdminDataColumn[] = [
+    { key: "person", label: "Person", sortable: false },
+    { key: "activity", label: "Activity", sortable: false },
+    { key: "status", label: "Status" },
+    { key: "date", label: "Received" },
+  ];
+  const activityRows: AdminDataRow[] = activityItems.map((item) => ({
+    id: item.id,
+    searchText: [item.title, item.detail, item.type, item.status, item.date].join(" "),
+    values: {
+      person: item.title,
+      activity: item.detail,
+      status: item.status,
+      date: item.date,
+    },
+    cells: {
+      person: <span className="font-semibold text-slate-900">{item.title}</span>,
+      activity: <span className="text-slate-600">{item.detail}</span>,
+      status: (
+        <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold capitalize text-sky-800">
+          {item.status}
+        </span>
+      ),
+      date: (
+        <time className="whitespace-nowrap text-xs text-slate-500" dateTime={item.date}>
+          {formatActivityDate(item.date)}
+        </time>
+      ),
+    },
+    card: (
+      <article className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold text-slate-900">{item.title}</h3>
+            <p className="mt-1 text-xs text-slate-500">{item.detail}</p>
+          </div>
+          <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold capitalize text-sky-800">{item.status}</span>
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+          <span className="text-xs text-slate-500">{item.type} · {formatActivityDate(item.date)}</span>
+          <Link href={item.href} className="shrink-0 text-xs font-semibold text-sky-700 hover:underline">Open</Link>
+        </div>
+      </article>
+    ),
+    actions: (
+      <Link href={item.href} className="text-xs font-semibold text-sky-700 hover:underline">
+        Open
+      </Link>
+    ),
+  }));
   const adminActions = [
     {
       title: "Add society member",
@@ -394,7 +447,7 @@ export default async function ManageHomePage() {
       detail: "Invite a person and assign their role.",
       href: "/manage/access#invite-user",
       icon: UserPlus,
-      tint: "bg-violet-50 text-violet-700",
+      tint: "bg-slate-100 text-slate-700",
     },
     {
       title: "Create an event",
@@ -433,72 +486,33 @@ export default async function ManageHomePage() {
     },
   ] as const;
   return (
-    <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-sky-50/70 via-slate-50 to-white px-4 py-6 sm:px-6 sm:py-10 lg:py-12">
-      <div className="mx-auto max-w-7xl">
-        <header className="relative isolate overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-violet-100/80 p-5 shadow-[0_18px_60px_-35px_rgba(14,116,144,0.3)] sm:p-8 lg:p-10">
-          <div
-            aria-hidden="true"
-            className="absolute -right-16 -top-24 -z-10 size-72 rounded-full bg-fuchsia-200/35 blur-3xl"
-          />
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-28 right-1/3 -z-10 size-64 rounded-full bg-cyan-200/45 blur-3xl"
-          />
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/90 bg-white/75 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-sky-800 shadow-sm">
-                <span className="grid size-6 place-items-center rounded-full bg-sky-100">
-                  <Settings2 aria-hidden="true" className="size-3.5" />
-                </span>
-                Society workspace
-              </div>
-              <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
+    <main className="min-h-[calc(100vh-5rem)] bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-[1440px]">
+        <header className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Society workspace</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
                 Manage society
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
-                A clear home for your people, clubs, events, and website. Choose
-                an area below to get started.
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Review work that needs attention, check society activity, and open the tools assigned to your role.
               </p>
             </div>
-
-            <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:max-w-md lg:min-w-[320px]">
-              <div className="rounded-2xl border border-white/90 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Available areas
-                </p>
-                <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-                  {availableSections.length.toString().padStart(2, "0")}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Based on your access
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/90 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Workspace access
-                </p>
-                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-800">
-                  <span
-                    aria-hidden="true"
-                    className="size-1.5 rounded-full bg-emerald-500"
-                  />
-                  {isAdmin ? "Administrator" : "Scoped manager"}
-                </p>
-                <p className="mt-2 text-xs leading-5 text-slate-500">
-                  Your assigned roles set what you can manage.
-                </p>
-              </div>
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <span className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700">
+                <ShieldCheck aria-hidden="true" className="size-4 text-emerald-700" />
+                {isAdmin ? "Administrator" : "Scoped manager"}
+              </span>
+              <span className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600">
+                {availableSections.length} areas available
+              </span>
             </div>
           </div>
-          <div className="mt-7 flex items-start gap-2 border-t border-sky-200/70 pt-4 text-xs leading-5 text-slate-500 sm:mt-8 sm:text-sm">
-            <ShieldCheck
-              aria-hidden="true"
-              className="mt-0.5 size-4 shrink-0 text-sky-700"
-            />
+          <div className="mt-5 flex items-start gap-2 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500 sm:text-sm">
+            <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-sky-700" />
             <p>
-              Changes are checked against your permissions when you save. You
-              only see management areas assigned to your active society or club
-              roles.
+              Changes are checked against your permissions when you save. You only see areas assigned to your active society or club roles.
             </p>
           </div>
         </header>
@@ -531,11 +545,11 @@ export default async function ManageHomePage() {
                   id="admin-overview"
                   className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl"
                 >
-                  Incoming activity &amp; review status
+                  Society activity at a glance
                 </h2>
               </div>
               <p className="text-xs text-slate-500">
-                Current totals from records your admin account can access
+                Live totals from records available to your admin account
               </p>
             </div>
             {overviewHasError && (
@@ -568,7 +582,7 @@ export default async function ManageHomePage() {
                 label="Not society members"
                 count={nonMembers}
                 detail="Registered accounts without active society membership"
-                tone="violet"
+                tone="slate"
               />
             </div>
             <AdminOverviewDonut
@@ -582,7 +596,7 @@ export default async function ManageHomePage() {
             />
             <section
               aria-labelledby="incoming-activity"
-              className="mt-5 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm sm:p-6"
+              className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -590,14 +604,19 @@ export default async function ManageHomePage() {
                     id="incoming-activity"
                     className="text-base font-bold text-slate-950 sm:text-lg"
                   >
-                    Recent incoming activity
+                    Latest activity
                   </h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    New club applications, contact forms, and event
-                    registrations.
+                    Search, sort, switch views, and export recent applications, enquiries, and registrations.
+
                   </p>
                 </div>
-                <AdminDashboardRefresh />
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex min-h-10 items-center rounded-xl bg-amber-50 px-3 text-xs font-semibold text-amber-900 ring-1 ring-amber-200">
+                    {needsAttentionCount.toLocaleString("en-IN")} need review
+                  </span>
+                  <AdminDashboardRefresh />
+                </div>
               </div>
               {activityHasError && (
                 <p
@@ -607,43 +626,13 @@ export default async function ManageHomePage() {
                   Some activity could not be loaded. Refresh to try again.
                 </p>
               )}
-              {!activityHasError && activityItems.length === 0 && (
-                <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-                  No recent activity is waiting here.
-                </p>
-              )}
-              <ul className="mt-4 divide-y divide-slate-100">
-                {activityItems.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:items-center sm:gap-4"
-                  >
-                    <span className="w-36 shrink-0 text-xs font-semibold text-sky-700">
-                      {item.type}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-slate-900">
-                        {item.title}
-                      </span>
-                      <span className="block truncate text-xs text-slate-500">
-                        {item.detail}
-                      </span>
-                    </span>
-                    <time
-                      className="shrink-0 text-xs text-slate-500"
-                      dateTime={item.date}
-                    >
-                      {formatActivityDate(item.date)}
-                    </time>
-                    <Link
-                      href={item.href}
-                      className="shrink-0 text-xs font-semibold text-sky-700 hover:underline"
-                    >
-                      Review
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <AdminDataTable
+                id="manage-dashboard-activity"
+                columns={activityColumns}
+                rows={activityRows}
+                pageSizes={[5, 10, 25]}
+                emptyMessage="No new applications, enquiries, or registrations in the latest activity."
+              />
             </section>
           </section>
         )}
@@ -651,11 +640,11 @@ export default async function ManageHomePage() {
         {isAdmin && !error && (
           <section
             aria-labelledby="admin-shortcuts"
-            className="mt-8 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-violet-50/80 p-5 shadow-sm sm:p-7"
+            className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">
                   Admin tools
                 </p>
                 <h2
@@ -670,15 +659,15 @@ export default async function ManageHomePage() {
                 checks your permissions before allowing changes.
               </p>
             </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {adminActions.map(({ title, detail, href, icon: Icon, tint }) => (
                 <Link
                   key={href}
                   href={href}
-                  className="group flex min-h-20 items-center gap-3 rounded-2xl border border-white bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                  className="group flex min-h-14 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 transition hover:border-sky-200 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                 >
                   <span
-                    className={`grid size-10 shrink-0 place-items-center rounded-xl ${tint}`}
+                    className={`grid size-9 shrink-0 place-items-center rounded-lg ${tint}`}
                   >
                     <Icon aria-hidden="true" className="size-5" />
                   </span>
@@ -719,8 +708,8 @@ export default async function ManageHomePage() {
         )}
 
         {!error && availableSections.length === 0 && (
-          <section className="mt-7 rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-violet-50 to-sky-50 p-6 shadow-sm sm:p-8">
-            <div className="grid size-12 place-items-center rounded-2xl bg-violet-100 text-violet-700">
+          <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="grid size-12 place-items-center rounded-2xl bg-sky-50 text-sky-700">
               <ShieldCheck aria-hidden="true" className="size-6" />
             </div>
             <h2 className="mt-5 text-xl font-bold text-slate-950">
@@ -732,7 +721,7 @@ export default async function ManageHomePage() {
               account.
             </p>
             <Link
-              className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+              className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
               href="/account"
             >
               Open your account{" "}
@@ -812,7 +801,7 @@ function ManagementCard({
     >
       <span
         aria-hidden="true"
-        className="absolute -right-8 -top-10 size-28 rounded-full bg-gradient-to-br from-sky-50 to-violet-50 transition duration-300 group-hover:scale-125"
+        className="absolute -right-8 -top-10 size-28 rounded-full bg-gradient-to-br from-sky-50 to-slate-100 transition duration-300 group-hover:scale-125"
       />
       <div className="relative flex items-start justify-between gap-4">
         <span
@@ -854,7 +843,7 @@ function Unavailable({
   message?: string;
 }) {
   return (
-    <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-sky-50 via-white to-violet-50 px-4 py-24 text-center">
+    <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-sky-50 via-white to-slate-50 px-4 py-24 text-center">
       <div className="mx-auto max-w-xl rounded-3xl border border-sky-100 bg-white/90 p-8 shadow-lg shadow-sky-950/5 sm:p-12">
         <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-sky-700">
           <Settings2 aria-hidden="true" className="size-6" />
@@ -897,12 +886,12 @@ function MemberTotalCard({
   label: string;
   count: number | null;
   detail: string;
-  tone: "sky" | "emerald" | "violet";
+  tone: "sky" | "emerald" | "slate";
 }) {
   const tones = {
     sky: "border-sky-100 bg-sky-50/70 text-sky-800",
     emerald: "border-emerald-100 bg-emerald-50/70 text-emerald-800",
-    violet: "border-violet-100 bg-violet-50/70 text-violet-800",
+    slate: "border-slate-200 bg-slate-50 text-slate-700",
   };
   return (
     <article className={`min-w-0 rounded-2xl border p-4 ${tones[tone]}`}>
