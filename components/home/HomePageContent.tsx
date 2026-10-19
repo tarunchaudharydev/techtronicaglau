@@ -21,10 +21,10 @@ export default function HomePageContent({ clubs, about, features, sponsors, stat
   sponsors: SiteContentRow[];
   stats: { value: string; label: string; description: string }[];
 }) {
-  const heroRef = useRef<HTMLDivElement | null>(null);
-  const statsRef = useRef<HTMLDivElement | null>(null);
-  const sectionRefs = useRef<HTMLDivElement[]>([]);
-  const setSectionRef = (element: HTMLDivElement | null, index: number) => { if (element) sectionRefs.current[index] = element; };
+  const heroRef = useRef<HTMLElement | null>(null);
+  const statsRef = useRef<HTMLElement | null>(null);
+  const sectionRefs = useRef<HTMLElement[]>([]);
+  const setSectionRef = (element: HTMLElement | null, index: number) => { if (element) sectionRefs.current[index] = element; };
   const aboutContent = contentObject(about?.content ?? {});
   const paragraphs = contentList(aboutContent.description);
   const layoutFeature = (row: SiteContentRow) => contentText(contentObject(row.content).placement);
