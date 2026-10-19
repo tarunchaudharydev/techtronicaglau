@@ -42,7 +42,7 @@ const pageGroups = [
 
 export default function SiteMapPage() {
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
         Website navigation
       </p>
@@ -85,6 +85,6 @@ export default function SiteMapPage() {
           </section>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
