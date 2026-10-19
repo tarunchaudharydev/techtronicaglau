@@ -28,7 +28,14 @@ function Footer() {
 
                 <div className="space-y-2 text-xs sm:text-sm max-w-md">
                   <p className="font-semibold text-sky-700">
-                    GLA UNIVERSITY, Mathura
+                    <a
+                      href="https://www.google.com/maps/search/?api=1&query=GLA+University%2C+Mathura%2C+Uttar+Pradesh%2C+India"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="footer-link"
+                    >
+                      GLA University, Mathura, Uttar Pradesh, India
+                    </a>
                   </p>
                   <p className="text-slate-700">
                     Department of{" "}
@@ -70,6 +77,11 @@ function Footer() {
                         Events
                       </Link>
                     </li>
+                    <li>
+                      <Link href="/site-map" className="footer-link">
+                        Site map
+                      </Link>
+                    </li>
                   </ul>
                 </div>
 
@@ -91,6 +103,11 @@ function Footer() {
                     <li>
                       <Link href="/contact" className="footer-link">
                         Contact Us
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/accessibility" className="footer-link">
+                        Accessibility
                       </Link>
                     </li>
                     <li>
