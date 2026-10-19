@@ -24,36 +24,46 @@ const FeatureSection = ({
   imgAlt,
   showTeamLink,
 }: FeatureSectionProps) => {
-  return (
-    <div
-      ref={(el) => setSectionRef(el, index)}
-      className="grid gap-8 md:grid-cols-2 md:items-center"
-    >
-      <div className="feature-text space-y-3 md:col-span-1">
-        <h2 className="text-xl sm:text-2xl font-bold text-sky-900">{title}</h2>
-        <p className="text-sm sm:text-base text-slate-700">{p1}</p>
-        <p className="text-xs sm:text-sm text-slate-700">{p2}</p>
+  const imageOnLeft = index % 2 === 1;
 
-        {showTeamLink && (
-          <Link
-            href="/team"
-            className="inline-flex items-center justify-center mt-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold text-white bg-sky-700 hover:bg-sky-800 transition-colors shadow-sm"
-          >
-            Meet the core team
-          </Link>
-        )}
+  return (
+    <section
+      ref={(el) => setSectionRef(el, index)}
+      className="grid overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.05)] lg:grid-cols-2"
+    >
+      <div
+        className={`order-1 flex flex-col justify-center p-6 sm:p-9 lg:p-12 ${imageOnLeft ? "lg:order-2" : "lg:order-1"}`}
+      >
+        <div className="max-w-xl space-y-4">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+            {title}
+          </h2>
+          <p className="text-sm leading-7 text-slate-700 sm:text-base">{p1}</p>
+          <p className="text-sm leading-7 text-slate-600">{p2}</p>
+
+          {showTeamLink && (
+            <Link
+              href="/team"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-offset-2"
+            >
+              Meet the core team
+            </Link>
+          )}
+        </div>
       </div>
 
-      <div className="feature-image md:col-span-1">
+      <div
+        className={`order-2 min-h-64 bg-slate-100 lg:min-h-[28rem] ${imageOnLeft ? "lg:order-1" : "lg:order-2"}`}
+      >
         <Image
           src={imgSrc}
           alt={imgAlt}
-          width={800}
-          height={500}
-          className="h-52 sm:h-64 md:h-72 w-full rounded-3xl object-cover shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
+          width={1000}
+          height={720}
+          className="h-full min-h-64 w-full object-cover lg:min-h-[28rem]"
         />
       </div>
-    </div>
+    </section>
   );
 };
 
