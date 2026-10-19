@@ -13,6 +13,7 @@ Use this index to find the guide for the task you are working on.
 
 - [Architecture and data boundaries](architecture.md)
 - [Live database updates and Realtime](realtime.md)
+- [In-app notifications and society activity](notifications.md)
 - [Authentication, membership, and permissions](authentication-and-permissions.md)
 - [Content management and public/private visibility](content-management.md)
 - [Storage and image workflow](storage-and-assets.md)
