@@ -18,8 +18,6 @@ const sharedTables = [
   "memberships",
   "event_registrations",
   "event_registration_members",
-  "notifications",
-  "notification_reads",
 ] as const satisfies readonly PublicTableName[];
 
 const managementTables = [
@@ -43,16 +41,17 @@ export default function RealtimePageRefresh() {
 
   useEffect(() => {
     const supabase = createClient();
-    const suffix = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
-    const channelName = `techtronica-page-refresh-${managementRoute ? "management" : "public"}-${suffix}`;
     const tables: readonly PublicTableName[] = managementRoute
       ? [...sharedTables, ...managementTables]
       : sharedTables;
 
     let active = true;
     let pendingRefresh = false;
+    let channelStarting = false;
+    let channel: ReturnType<ReturnType<typeof createClient>["channel"]> | null = null;
     let refreshTimer: number | undefined;
-    let channel = supabase.channel(channelName);
+    let retryTimer: number | null = null;
+    let retryDelayMs = 1_000;
 
     const scheduleRefresh = () => {
       if (!active) return;
@@ -70,41 +69,83 @@ export default function RealtimePageRefresh() {
       }, 180);
     };
 
-    for (const table of tables) {
-      channel = channel
-        .on("postgres_changes", { event: "INSERT", schema: "public", table }, scheduleRefresh)
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table }, scheduleRefresh);
-    }
+    const scheduleRetry = () => {
+      if (!active || retryTimer !== null) return;
+      const delay = retryDelayMs;
+      retryDelayMs = Math.min(retryDelayMs * 2, 30_000);
+      retryTimer = window.setTimeout(() => {
+        retryTimer = null;
+        connect();
+      }, delay);
+    };
 
-    channel.subscribe((status) => {
-      if (!active) return;
-      if (status === "SUBSCRIBED") {
-        // Re-fetch once after joining and after reconnecting to reconcile any
-        // changes made between the server render and the live subscription.
-        pendingRefresh = false;
-        scheduleRefresh();
-      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        pendingRefresh = true;
+    const connect = () => {
+      if (!active || channel || channelStarting) return;
+      channelStarting = true;
+      const suffix = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+      const nextChannel = supabase.channel(`techtronica-page-refresh-${managementRoute ? "management" : "public"}-${suffix}`);
+
+      try {
+        for (const table of tables) {
+          nextChannel
+            .on("postgres_changes", { event: "INSERT", schema: "public", table }, scheduleRefresh)
+            .on("postgres_changes", { event: "UPDATE", schema: "public", table }, scheduleRefresh)
+            .on("postgres_changes", { event: "DELETE", schema: "public", table }, scheduleRefresh);
+        }
+
+        channel = nextChannel;
+        nextChannel.subscribe((status) => {
+          if (!active || channel !== nextChannel) return;
+          if (status === "SUBSCRIBED") {
+            channelStarting = false;
+            retryDelayMs = 1_000;
+            if (retryTimer !== null) window.clearTimeout(retryTimer);
+            retryTimer = null;
+            // Reconcile after joining so changes made during reconnect are not missed.
+            scheduleRefresh();
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            channel = null;
+            channelStarting = false;
+            pendingRefresh = true;
+            void supabase.removeChannel(nextChannel).catch(() => undefined).then(scheduleRetry);
+          }
+        });
+      } catch {
+        if (channel === nextChannel) channel = null;
+        channelStarting = false;
+        void supabase.removeChannel(nextChannel).catch(() => undefined);
+        scheduleRetry();
       }
-    });
+    };
+
+    const reconciliationTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") scheduleRefresh();
+    }, 30_000);
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible" && pendingRefresh) scheduleRefresh();
+      if (document.visibilityState !== "visible") return;
+      if (pendingRefresh) scheduleRefresh();
+      if (!channel) connect();
     };
     const onOnline = () => {
       pendingRefresh = true;
       scheduleRefresh();
+      if (!channel) connect();
     };
 
+    connect();
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("online", onOnline);
 
     return () => {
       active = false;
+      window.clearInterval(reconciliationTimer);
       if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
+      if (retryTimer !== null) window.clearTimeout(retryTimer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("online", onOnline);
-      void supabase.removeChannel(channel).catch(() => undefined);
+      if (channel) void supabase.removeChannel(channel).catch(() => undefined);
+      channel = null;
     };
   }, [managementRoute, router]);
 
