@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { Bell, CheckCheck, LoaderCircle, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -165,12 +166,16 @@ export default function NotificationBell({ userId }: { userId: string }) {
       };
   
       void connect();
+      const reconciliationTimer = window.setInterval(() => {
+        if (document.visibilityState === "visible") void refresh();
+      }, 30_000);
       document.addEventListener("visibilitychange", refreshOrReconnect);
       window.addEventListener("online", refreshOrReconnect);
   
       return () => {
         active = false;
         if (retryTimer !== null) window.clearTimeout(retryTimer);
+        window.clearInterval(reconciliationTimer);
         document.removeEventListener("visibilitychange", refreshOrReconnect);
         window.removeEventListener("online", refreshOrReconnect);
         if (channel) void supabase.removeChannel(channel).catch(() => undefined);
@@ -290,14 +295,14 @@ export default function NotificationBell({ userId }: { userId: string }) {
         {unreadCount > 0 && <span className="absolute right-0.5 top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-rose-600 px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <>
           <button
             type="button"
             tabIndex={-1}
             aria-label="Close notifications"
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-[99] cursor-default bg-slate-950/35 backdrop-blur-[2px] sm:hidden"
+            className="fixed inset-0 z-[99] cursor-default bg-slate-950/35 backdrop-blur-[2px] lg:hidden"
           />
           <section
             id="notification-panel"
@@ -305,7 +310,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="notification-panel-title"
-            className="fixed inset-x-0 bottom-0 z-[100] flex max-h-[min(82dvh,720px)] flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:bottom-auto sm:mt-2 sm:max-h-[min(65vh,520px)] sm:w-[min(92vw,390px)] sm:rounded-2xl sm:pb-0"
+            className="fixed inset-x-0 bottom-0 z-[100] flex max-h-[min(82dvh,720px)] flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl dark:border-slate-700 dark:bg-slate-900 lg:inset-x-auto lg:right-4 lg:top-24 lg:bottom-auto lg:mt-0 lg:max-h-[min(65vh,520px)] lg:w-[min(92vw,390px)] lg:rounded-2xl lg:pb-0"
           >
             <header className="shrink-0 border-b border-slate-100 px-4 pb-3 pt-3 dark:border-slate-800 sm:py-3">
               <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-600 sm:hidden" />
@@ -358,7 +363,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
               Showing {notices.length} updates {hasMore ? "· scroll or load more" : "· all available updates"}
             </footer>
           </section>
-        </>
+        </>,
+        document.body,
       )}
     </div>
   );
