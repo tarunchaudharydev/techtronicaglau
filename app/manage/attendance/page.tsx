@@ -56,14 +56,14 @@ export default async function MeetingAttendancePage({
       <header className="mt-4">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">People & operations</p>
         <h1 className="mt-2 text-3xl font-bold">Meeting attendance</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Create a named attendance sheet for each meeting. Active members in the selected society or club scope are added automatically when the sheet is created.</p>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Create a named attendance sheet for each meeting. A society sheet starts with all active society members; a club sheet starts with all active members of that club. “Not in meeting” means that person is not included in this meeting.</p>
       </header>
 
       <ResultMessage result={result} />
 
       <section id="create-meeting" className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         <h2 className="text-xl font-semibold">Create an attendance sheet</h2>
-        <p className="mt-1 text-sm text-muted">The member list is a snapshot at creation time. Later membership changes do not rewrite past meeting records.</p>
+        <p className="mt-1 text-sm text-muted">The active member list is added automatically and saved as a snapshot. Mark people as Present, Absent, or Excused when the meeting applies to them; leave everyone else as Not in meeting. Later membership changes do not rewrite this sheet.</p>
         <form action={createMeetingAttendance} className="mt-5 grid gap-4 sm:grid-cols-2">
           <Field label="Meeting name">
             <input name="name" required minLength={2} maxLength={120} placeholder="Society meeting 1" className={inputClass} />
