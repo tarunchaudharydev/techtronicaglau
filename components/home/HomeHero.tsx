@@ -35,6 +35,14 @@ export default function HomeHero({ heroRef, clubs, title, tagline, description }
         aria-hidden="true"
         className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-slate-950/10"
       />
+      <div
+        aria-hidden="true"
+        className="absolute -left-28 top-12 size-80 rounded-full bg-sky-300/20 blur-3xl motion-safe:animate-pulse"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute -right-24 bottom-0 size-96 rounded-full bg-cyan-100/15 blur-3xl motion-safe:animate-pulse"
+      />
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-5 py-24 sm:px-8 lg:px-12">
         <div className="max-w-4xl">
