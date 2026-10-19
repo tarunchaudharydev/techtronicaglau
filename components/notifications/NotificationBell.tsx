@@ -68,64 +68,105 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }, [userId]);
 
   useEffect(() => {
-    let active = true;
-    let channel: ReturnType<ReturnType<typeof createClient>["channel"]> | null = null;
-    let channelStarting = false;
-    const supabase = createClient();
-
-    const attachRealtime = () => {
-      if (!active || channel || channelStarting) return;
-      channelStarting = true;
-      try {
-        // A unique topic per effect instance avoids reusing a subscribed channel
-        // during React remounts (including Strict Mode's development remount).
-        const suffix = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
-        const nextChannel = supabase
-          .channel(`notification-feed-${userId}-${suffix}`)
-          .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => {
-            if (active) void refresh();
-          });
-
-        channel = nextChannel;
-        nextChannel.subscribe((status) => {
-          if (!active || (status !== "CHANNEL_ERROR" && status !== "TIMED_OUT" && status !== "CLOSED")) return;
-          if (channel === nextChannel) channel = null;
+      let active = true;
+      let channel: ReturnType<ReturnType<typeof createClient>["channel"]> | null = null;
+      let channelStarting = false;
+      let retryTimer: number | null = null;
+      let retryDelayMs = 1_000;
+      const supabase = createClient();
+  
+      const scheduleRetry = () => {
+        if (!active || retryTimer !== null) return;
+        const delay = retryDelayMs;
+        retryDelayMs = Math.min(retryDelayMs * 2, 30_000);
+        retryTimer = window.setTimeout(() => {
+          retryTimer = null;
+          void connect();
+        }, delay);
+      };
+  
+      const connect = async () => {
+        if (!active || channel || channelStarting) return;
+        channelStarting = true;
+        const available = await refresh();
+        if (!active) return;
+        if (!available) {
           channelStarting = false;
-          void supabase.removeChannel(nextChannel).catch(() => undefined);
-        });
-      } catch {
-        // Polling remains available if Realtime is disabled or temporarily fails.
-        channelStarting = false;
-        if (channel) {
-          const failedChannel = channel;
-          channel = null;
-          void supabase.removeChannel(failedChannel).catch(() => undefined);
+          scheduleRetry();
+          return;
         }
-      }
-    };
+  
+        let nextChannel: ReturnType<ReturnType<typeof createClient>["channel"]> | null = null;
+        try {
+          const suffix = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+          nextChannel = supabase
+            .channel("notification-feed-" + userId + "-" + suffix)
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => {
+              if (active) void refresh();
+            })
+            .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => {
+              if (active) void refresh();
+            })
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "notification_reads", filter: "user_id=eq." + userId }, () => {
+              if (active) void refresh();
+            })
+            .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notification_reads", filter: "user_id=eq." + userId }, () => {
+              if (active) void refresh();
+            });
+  
+          channel = nextChannel;
+          nextChannel.subscribe((status) => {
+            if (!active || channel !== nextChannel) return;
+            if (status === "SUBSCRIBED") {
+              channelStarting = false;
+              retryDelayMs = 1_000;
+              if (retryTimer !== null) window.clearTimeout(retryTimer);
+              retryTimer = null;
+              // Reconcile the initial read with the moment the socket joined.
+              void refresh();
+              return;
+            }
+  
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+              channel = null;
+              channelStarting = false;
+              void supabase.removeChannel(nextChannel!).catch(() => undefined).then(scheduleRetry);
+            }
+          });
+        } catch {
+          if (nextChannel) {
+            if (channel === nextChannel) channel = null;
+            void supabase.removeChannel(nextChannel).catch(() => undefined);
+          }
+          channelStarting = false;
+          scheduleRetry();
+        }
+      };
+  
+      const refreshOrReconnect = () => {
+        if (document.visibilityState !== "visible") return;
+        if (channel) void refresh();
+        else {
+          if (retryTimer !== null) window.clearTimeout(retryTimer);
+          retryTimer = null;
+          void connect();
+        }
+      };
+  
+      void connect();
+      document.addEventListener("visibilitychange", refreshOrReconnect);
+      window.addEventListener("online", refreshOrReconnect);
+  
+      return () => {
+        active = false;
+        if (retryTimer !== null) window.clearTimeout(retryTimer);
+        document.removeEventListener("visibilitychange", refreshOrReconnect);
+        window.removeEventListener("online", refreshOrReconnect);
+        if (channel) void supabase.removeChannel(channel).catch(() => undefined);
+        channel = null;
+      };
+    }, [refresh, userId]);
 
-    const refreshAndConnect = async () => {
-      const available = await refresh();
-      if (active && available) attachRealtime();
-    };
-
-    void refreshAndConnect();
-    const poll = window.setInterval(() => {
-      if (active && document.visibilityState === "visible") void refreshAndConnect();
-    }, 60_000);
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void refreshAndConnect();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-
-    return () => {
-      active = false;
-      window.clearInterval(poll);
-      document.removeEventListener("visibilitychange", onVisible);
-      if (channel) void supabase.removeChannel(channel).catch(() => undefined);
-      channel = null;
-    };
-  }, [refresh, userId]);
 
   useEffect(() => {
     if (!open) return;

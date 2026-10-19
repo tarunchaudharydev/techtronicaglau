@@ -1,23 +1,12 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-const refreshIntervalMs = 60_000;
 
 export function AdminDashboardRefresh() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") {
-        router.refresh();
-      }
-    }, refreshIntervalMs);
-
-    return () => window.clearInterval(timer);
-  }, [router]);
 
   return (
     <button

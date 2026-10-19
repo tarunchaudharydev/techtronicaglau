@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { formString, redirectResult, requireManager, safeSlug, validId } from "@/lib/manage/server";
 import { siteContentTypes, type SiteContentType } from "@/lib/data/public-content";
 import type { Json } from "@/types/database";
@@ -87,7 +87,7 @@ function validateContent(type: SiteContentType, content: Record<string, Json | u
 }
 
 function refreshContent() {
-  revalidateTag("site-content", "max");
+  updateTag("site-content");
   for (const path of ["/", "/about", "/alumni", "/clubs", "/events", "/faq", "/academics", "/projects", "/research", "/patents", "/library", "/gallery", "/privacy-policy", "/terms", "/refund-policy", "/code-of-conduct"]) {
     revalidatePath(path);
   }

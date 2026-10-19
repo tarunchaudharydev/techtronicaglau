@@ -17,6 +17,7 @@ import { mapDatabaseEvent } from "@/lib/data/event-mappers";
 import { getPublicEvents } from "@/lib/data/public-content";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import CookieConsent from "@/components/CookieConsent";
+import RealtimePageRefresh from "@/components/RealtimePageRefresh";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -118,6 +119,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-900 text-foreground dark:text-white transition-colors duration-300 lg:pl-[4.5rem]`}
       >
         {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem> */}
+        <RealtimePageRefresh />
         <Navbar />
 
         <main className="min-h-screen pt-16 lg:pt-20 bg-[#f7f9fb] dark:bg-slate-950 transition-colors duration-300">
