@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { formString, requireManager, validId } from "@/lib/manage/server";
 
@@ -96,6 +96,7 @@ function redirectTeamResult(formData: FormData, result: "saved" | "error" | "inv
 }
 
 function revalidateTeam() {
+  updateTag("public-team");
   revalidatePath(route);
   revalidatePath("/about");
   revalidatePath("/", "page");
