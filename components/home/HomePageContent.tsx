@@ -21,10 +21,10 @@ export default function HomePageContent({ clubs, about, features, sponsors, stat
   sponsors: SiteContentRow[];
   stats: { value: string; label: string; description: string }[];
 }) {
-  const heroRef = useRef<HTMLDivElement | null>(null);
-  const statsRef = useRef<HTMLDivElement | null>(null);
-  const sectionRefs = useRef<HTMLDivElement[]>([]);
-  const setSectionRef = (element: HTMLDivElement | null, index: number) => { if (element) sectionRefs.current[index] = element; };
+  const heroRef = useRef<HTMLElement | null>(null);
+  const statsRef = useRef<HTMLElement | null>(null);
+  const sectionRefs = useRef<HTMLElement[]>([]);
+  const setSectionRef = (element: HTMLElement | null, index: number) => { if (element) sectionRefs.current[index] = element; };
   const aboutContent = contentObject(about?.content ?? {});
   const paragraphs = contentList(aboutContent.description);
   const layoutFeature = (row: SiteContentRow) => contentText(contentObject(row.content).placement);
@@ -41,34 +41,80 @@ export default function HomePageContent({ clubs, about, features, sponsors, stat
     return logo ? [{ name: row.title, logo }] : [];
   });
 
-  return <main className="min-h-screen bg-gradient-to-br from-white via-sky-50 to-purple-100 dark:from-slate-950 dark:via-slate-900 dark:to-black">
-    {about && <HomeHero heroRef={heroRef} clubs={clubs} title={heroTitle} tagline={tagline} description={heroDescription} />}
-    <section className="mx-auto w-full max-w-6xl space-y-16 px-3 pb-20 pt-12 text-slate-950 sm:space-y-20 sm:px-4 sm:pt-16 dark:text-white">
-      {stats.length > 0 && <StatsGrid statsRef={statsRef} stats={stats} />}
-      {about && paragraphs.length > 0 && <ClubsOverview aboutSociety={{ title, description: paragraphs }} setSectionRef={setSectionRef} />}
-      {displayFeatures.map((feature, index) => {
-        const content = contentObject(feature.content);
-        const featureTitle = contentText(content.title, feature.title);
-        const p1 = contentText(content.p1);
-        const p2 = contentText(content.p2);
-        const image = contentText(content.image);
-        if (!p1 || !image) return null;
-        return <FeatureSection key={feature.id} setSectionRef={setSectionRef} index={index + 1} title={featureTitle} p1={p1} p2={p2} imgSrc={image} imgAlt={contentText(content.alt, featureTitle)} />;
-      })}
-      {sponsorItems.length > 0 && <SponsorsMarquee sponsors={sponsorItems} />}
-      {involvement && <HowToGetInvolved title={contentText(contentObject(involvement.content).title)} steps={jsonObjects(contentObject(involvement.content).items).flatMap((item) => {
-        const stepTitle = contentText(item.title);
-        const description = contentText(item.description);
-        return stepTitle && description ? [{ title: stepTitle, description }] : [];
-      })} />}
-      {cta && <CoreTeamCTA title={contentText(contentObject(cta.content).title)} description={contentText(contentObject(cta.content).description)} buttonLabel={contentText(contentObject(cta.content).button_label)} href={safeInternalHref(contentText(contentObject(cta.content).href))} />}
-    </section>
-    <WhatsAppFloat />
-  </main>;
+  return (
+    <main className="min-h-screen bg-[#f7f9fb] text-slate-950 dark:bg-slate-950 dark:text-white">
+      {about && (
+        <HomeHero
+          heroRef={heroRef}
+          clubs={clubs}
+          title={heroTitle}
+          tagline={tagline}
+          description={heroDescription}
+        />
+      )}
+
+      <div className="mx-auto w-full max-w-7xl space-y-14 px-4 pb-20 pt-10 sm:space-y-20 sm:px-6 sm:pt-14 lg:space-y-24 lg:px-8">
+        {stats.length > 0 && <StatsGrid statsRef={statsRef} stats={stats} />}
+
+        {about && paragraphs.length > 0 && (
+          <ClubsOverview
+            aboutSociety={{ title, description: paragraphs }}
+            setSectionRef={setSectionRef}
+          />
+        )}
+
+        {displayFeatures.map((feature, index) => {
+          const content = contentObject(feature.content);
+          const featureTitle = contentText(content.title, feature.title);
+          const p1 = contentText(content.p1);
+          const p2 = contentText(content.p2);
+          const image = contentText(content.image);
+          if (!p1 || !image) return null;
+          return (
+            <FeatureSection
+              key={feature.id}
+              setSectionRef={setSectionRef}
+              index={index + 1}
+              title={featureTitle}
+              p1={p1}
+              p2={p2}
+              imgSrc={image}
+              imgAlt={contentText(content.alt, featureTitle)}
+            />
+          );
+        })}
+
+        {sponsorItems.length > 0 && <SponsorsMarquee sponsors={sponsorItems} />}
+
+        {involvement && (
+          <HowToGetInvolved
+            title={contentText(contentObject(involvement.content).title)}
+            steps={jsonObjects(contentObject(involvement.content).items).flatMap((item) => {
+              const stepTitle = contentText(item.title);
+              const description = contentText(item.description);
+              return stepTitle && description ? [{ title: stepTitle, description }] : [];
+            })}
+          />
+        )}
+
+        {cta && (
+          <CoreTeamCTA
+            title={contentText(contentObject(cta.content).title)}
+            description={contentText(contentObject(cta.content).description)}
+            buttonLabel={contentText(contentObject(cta.content).button_label)}
+            href={safeInternalHref(contentText(contentObject(cta.content).href))}
+          />
+        )}
+      </div>
+      <WhatsAppFloat />
+    </main>
+  );
 }
 
 function jsonObjects(value: Json | undefined) {
   return Array.isArray(value) ? value.flatMap((entry) => entry && typeof entry === "object" && !Array.isArray(entry) ? [entry] : []) : [];
 }
 
-function safeInternalHref(value: string) { return value.startsWith("/") && !value.startsWith("//") ? value : "/about"; }
+function safeInternalHref(value: string) {
+  return value.startsWith("/") && !value.startsWith("//") ? value : "/about";
+}

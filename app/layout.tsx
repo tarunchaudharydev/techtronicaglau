@@ -120,7 +120,7 @@ export default async function RootLayout({
         {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem> */}
         <Navbar />
 
-        <main className="min-h-screen pt-16 lg:pt-20 bg-gradient-to-br from-white dark:from-slate-950 via-sky-50 dark:via-slate-900 to-purple-100 dark:to-black dark:from-slate-900 dark:via-slate-800 dark:to-black transition-colors duration-300">
+        <main className="min-h-screen pt-16 lg:pt-20 bg-[#f7f9fb] dark:bg-slate-950 transition-colors duration-300">
           <Suspense fallback={null}><EventPopupLoader /></Suspense>
           {children}
         </main>
