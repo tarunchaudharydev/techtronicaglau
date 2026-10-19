@@ -113,6 +113,7 @@ export default function HomeHero({ heroRef, clubs, title, tagline, description }
           className="relative mx-auto w-full max-w-3xl"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
+          role="region"
           aria-label="Featured clubs"
           aria-roledescription="carousel"
         >
@@ -130,7 +131,7 @@ export default function HomeHero({ heroRef, clubs, title, tagline, description }
                   aria-current={isActive ? "true" : undefined}
                   tabIndex={isActive ? 0 : -1}
                   className={[
-                    "absolute left-1/2 top-1/2 block h-[82%] aspect-[0.72] overflow-hidden rounded-[1.75rem] border border-white/70 bg-slate-900 shadow-[0_24px_60px_rgba(15,23,42,.24)] outline-none transition-[transform,opacity,filter,box-shadow] duration-700 ease-[cubic-bezier(.2,.75,.25,1)] motion-reduce:transition-none",
+                    "absolute group left-1/2 top-1/2 block h-[82%] aspect-[0.72] overflow-hidden rounded-[1.75rem] border border-white/70 bg-slate-900 shadow-[0_24px_60px_rgba(15,23,42,.24)] outline-none transition-[transform,opacity,filter,box-shadow] duration-700 ease-[cubic-bezier(.2,.75,.25,1)] motion-reduce:transition-none",
                     isActive
                       ? "z-30 opacity-100 shadow-[0_30px_80px_rgba(15,23,42,.32)] focus-visible:ring-4 focus-visible:ring-sky-400"
                       : "pointer-events-none z-10 opacity-0 md:pointer-events-auto md:opacity-65 md:hover:opacity-90",
@@ -201,7 +202,7 @@ export default function HomeHero({ heroRef, clubs, title, tagline, description }
           </div>
 
           {clubs.length > 1 && (
-            <div className="mt-1 flex justify-center gap-2" aria-label="Choose a club">
+            <div role="group" className="mt-1 flex justify-center gap-2" aria-label="Choose a club">
               {clubs.map((club, index) => (
                 <button
                   key={club.id}
