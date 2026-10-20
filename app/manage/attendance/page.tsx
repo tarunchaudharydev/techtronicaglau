@@ -68,10 +68,10 @@ export default async function MeetingAttendancePage({
           <Field label="Meeting name">
             <input name="name" required minLength={2} maxLength={120} placeholder="Society meeting 1" className={inputClass} />
           </Field>
-          <Field label="Meeting date">
+          <Field label="Meeting date (IST)">
             <input name="meeting_date" type="date" required defaultValue={todayInIndia()} className={inputClass} />
           </Field>
-          <Field label="Meeting time (optional)">
+          <Field label="Meeting time (IST, optional)">
             <input name="meeting_time" type="time" className={inputClass} />
           </Field>
           <Field label="Meeting scope">
