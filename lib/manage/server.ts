@@ -35,7 +35,11 @@ export function safeSlug(value: string | null): value is string {
 
 export function parsedDate(value: string | null) {
   if (!value || value.length > 40) return null;
-  const date = new Date(value);
+  // datetime-local values have no offset; interpret them as India Standard Time.
+  const normalized = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(value)
+    ? `${value}+05:30`
+    : value;
+  const date = new Date(normalized);
   return Number.isNaN(date.valueOf()) ? null : date.toISOString();
 }
 
