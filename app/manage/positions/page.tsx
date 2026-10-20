@@ -50,14 +50,12 @@ export default async function PositionsPage({ searchParams }: { searchParams: Pr
     return { id: position.id, values, cells: values, searchText: Object.values(values).join(" "), actions: <a href={`#manage-position-${position.id}`} className="font-semibold text-sky-700 underline underline-offset-2">Edit</a>, card: <div id={`manage-position-${position.id}`} className="scroll-mt-24"><PositionCard position={position} clubs={clubs} roles={roles} disabled={hasLookupError} /></div> };
   }) : [];
 
-  return <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-sky-50/70 via-slate-50 to-white px-4 py-6 sm:px-6 sm:py-10">
+  return <main className="min-h-[calc(100vh-5rem)] bg-slate-50 px-4 py-6 sm:px-6 sm:py-10">
     <div className="mx-auto max-w-7xl">
       <Link href="/manage" className="inline-flex min-h-10 items-center gap-2 rounded-lg pr-2 text-sm font-semibold text-slate-600 transition hover:text-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"><ArrowLeft aria-hidden="true" className="size-4" /> Management</Link>
 
-      <header className="relative isolate mt-4 overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-violet-100/80 p-5 shadow-[0_18px_60px_-35px_rgba(14,116,144,0.3)] sm:p-8 lg:p-10">
-        <div aria-hidden="true" className="absolute -right-16 -top-24 -z-10 size-72 rounded-full bg-fuchsia-200/35 blur-3xl" />
-        <div aria-hidden="true" className="absolute -bottom-24 right-1/3 -z-10 size-64 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mt-4 rounded-xl border border-slate-200 bg-white p-5 sm:p-7 lg:p-8">
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-white bg-white/80 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-sky-800 shadow-sm"><BriefcaseBusiness aria-hidden="true" className="size-3.5" /> Society structure</span>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Positions</h1>
@@ -82,12 +80,12 @@ export default async function PositionsPage({ searchParams }: { searchParams: Pr
         <details>
           <summary className="group flex min-h-[84px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 [&::-webkit-details-marker]:hidden sm:px-7">
             <span className="flex min-w-0 items-center gap-4">
-              <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-100 to-violet-100 text-sky-800"><Plus aria-hidden="true" className="size-5" /></span>
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-700"><Plus aria-hidden="true" className="size-5" /></span>
               <span className="min-w-0"><span className="block truncate text-base font-bold text-slate-900">Add a position</span><span className="mt-1 block text-sm text-slate-500">Set its scope, permission role, and display order.</span></span>
             </span>
             <ChevronDown aria-hidden="true" className="size-5 shrink-0 text-slate-400 transition group-open:rotate-180" />
           </summary>
-          <div className="border-t border-slate-100 bg-gradient-to-br from-white to-sky-50/50 px-5 py-5 sm:px-7 sm:py-7">
+          <div className="border-t border-slate-100 bg-white px-5 py-5 sm:px-7 sm:py-7">
             {roles.length === 0 && !roleResult.error && <LookupNotice>There are no permission roles available yet. Add a role in Roles &amp; access before creating a position.</LookupNotice>}
             <PositionForm action={createPosition} clubs={clubs} roles={roles} disabled={hasLookupError || roles.length === 0} mode="create" />
           </div>

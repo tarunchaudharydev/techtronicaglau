@@ -345,3 +345,36 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Shared, compact controls for account forms and management workspaces. */
+.workspace-ui :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: #dadce0;
+  border-radius: 0.625rem;
+  box-shadow: none;
+}
+.workspace-ui :is(input:not([type="checkbox"]):not([type="radio"]), select) {
+  min-height: 2.5rem;
+}
+.workspace-ui :is(input, select, textarea):focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 1px;
+  border-color: #1a73e8;
+  box-shadow: none;
+}
+.workspace-ui :is(input[type="checkbox"], input[type="radio"]) {
+  accent-color: #1a73e8;
+}
+.workspace-ui :is(section, article)[class*="border-slate-200"][class*="bg-white"] {
+  border-radius: 0.75rem;
+  box-shadow: none;
+}
+.workspace-ui table {
+  border-collapse: collapse;
+}
+.workspace-ui :is(th, td) {
+  border-color: #e8eaed;
+}
+.workspace-ui th {
+  font-weight: 600;
+}
