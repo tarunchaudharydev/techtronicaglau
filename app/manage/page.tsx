@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
 import AdminDataTable, { type AdminDataColumn, type AdminDataRow } from "@/components/manage/AdminDataTable";
 import { AdminOverviewDonut } from "@/components/manage/AdminOverviewDonut";
@@ -65,6 +66,15 @@ const sections = [
     description: "Assign roles and control what each society team can manage.",
     icon: ShieldCheck,
     tone: "rose",
+  },
+  {
+    title: "Users & sessions",
+    href: "/manage/users",
+    permission: "admin.manage",
+    group: "People & access",
+    description: "Invite accounts, review sign-ins, and manage account access.",
+    icon: UserPlus,
+    tone: "blue",
   },
   {
     title: "Clubs",
@@ -193,15 +203,8 @@ export default async function ManageHomePage() {
   const supabase = await createClient();
   if (!supabase) return <Unavailable />;
 
-  let userId = "";
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    if (!error) userId = data.user?.id ?? "";
-  } catch {
-    return (
-      <Unavailable message="We could not verify your session. Refresh or sign in again." />
-    );
-  }
+  const appUser = await getCurrentAppUser();
+  const userId = appUser?.id ?? "";
   if (!userId) redirect("/auth/sign-in?next=/manage");
 
   const { permissionKeys, error } = await getMyPermissionKeys(supabase, userId);

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import AuthForm from "@/components/auth/AuthForm";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = { title: "Reset password | Techtronica" };
 
 export default function ForgotPasswordPage() {
-  return <AuthForm mode="forgot-password" />;
+  redirect("/auth/sign-in");
 }

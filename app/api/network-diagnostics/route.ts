@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
@@ -55,19 +57,12 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   if (!supabase) return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
 
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) {
-    return NextResponse.json({ error: "Could not read the current account session." }, { status: 401 });
+  const { userId: clerkUserId } = await auth();
+  const appUser = clerkUserId ? await getCurrentAppUser() : null;
+  if (clerkUserId && !appUser) {
+    return NextResponse.json({ error: "Could not resolve the current account profile." }, { status: 401 });
   }
-
-  let userId: string | null = null;
-  if (sessionData.session) {
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData.user) {
-      return NextResponse.json({ error: "Could not verify the current account." }, { status: 401 });
-    }
-    userId = authData.user.id;
-  }
+  const userId = appUser?.id ?? null;
 
   const currentSessionCookie = request.cookies.get(sessionCookieName)?.value;
   const ownerPrefix = userId ? "user:" + userId + ":" : "guest:";

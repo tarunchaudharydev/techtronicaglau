@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
 
 export type JoinClubState = { status: "idle" | "success" | "error"; message: string };
 
@@ -21,13 +22,8 @@ export async function requestClubMembershipAction(
   const supabase = await createClient();
   if (!supabase) return fail("Club applications are temporarily unavailable. Please try again later.");
 
-  let userId = "";
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    if (!error) userId = data.user?.id ?? "";
-  } catch {
-    return fail("We could not verify your session. Sign in and try again.");
-  }
+  const appUser = await getCurrentAppUser();
+  const userId = appUser?.id ?? "";
   if (!userId) redirect(`/auth/sign-in?next=${encodeURIComponent(`/clubs/${slug}/join`)}`);
 
   const { data: club, error: clubError } = await supabase

@@ -3,18 +3,16 @@
 import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { useEffect, useRef, useState } from "react";
+import { useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
 import {
   Activity, BriefcaseBusiness, CalendarDays, ChevronDown, ChevronRight,
   Code2, GraduationCap, House, Info, Library, LogIn, LogOut, Mail, Menu,
   Sparkles, UserPlus, UserRound, Users, X,
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
-import { createClient } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const navLinks = [
   { href: "/", label: "Home", icon: House },
@@ -48,14 +46,14 @@ type HeaderAccountState =
   | { status: "signed-in"; userId: string; name: string; initials: string; avatarUrl: string | null };
 
 export default function Navbar() {
-  const [account, setAccount] = useState<HeaderAccountState>(() =>
-    isSupabaseConfigured ? { status: "loading" } : { status: "signed-out" },
-  );
+  const [account, setAccount] = useState<HeaderAccountState>({ status: "loading" });
   const [menuOpen, setMenuOpen] = useState(false);
   const [clubsOpen, setClubsOpen] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const pathname = usePathname();
+  const { isLoaded: authLoaded, userId: clerkId } = useAuth();
+  const { user: clerkUser } = useUser();
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const sidebarExpanded = sidebarPinned || sidebarHovered;
@@ -65,44 +63,32 @@ export default function Navbar() {
   const pageLabel = navLinks.find((link) => isActive(link.href))?.label ?? "Techtronica";
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-    let mounted = true;
-    let supabase: ReturnType<typeof createClient>;
-    try {
-      supabase = createClient();
-    } catch {
+    if (!authLoaded) return;
+    if (!clerkId) {
       setAccount({ status: "signed-out" });
       return;
     }
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) setAccount(accountStateFor(session?.user ?? null));
-    });
-    void supabase.auth.getSession().then(({ data, error }) => {
-      if (mounted) setAccount(accountStateFor(error ? null : data.session?.user ?? null));
-    }).catch(() => {
-      if (mounted) setAccount({ status: "signed-out" });
-    });
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [pathname]);
 
-  useEffect(() => {
-    if (!userId) return;
     let active = true;
-    void (async () => {
-      try {
-        const { data, error } = await createClient().from("profiles").select("avatar_url").eq("id", userId).maybeSingle();
-        if (active && !error) setAccount((current) =>
-          current.status === "signed-in" && current.userId === userId ? { ...current, avatarUrl: data?.avatar_url ?? null } : current,
-        );
-      } catch {
-        // Use initials if profile data is unavailable.
-      }
-    })();
+    const fallbackName = clerkUser?.fullName?.trim()
+      || clerkUser?.primaryEmailAddress?.emailAddress.split("@")[0]
+      || "Techtronica member";
+    setAccount(accountStateFor("", fallbackName, clerkUser?.imageUrl ?? null));
+
+    void fetch("/api/account/identity", { cache: "no-store", credentials: "same-origin" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Profile identity unavailable");
+        return response.json() as Promise<{ id: string; fullName: string; avatarUrl: string | null }>;
+      })
+      .then((identity) => {
+        if (active) setAccount(accountStateFor(identity.id, identity.fullName || fallbackName, identity.avatarUrl));
+      })
+      .catch(() => {
+        // Keep the Clerk account visible; the profile UUID is needed only for database notifications.
+      });
+
     return () => { active = false; };
-  }, [userId]);
+  }, [authLoaded, clerkId, clerkUser?.id, clerkUser?.fullName, clerkUser?.imageUrl, clerkUser?.primaryEmailAddress?.emailAddress]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -194,7 +180,7 @@ export default function Navbar() {
           <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{pageLabel}</p><p className="hidden text-[11px] text-slate-400 xl:block">Techtronica Society · GLA University</p></div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          {account.status === "signed-in" && <NotificationBell userId={account.userId} />}
+          {account.status === "signed-in" && account.userId && <NotificationBell userId={account.userId} />}
           {account.status === "signed-in" ? <Link href="/account" className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 py-1 pl-1 pr-3 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"><Avatar account={account} size="size-8" /><span className="max-w-36 truncate">{account.name}</span><ChevronDown className="size-4 text-slate-400" /></Link> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700"><LogIn className="size-4" />Sign in</Link> : <span className="size-9 animate-pulse rounded-full bg-slate-200" aria-label="Loading account" />}
         </div>
       </header>
@@ -219,12 +205,11 @@ export default function Navbar() {
   );
 }
 
-function accountStateFor(user: User | null): HeaderAccountState {
-  if (!user) return { status: "signed-out" };
-  const metadataName = user.user_metadata?.full_name;
-  const name = typeof metadataName === "string" && metadataName.trim() ? metadataName.trim().replace(/\s+/g, " ") : user.email?.split("@")[0] || "Techtronica member";
-  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "").join("") || "T";
-  return { status: "signed-in", userId: user.id, name: name.slice(0, 40), initials, avatarUrl: null };
+function accountStateFor(userId: string, value: string, avatarUrl: string | null): HeaderAccountState {
+  const name = value.trim().replace(/\s+/g, " ") || "Techtronica member";
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
+    .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "").join("") || "T";
+  return { status: "signed-in", userId, name: name.slice(0, 40), initials, avatarUrl };
 }
 
 function Avatar({ account, size }: { account: Extract<HeaderAccountState, { status: "signed-in" }>; size: string }) {

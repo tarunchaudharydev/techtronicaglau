@@ -1,27 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { clerkClient } from "@clerk/nextjs/server";
 import { formString, redirectResult, requireManager, validId } from "@/lib/manage/server";
 
 const route = "/manage/access";
 const scopes = new Set(["society", "club"]);
 
 function selectedPermissions(formData: FormData) {
-  return [...new Set(
-    formData.getAll("permission_keys")
-      .filter((value): value is string => typeof value === "string")
-      .map((value) => value.trim())
-      .filter((value) => value.length > 0 && value.length <= 100),
-  )].slice(0, 100);
-}
-
-function createRoleResult(error: { code?: string; message?: string } | null) {
-  if (!error) return "saved";
-  if (error.code === "23505") return "role_exists";
-  const message = error.message?.toLowerCase() ?? "";
-  if (error.code === "42501" || message.includes("society admin permission required")) return "admin_required";
-  if (message.includes("invalid role details") || message.includes("unknown permission key") || message.includes("too many permissions")) return "invalid";
-  return "error";
+  return formData.getAll("permission_keys").filter((value): value is string => typeof value === "string" && value.length <= 100).slice(0, 100);
 }
 
 export async function createRole(formData: FormData) {
@@ -34,7 +21,7 @@ export async function createRole(formData: FormData) {
   const { error } = await supabase.rpc("admin_create_role", { p_name: name, p_scope: scope, p_description: description, p_permission_keys: permissionKeys });
   revalidatePath(route);
   revalidatePath("/manage");
-  return redirectResult(route, createRoleResult(error));
+  return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : "saved");
 }
 
 export async function updateRole(formData: FormData) {
@@ -77,8 +64,7 @@ export async function assignRole(formData: FormData) {
     supabase.from("roles").select("id, scope").eq("id", roleId).maybeSingle(),
     supabase.from("profiles").select("id").eq("id", targetUserId).maybeSingle(),
   ]);
-  if (!role || !profile) return redirectResult(route, "invalid");
-  if ((role.scope === "society") !== (clubId === null)) return redirectResult(route, "scope_mismatch");
+  if (!role || !profile || (role.scope === "society") !== (clubId === null)) return redirectResult(route, "invalid");
   const { error } = await supabase.from("user_role_assignments").insert({ user_id: targetUserId, role_id: roleId, club_id: clubId, granted_by: user.id });
   revalidatePath(route);
   revalidatePath("/manage");
@@ -96,12 +82,20 @@ export async function revokeRole(formData: FormData) {
 }
 
 export async function inviteUser(formData: FormData) {
-  const { supabase } = await requireManager("admin.manage");
+  await requireManager("admin.manage");
   const email = formString(formData, "email", 254)?.toLowerCase();
   const fullName = formString(formData, "full_name", 120) || "";
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return redirectResult(route, "invalid");
-  const { error } = await supabase.functions.invoke("admin-invite-user", { body: { email, fullName } });
-  if (error) return redirectResult(route, "error");
+  try {
+    const client = await clerkClient();
+    await client.invitations.createInvitation({
+      emailAddress: email,
+      redirectUrl: "/auth/sign-up",
+      publicMetadata: fullName ? { techtronica: { invited_name: fullName } } : undefined,
+    });
+  } catch {
+    return redirectResult(route, "error");
+  }
   revalidatePath(route);
   return redirectResult(route, "invited");
 }

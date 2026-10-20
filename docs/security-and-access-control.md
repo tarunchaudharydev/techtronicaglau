@@ -3,11 +3,11 @@
 ## Trust boundaries
 
 - Supabase publishable key: identifies the project; it is public and safe for browser use.
-- Auth session: establishes the user identity. Supabase Postgres policies derive the user from the verified JWT.
-- Database roles and permissions: the authority for all management operations. Do not trust browser state or editable Auth metadata.
-- Service credentials: not used by this frontend. The invitation Edge Function keeps its server-side credential in Supabase secrets.
+- Clerk session: establishes identity. Supabase Third-Party Auth validates the Clerk-signed token before Postgres uses it.
+- Application profile and permission records: Supabase stores the stable UUID, society/club roles, and scope. These database records are the authority for management access.
+- Service credentials: Clerk's secret key is server-only and used for invitations/session administration. The frontend does not use a Supabase service-role key.
 
-The website uses cookie-aware server clients. A server component or server action still represents the signed-in user and receives only that user's database privileges.
+The website uses request-scoped server and browser clients. Authenticated database requests carry the current Clerk session token and remain limited by RLS.
 
 ## Defense in depth
 
@@ -45,7 +45,7 @@ Roles can grant only existing permission keys. Adding a new key requires a backe
 
 ## High-risk operations and retention
 
-- The invitation Edge Function verifies the Auth JWT and checks society-wide admin.manage before using its server-side Auth Admin credential.
+- Clerk invitation and account administration are called only from server actions protected by the database-backed admin.manage permission. Never expose the Clerk secret key to the browser.
 - Role creation, permission replacement, and deletion use admin-only database functions that enforce uniqueness and prevent removal of system or assigned roles.
 - Event registration capacity, waitlist assignment, and promotion are database-owned to handle concurrent sign-ups.
 - Cancelling an active registration may promote a waitlisted user. Stale manager actions are rejected by checking the previous status.
@@ -57,7 +57,7 @@ For a new table or capability, review:
 
 - RLS is enabled on every exposed table and policies cover intended operations.
 - SQL grants are no broader than necessary for anon/authenticated.
-- Inserts and updates derive ownership from auth.uid() and prevent client-selected privilege/status escalation.
+- Inserts and updates derive ownership from the verified token through private.current_profile_id() and prevent client-selected privilege/status escalation.
 - Scope checks cover reads and writes, and database constraints protect valid relationships.
 - SECURITY DEFINER functions use a constrained search_path, qualified references, and minimal execute grants.
 - Authenticated/private queries do not enter a shared anonymous cache.

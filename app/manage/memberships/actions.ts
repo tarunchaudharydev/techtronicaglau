@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { clerkClient } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { formString, redirectResult, requireManager } from "@/lib/manage/server";
 
@@ -13,11 +14,26 @@ const MAX_BULK_INVITES = 50;
 export async function addSocietyMember(formData: FormData) {
   const { supabase } = await requireManager("admin.manage");
   const email = formString(formData, "email", 254)?.toLowerCase();
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return redirectResult(route, "invalid");
-  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return redirectResult(route, "invalid");
 
-  const { data, error } = await supabase.rpc("admin_add_society_member", { p_email: email });
+  let clerkUserId: string | null = null;
+  try {
+    const clerk = await clerkClient();
+    const matches = await clerk.users.getUserList({ emailAddress: [email], limit: 100 });
+    const account = matches.data.find((candidate) => candidate.emailAddresses.some((address) =>
+      address.emailAddress.toLowerCase() === email && address.verification?.status === "verified",
+    ));
+    clerkUserId = account?.id ?? null;
+  } catch {
+    return redirectResult(route, "error");
+  }
+  if (!clerkUserId) return redirectResult(route, "member_not_verified");
+
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("id").eq("clerk_user_id", clerkUserId).maybeSingle();
+  if (profileError) return redirectResult(route, "error");
+  if (!profile) return redirectResult(route, "member_not_found");
+
+  const { data, error } = await supabase.rpc("admin_add_clerk_society_member", { p_clerk_user_id: clerkUserId });
   if (error) return redirectResult(route, error.code === "P0002" ? "member_not_found" : error.code === "55000" ? "member_not_verified" : "error");
 
   revalidatePath(route);
@@ -36,9 +52,10 @@ export type BulkInviteState = {
 };
 
 export async function inviteMultipleUsers(_previousState: BulkInviteState, formData: FormData): Promise<BulkInviteState> {
-  const { supabase } = await requireManager("admin.manage");
+  await requireManager("admin.manage");
   const raw = formString(formData, "emails", 20000) ?? "";
-  if (!raw) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount: 0, submissionId: Date.now() };
+  const submissionId = Date.now();
+  if (!raw) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount: 0, submissionId };
 
   const seen = new Set<string>();
   const addresses: string[] = [];
@@ -46,56 +63,66 @@ export async function inviteMultipleUsers(_previousState: BulkInviteState, formD
   for (const token of raw.split(/[\s,;]+/)) {
     const email = token.trim().toLowerCase();
     if (!email) continue;
-    if (seen.has(email)) {
-      duplicateCount += 1;
-      continue;
-    }
+    if (seen.has(email)) { duplicateCount += 1; continue; }
     seen.add(email);
     addresses.push(email);
   }
+  if (!addresses.length) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount, submissionId };
+  if (addresses.length > MAX_BULK_INVITES) {
+    return { status: "error", message: `Send up to ${MAX_BULK_INVITES} unique invitations at a time. No invitations were sent; split the list into smaller batches.`, results: [], duplicateCount, submissionId };
+  }
 
-  if (addresses.length === 0) return { status: "error", message: "Enter at least one email address.", results: [], duplicateCount, submissionId: Date.now() };
-  if (addresses.length > MAX_BULK_INVITES) return { status: "error", message: `Send up to ${MAX_BULK_INVITES} unique invitations at a time. No invitations were sent; split the list into smaller batches.`, results: [], duplicateCount, submissionId: Date.now() };
-
-  const validEmail = (value: string) => value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  const results: BulkInviteResult[] = addresses.map((email) => validEmail(email)
-    ? { email, status: "failed", message: "Not processed yet" }
+  const isValidEmail = (email: string) => email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const results: BulkInviteResult[] = addresses.map((email) => isValidEmail(email)
+    ? { email, status: "failed", message: "Invitation could not be sent" }
     : { email, status: "invalid", message: "Invalid email address" });
-  const queue = addresses.flatMap((email, index) => validEmail(email) ? [index] : []);
-  let nextIndex = 0;
+  const validAddresses = addresses.filter(isValidEmail);
 
-  async function inviteAt(index: number) {
-    const email = addresses[index];
-    try {
-      const { error } = await supabase.functions.invoke("admin-invite-user", { body: { email } });
-      if (!error) {
-        results[index] = { email, status: "sent", message: "Invitation sent" };
-        return;
-      }
-
-      let detail = error.message ?? "";
-      const context = "context" in error ? error.context : null;
-      if (context instanceof Response) {
-        const payload = await context.clone().json().catch(() => null) as { error?: unknown } | null;
-        if (typeof payload?.error === "string") detail = payload.error;
-      }
-      if (/already exists|account already/i.test(detail)) {
+  try {
+    const clerk = await clerkClient();
+    const accounts = validAddresses.length
+      ? await clerk.users.getUserList({ emailAddress: validAddresses, limit: 100 })
+      : { data: [] };
+    const existingUsers = new Set(accounts.data.flatMap((user) => user.emailAddresses.map((address) => address.emailAddress.toLowerCase())));
+    for (const email of validAddresses) {
+      if (existingUsers.has(email)) {
+        const index = addresses.indexOf(email);
         results[index] = { email, status: "existing", message: "Account already exists" };
-      } else {
-        results[index] = { email, status: "failed", message: "Invitation could not be sent" };
       }
-    } catch {
-      results[index] = { email, status: "failed", message: "Invitation could not be sent" };
     }
-  }
 
-  async function worker() {
-    while (nextIndex < queue.length) {
-      const index = queue[nextIndex++];
-      await inviteAt(index);
+    const candidates = validAddresses.filter((email) => !existingUsers.has(email));
+    const alreadyInvited = new Set<string>();
+    for (let start = 0; start < candidates.length; start += 5) {
+      const batch = candidates.slice(start, start + 5);
+      const invitations = await Promise.all(batch.map((email) => clerk.invitations.getInvitationList({ query: email, limit: 10 })));
+      invitations.forEach((response, offset) => {
+        const email = batch[offset];
+        if (response.data.some((invitation) => invitation.emailAddress.toLowerCase() === email)) alreadyInvited.add(email);
+      });
     }
+    for (const email of alreadyInvited) {
+      results[addresses.indexOf(email)] = { email, status: "existing", message: "Invitation already pending" };
+    }
+
+    const toInvite = candidates.filter((email) => !alreadyInvited.has(email));
+    if (toInvite.length) {
+      const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+      const invitations = await clerk.invitations.createInvitationBulk(toInvite.map((emailAddress) => ({
+        emailAddress,
+        redirectUrl: `${baseUrl}/auth/sign-up`,
+      })));
+      const sent = new Set(invitations.map((invitation) => invitation.emailAddress.toLowerCase()));
+      for (const email of toInvite) {
+        const index = addresses.indexOf(email);
+        results[index] = sent.has(email)
+          ? { email, status: "sent", message: "Invitation sent" }
+          : { email, status: "failed", message: "Invitation could not be sent" };
+      }
+    }
+  } catch {
+    // Any Clerk bulk request failure leaves affected entries failed without claiming success.
   }
-  await Promise.all(Array.from({ length: Math.min(3, queue.length) }, () => worker()));
 
   const sentCount = results.filter(({ status }) => status === "sent").length;
   const existingCount = results.filter(({ status }) => status === "existing").length;
@@ -103,14 +130,15 @@ export async function inviteMultipleUsers(_previousState: BulkInviteState, formD
   const failedCount = results.filter(({ status }) => status === "failed").length;
   const summary = [
     `${sentCount} invitation${sentCount === 1 ? "" : "s"} sent`,
-    existingCount ? `${existingCount} account${existingCount === 1 ? "" : "s"} already existed` : "",
+    existingCount ? `${existingCount} account or invitation${existingCount === 1 ? "" : "s"} already existed` : "",
     invalidCount ? `${invalidCount} invalid address${invalidCount === 1 ? "" : "es"}` : "",
     failedCount ? `${failedCount} failed` : "",
     duplicateCount ? `${duplicateCount} duplicate${duplicateCount === 1 ? "" : "s"} skipped` : "",
   ].filter(Boolean).join(" · ");
 
   revalidatePath(route);
-  return { status: sentCount === 0 && (invalidCount > 0 || failedCount > 0) ? "error" : "complete", message: summary, results, duplicateCount, submissionId: Date.now() };
+  revalidatePath("/manage/users");
+  return { status: sentCount === 0 && (invalidCount > 0 || failedCount > 0) ? "error" : "complete", message: summary, results, duplicateCount, submissionId };
 }
 
 export async function decideMembershipAction(

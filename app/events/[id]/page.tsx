@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPublicEventBySlug, getVisibleEventBySlug } from "@/lib/data/public-content";
 import DatabaseEventDetails from "@/components/events/DatabaseEventDetails";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
 
 type PageProps = {
   params: Promise<{
@@ -36,10 +37,10 @@ export default async function EventDetailPage({ params, searchParams }: PageProp
   if (!event) notFound();
 
   const supabase = await createClient();
-  const { data: auth } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+  const appUser = await getCurrentAppUser();
   let currentRegistration: { id: string; status: string } | null = null;
-  if (supabase && auth.user) {
-    const { data } = await supabase.from("event_registrations").select("id, status").eq("event_id", event.id).eq("user_id", auth.user.id).maybeSingle();
+  if (supabase && appUser) {
+    const { data } = await supabase.from("event_registrations").select("id, status").eq("event_id", event.id).eq("user_id", appUser.id).maybeSingle();
     currentRegistration = data;
   }
   return <DatabaseEventDetails event={event} registration={currentRegistration} result={registrationMessage} />;

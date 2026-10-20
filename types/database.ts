@@ -781,6 +781,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          clerk_user_id: string | null
           department: string | null
           full_name: string
           id: string
@@ -790,6 +791,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          clerk_user_id?: string | null
           department?: string | null
           full_name?: string
           id: string
@@ -799,6 +801,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          clerk_user_id?: string | null
           department?: string | null
           full_name?: string
           id?: string
@@ -1070,7 +1073,7 @@ export type Database = {
     }
     Functions: {
       register_event_with_team: { Args: { p_event_id: string; p_members: Json }; Returns: string }
-      admin_add_society_member: { Args: { p_email: string }; Returns: string }
+      admin_add_clerk_society_member: { Args: { p_clerk_user_id: string }; Returns: string }
       admin_create_role: {
         Args: {
           p_description: string
@@ -1085,16 +1088,6 @@ export type Database = {
         Args: { p_permission_keys: string[]; p_role_id: string }
         Returns: undefined
       }
-      list_my_auth_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          is_current: boolean
-          last_refreshed_at: string
-          total_sessions: number
-          session_created_at: string
-          user_agent: string | null
-        }[]
-      },
       create_meeting_attendance_session: {
         Args: {
           p_club_id: string | null

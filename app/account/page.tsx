@@ -4,15 +4,16 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
 import {
   ArrowRight, BadgeCheck, CalendarDays, Clock3, Settings2,
   ShieldCheck, Users, LogOut, BriefcaseBusiness,
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
+import { clerkClient } from "@clerk/nextjs/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
-import AccountSessionsList from "@/components/account/AccountSessionsList";
+import ClerkSessionList from "@/components/account/ClerkSessionList";
 import AdminDataTable, { type AdminDataColumn, type AdminDataRow } from "@/components/manage/AdminDataTable";
 
 const MANAGEMENT_PERMISSION_KEYS = [
@@ -29,19 +30,31 @@ export default async function AccountPage() {
   const supabase = await createClient();
   if (!supabase) return <Unavailable message="Connect the Supabase project to view your member account." />;
 
-  let user: User | null = null;
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    user = error ? null : data.user;
-  } catch {
-    return <Unavailable message="We could not verify your session. Refresh the page or sign in again." />;
-  }
+  const user = await getCurrentAppUser();
   if (!user) redirect("/auth/sign-in?next=/account");
 
   const accessPromise = getMyPermissionKeys(supabase, user.id).catch(() => ({
     permissionKeys: new Set<string>(),
     error: true,
   }));
+  const sessionsPromise = (async () => {
+    try {
+      const clerk = await clerkClient();
+      const result = await clerk.sessions.getSessionList({ userId: user.clerkUserId, status: "active", limit: 100 });
+      return {
+        data: result.data.map((session) => ({
+          id: session.id,
+          device: session.latestActivity?.deviceType || (session.latestActivity?.isMobile ? "Mobile device" : "Device"),
+          browser: session.latestActivity?.browserName || "Browser",
+          lastActiveAt: session.lastActiveAt,
+          createdAt: session.createdAt,
+        })),
+        error: false,
+      };
+    } catch {
+      return { data: [], error: true };
+    }
+  })();
   const [profileResult, membershipsResult, registrationsResult, accessResult, sessionsResult] = await Promise.all([
     supabase.from("profiles").select("full_name, department, year_of_study, avatar_url").eq("id", user.id).maybeSingle(),
     supabase.from("memberships").select("id, status, created_at, club_id, clubs(name, slug), positions(name)")
@@ -49,16 +62,16 @@ export default async function AccountPage() {
     supabase.from("event_registrations").select("id, status, registered_at, events(title, slug, starts_at)")
       .eq("user_id", user.id).order("registered_at", { ascending: false }).order("id", { ascending: false }).limit(25),
     accessPromise,
-    supabase.rpc("list_my_auth_sessions"),
+    sessionsPromise,
   ]);
 
   const canManageSociety = !accessResult.error
     && MANAGEMENT_PERMISSION_KEYS.some((permission) => accessResult.permissionKeys.has(permission));
   const profile = profileResult.data ?? {
-    full_name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "",
+    full_name: user.fullName,
     department: null, year_of_study: null, avatar_url: null,
   };
-  const name = profile.full_name.trim() || user.email?.split("@")[0] || "Techtronica member";
+  const name = profile.full_name.trim() || user.fullName || user.email?.split("@")[0] || "Techtronica member";
   const memberships = membershipsResult.data ?? [];
   const registrations = registrationsResult.data ?? [];
   const activeMemberships = memberships.filter((membership) => membership.status === "active").length;
@@ -77,9 +90,9 @@ export default async function AccountPage() {
   const profileProgress = Math.round(profileFields.filter(Boolean).length / profileFields.length * 100);
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
     .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "").join("") || "T";
-  const isVerified = Boolean(user.email_confirmed_at);
+  const isVerified = user.emailVerified;
   const nextEvent = nextRegistration ? relation(nextRegistration.events) : null;
-  const sessionCount = sessionsResult.error ? null : sessionsResult.data?.[0]?.total_sessions ?? 0;
+  const sessionCount = sessionsResult.error ? null : sessionsResult.data.length;
 
   const membershipColumns: AdminDataColumn[] = [
     { key: "club", label: "Club" }, { key: "position", label: "Position" },
@@ -183,7 +196,7 @@ export default async function AccountPage() {
               </div>
               <h2 className="mt-2 truncate text-xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-2xl">{name}</h2>
               <p className="mt-0.5 break-all text-sm text-slate-600 dark:text-slate-300">{user.email ?? "Email unavailable"}</p>
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Account created {formatDate(user.created_at, { dateStyle: "long" })}</p>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Account created {formatDate(user.createdAt, { dateStyle: "long" })}</p>
             </div>
           </div>
           <Link href="/account/settings#profile-settings" className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-sky-700 px-4 text-sm font-medium text-white transition hover:bg-sky-800 sm:self-center dark:bg-sky-600 dark:hover:bg-sky-500">
@@ -288,7 +301,7 @@ export default async function AccountPage() {
           </div>
           <Link className="inline-flex min-h-9 items-center justify-center gap-2 self-start rounded-lg px-2.5 text-sm font-medium text-sky-700 transition hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-slate-800 sm:self-center" href="/account/settings#session-settings">Manage sessions <ArrowRight className="size-4" /></Link>
         </div>
-        <AccountSessionsList sessions={sessionsResult.data ?? []} unavailable={Boolean(sessionsResult.error)} compact />
+        <ClerkSessionList sessions={sessionsResult.data} unavailable={Boolean(sessionsResult.error)} compact />
       </section>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
