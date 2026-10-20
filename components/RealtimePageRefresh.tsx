@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Database } from "@/types/database";
@@ -38,9 +39,11 @@ export default function RealtimePageRefresh() {
   const router = useRouter();
   const pathname = usePathname();
   const managementRoute = pathname === "/manage" || pathname.startsWith("/manage/");
+  const { getToken, isLoaded } = useAuth();
 
   useEffect(() => {
-    const supabase = createClient();
+    if (!isLoaded) return;
+    const supabase = createClient(() => getToken());
     const tables: readonly PublicTableName[] = managementRoute
       ? [...sharedTables, ...managementTables]
       : sharedTables;
@@ -147,7 +150,7 @@ export default function RealtimePageRefresh() {
       if (channel) void supabase.removeChannel(channel).catch(() => undefined);
       channel = null;
     };
-  }, [managementRoute, router]);
+  }, [getToken, isLoaded, managementRoute, router]);
 
   return null;
 }
