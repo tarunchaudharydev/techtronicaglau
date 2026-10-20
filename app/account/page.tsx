@@ -145,11 +145,11 @@ export default async function AccountPage() {
         </div>
       </section>
 
-      <section aria-label="Account activity summary" className="mt-4 grid grid-cols-2 divide-x divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white md:grid-cols-4 md:divide-y-0 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
-        <StatCard icon={<Users className="size-4" />} label="Club memberships" value={activeMemberships} detail={membershipsResult.error ? "Could not load memberships" : "Active clubs"} />
-        <StatCard icon={<Clock3 className="size-4" />} label="Applications" value={pendingMemberships} detail={membershipsResult.error ? "Could not load applications" : "Awaiting review"} />
-        <StatCard icon={<CalendarDays className="size-4" />} label="Upcoming events" value={upcomingRegistrations.length} detail={registrationsResult.error ? "Could not load registrations" : "Your registrations"} />
-        <StatCard icon={<ShieldCheck className="size-4" />} label="Signed-in devices" value={sessionCount === null ? "—" : sessionCount} detail={sessionsResult.error ? "Session list unavailable" : "Active sessions"} />
+      <section aria-label="Account activity summary" className="mt-4 grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200 bg-white md:grid-cols-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="border-b border-r border-slate-200 md:border-b-0 dark:border-slate-800"><StatCard icon={<Users className="size-4" />} label="Club memberships" value={activeMemberships} detail={membershipsResult.error ? "Could not load memberships" : "Active clubs"} /></div>
+        <div className="border-b border-slate-200 md:border-b-0 md:border-r dark:border-slate-800"><StatCard icon={<Clock3 className="size-4" />} label="Applications" value={pendingMemberships} detail={membershipsResult.error ? "Could not load applications" : "Awaiting review"} /></div>
+        <div className="border-r border-slate-200 dark:border-slate-800"><StatCard icon={<CalendarDays className="size-4" />} label="Upcoming events" value={upcomingRegistrations.length} detail={registrationsResult.error ? "Could not load registrations" : "Your registrations"} /></div>
+        <div><StatCard icon={<ShieldCheck className="size-4" />} label="Signed-in devices" value={sessionCount === null ? "—" : sessionCount} detail={sessionsResult.error ? "Session list unavailable" : "Active sessions"} /></div>
       </section>
 
       {profileResult.error && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status">Some profile details could not be loaded. Review your settings and try again.</p>}
