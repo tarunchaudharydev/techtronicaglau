@@ -123,7 +123,7 @@ export default async function AttendanceSessionPage({
                   <tr>
                     <th scope="col" className="px-4 py-3 font-semibold">Member</th>
                     <th scope="col" className="px-4 py-3 font-semibold">Mark attendance</th>
-                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">Last marked</th>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">Last marked (IST)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
