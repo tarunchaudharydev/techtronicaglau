@@ -120,7 +120,7 @@ function formatDate(value: string, time: string | null) {
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day, 12));
   if (Number.isNaN(date.valueOf())) return "Date unavailable";
-  const label = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "UTC" }).format(date);
+  const label = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(date);
   return label + (time ? " · " + time.slice(0, 5) : "");
 }
 
