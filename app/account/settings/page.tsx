@@ -43,7 +43,7 @@ export default async function AccountSettingsPage() {
   };
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:py-14">
+    <main className="workspace-ui mx-auto max-w-5xl px-4 py-7 sm:px-6 lg:py-10">
       <Link className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 hover:underline" href="/account">
         <FiArrowLeft aria-hidden="true" /> Back to account
       </Link>
@@ -57,9 +57,9 @@ export default async function AccountSettingsPage() {
       </header>
 
       <nav aria-label="Settings sections" className="mb-7 flex gap-2 overflow-x-auto pb-2">
-        <a className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" href="#profile-settings">Profile</a>
-        <a className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" href="#sign-in-settings">Sign-in</a>
-        <a className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" href="#session-settings">Sessions</a>
+        <a className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" href="#profile-settings">Profile</a>
+        <a className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" href="#sign-in-settings">Sign-in</a>
+        <a className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" href="#session-settings">Sessions</a>
       </nav>
 
       {profileError && (
@@ -69,7 +69,7 @@ export default async function AccountSettingsPage() {
       )}
 
       <div className="space-y-6">
-        <section id="profile-settings" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+        <section id="profile-settings" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-6 shadow-none dark:border-slate-800 dark:bg-slate-900 sm:p-7">
           <div className="mb-6 flex items-start gap-4">
             <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-sky-50 text-xl text-sky-700 dark:bg-sky-950 dark:text-sky-300">
               <FiUser aria-hidden="true" />
@@ -82,9 +82,9 @@ export default async function AccountSettingsPage() {
           <ProfileEditor profile={currentProfile} />
         </section>
 
-        <section id="sign-in-settings" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+        <section id="sign-in-settings" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-6 shadow-none dark:border-slate-800 dark:bg-slate-900 sm:p-7">
           <div className="mb-6 flex items-start gap-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-indigo-50 text-xl text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-xl text-slate-700 dark:bg-slate-800 dark:text-slate-200">
               <FiLock aria-hidden="true" />
             </span>
             <div>
@@ -106,7 +106,7 @@ export default async function AccountSettingsPage() {
           </p>
         </section>
 
-        <section id="session-settings" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+        <section id="session-settings" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-6 shadow-none dark:border-slate-800 dark:bg-slate-900 sm:p-7">
           <div className="mb-6 flex items-start gap-4">
             <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-xl text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
               <FiShield aria-hidden="true" />
