@@ -165,19 +165,19 @@ export default function AdminDataTable({
   }
 
   return (
-    <section className="mt-6 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5" aria-label="Records" onClick={handleTableActionClick}>
+    <section className="mt-6 min-w-0 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:p-4" aria-label="Records" onClick={handleTableActionClick}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <label className="relative block min-w-0 flex-1 lg:max-w-md">
           <span className="sr-only">Search records</span>
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} type="search" placeholder="Search records…" className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-sky-950" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} type="search" placeholder="Search records…" className="min-h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-sky-950" />
         </label>
         <div className="flex flex-wrap items-center gap-2">
           <details className="relative">
-            <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-slate-300 px-3 text-sm font-medium dark:border-slate-700">
+            <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-medium dark:border-slate-700">
               View <ChevronDown aria-hidden="true" className="size-4" />
             </summary>
-            <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div className="absolute right-0 z-20 mt-2 w-48 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
               {(["auto", "cards", "table"] as const).map((mode) => (
                 <button key={mode} type="button" onClick={() => setView(mode)} className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm capitalize hover:bg-slate-100 dark:hover:bg-slate-800" aria-pressed={view === mode}>
                   {mode === "auto" ? "Auto view" : mode === "cards" ? "View cards" : "View table"}
@@ -187,10 +187,10 @@ export default function AdminDataTable({
             </div>
           </details>
           <details className="relative">
-            <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-slate-300 px-3 text-sm font-medium dark:border-slate-700">
+            <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-medium dark:border-slate-700">
               <SlidersHorizontal aria-hidden="true" className="size-4" /> Columns
             </summary>
-            <div className="absolute right-0 z-20 mt-2 max-h-72 w-56 overflow-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div className="absolute right-0 z-20 mt-2 max-h-72 w-56 overflow-auto rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900">
               {columns.map((column) => (
                 <label key={column.key} className="flex cursor-pointer items-center gap-2 py-2 text-sm">
                   <input type="checkbox" checked={shownKeys.includes(column.key)} onChange={() => toggleColumn(column.key)} />
@@ -199,14 +199,14 @@ export default function AdminDataTable({
               ))}
             </div>
           </details>
-          <button type="button" onClick={downloadCsv} disabled={!filteredRows.length} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 px-3 text-sm font-medium disabled:opacity-50 dark:border-slate-700">
+          <button type="button" onClick={downloadCsv} disabled={!filteredRows.length} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-medium disabled:opacity-50 dark:border-slate-700">
             <Download aria-hidden="true" className="size-4" /> Export CSV
           </button>
         </div>
       </div>
 
       {resolvedView === "table" ? (
-        <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
           <table className="w-full min-w-[640px] border-collapse text-left text-sm">
             <thead className="bg-slate-50 dark:bg-slate-950">
               <tr>
@@ -232,9 +232,9 @@ export default function AdminDataTable({
           </table>
         </div>
       ) : (
-        <div className="mt-4 space-y-3">
+        <div className="mt-3 space-y-2">
           {visibleRows.map((row) => <div key={row.id}>{row.card}</div>)}
-          {!visibleRows.length && <p className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-muted dark:border-slate-700">{emptyMessage}</p>}
+          {!visibleRows.length && <p className="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-muted dark:border-slate-700">{emptyMessage}</p>}
         </div>
       )}
 
@@ -256,7 +256,7 @@ export default function AdminDataTable({
         </div>
       )}
 
-      <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-3 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2 text-muted">
           <label>Rows per page
             <select className="ml-2 min-h-9 rounded-lg border border-slate-300 bg-white px-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
@@ -266,9 +266,9 @@ export default function AdminDataTable({
           <span aria-live="polite">Showing {filteredRows.length ? currentPage * pageSize + 1 : 0}–{Math.min((currentPage + 1) * pageSize, filteredRows.length)} of {filteredRows.length}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setPage((value) => Math.max(0, value - 1))} disabled={currentPage === 0} className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-slate-300 px-3 disabled:opacity-50 dark:border-slate-700"><ChevronLeft aria-hidden="true" className="size-4" /> Previous</button>
+          <button type="button" onClick={() => setPage((value) => Math.max(0, value - 1))} disabled={currentPage === 0} className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-300 px-3 disabled:opacity-50 dark:border-slate-700"><ChevronLeft aria-hidden="true" className="size-4" /> Previous</button>
           <span className="min-w-16 text-center">Page {currentPage + 1} of {pageCount}</span>
-          <button type="button" onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))} disabled={currentPage >= pageCount - 1} className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-slate-300 px-3 disabled:opacity-50 dark:border-slate-700">Next <ChevronRight aria-hidden="true" className="size-4" /></button>
+          <button type="button" onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))} disabled={currentPage >= pageCount - 1} className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-300 px-3 disabled:opacity-50 dark:border-slate-700">Next <ChevronRight aria-hidden="true" className="size-4" /></button>
         </div>
       </div>
     </section>
