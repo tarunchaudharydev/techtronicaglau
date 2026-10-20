@@ -323,6 +323,10 @@ export default async function ManageHomePage() {
       : null;
   const overviewHasError =
     overviewStats.some((stat) => stat.error) || Boolean(memberTotals?.error);
+  const needsAttentionCount = overview
+    ? Math.max(0, overview[0].count ?? 0) +
+      Math.max(0, overview[2].count ?? 0)
+    : 0;
   const activity =
     isAdmin && !error
       ? await Promise.all([
