@@ -40,7 +40,7 @@ export default function ProfileEditor({
         <span className="text-sm font-medium">Profile image URL</span>
         <input className="input" defaultValue={profile.avatar_url ?? ""} id="profile-avatar-url" maxLength={500} name="avatar_url" placeholder="https://… or /images/profile.jpg" type="text" />
       </label>
-      <p className="text-xs leading-5 text-muted">Use a secure HTTPS image URL or a site path beginning with /. Leave blank to use your initials.</p>
+      <p className="text-xs leading-5 text-muted">Your Google/Clerk profile photo is used when available. Otherwise, use a secure HTTPS image URL or a site path beginning with /; initials appear when neither is available.</p>
       {state.message && (
         <p aria-live="polite" className={state.status === "error" ? "text-sm text-rose-700" : "text-sm text-emerald-700"} role={state.status === "error" ? "alert" : "status"}>
           {state.message}
