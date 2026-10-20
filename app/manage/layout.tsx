@@ -5,5 +5,5 @@ export const metadata: Metadata = {
 };
 
 export default function ManageLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return children;
+  return <div className="workspace-ui min-h-screen">{children}</div>;
 }
