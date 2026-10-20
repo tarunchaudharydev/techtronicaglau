@@ -68,10 +68,10 @@ export default async function MeetingAttendancePage({
           <Field label="Meeting name">
             <input name="name" required minLength={2} maxLength={120} placeholder="Society meeting 1" className={inputClass} />
           </Field>
-          <Field label="Meeting date">
+          <Field label="Meeting date (IST)">
             <input name="meeting_date" type="date" required defaultValue={todayInIndia()} className={inputClass} />
           </Field>
-          <Field label="Meeting time (optional)">
+          <Field label="Meeting time (IST, optional)">
             <input name="meeting_time" type="time" className={inputClass} />
           </Field>
           <Field label="Meeting scope">
@@ -120,7 +120,7 @@ function formatDate(value: string, time: string | null) {
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day, 12));
   if (Number.isNaN(date.valueOf())) return "Date unavailable";
-  const label = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "UTC" }).format(date);
+  const label = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(date);
   return label + (time ? " · " + time.slice(0, 5) : "");
 }
 

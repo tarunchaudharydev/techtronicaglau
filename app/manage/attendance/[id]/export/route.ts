@@ -39,10 +39,10 @@ export async function GET(
   const meetingDate = session.meeting_date;
   const meetingTime = session.meeting_time ?? "";
   const output = [
-    ["Meeting", "Date", "Time", "Scope", "Club", "Venue", "Member", "Attendance", "Marked at"],
+    ["Meeting", "Date (IST)", "Time (IST)", "Scope", "Club", "Venue", "Member", "Attendance", "Marked at (IST)"],
     ...rows.map((row) => [
       session.name, meetingDate, meetingTime, session.scope, club,
-      session.venue ?? "", row.member_name, formatAttendanceStatus(row.status), row.marked_at ?? "",
+      session.venue ?? "", row.member_name, formatAttendanceStatus(row.status), formatMarkedAt(row.marked_at),
     ]),
   ].map((line) => line.map(quoteCsv).join(",")).join("\r\n");
 
@@ -54,6 +54,18 @@ export async function GET(
       "Cache-Control": "private, no-store",
     },
   });
+}
+
+function formatMarkedAt(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf())
+    ? ""
+    : new Intl.DateTimeFormat("en-IN", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Kolkata",
+      }).format(date);
 }
 
 function formatAttendanceStatus(status: AttendanceExportRow["status"]) {

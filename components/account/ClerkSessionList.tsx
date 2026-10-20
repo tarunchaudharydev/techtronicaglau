@@ -27,5 +27,5 @@ export default function ClerkSessionList({ sessions, unavailable, compact = fals
 }
 
 function formatDate(timestamp: number) {
-  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(timestamp));
+  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(timestamp));
 }

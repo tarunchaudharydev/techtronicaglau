@@ -418,7 +418,7 @@ function relation<T>(value: T | T[] | null) { return Array.isArray(value) ? valu
 
 function formatDate(value: string, options: Intl.DateTimeFormatOptions = { dateStyle: "medium", timeStyle: "short" }) {
   const date = new Date(value);
-  return Number.isNaN(date.valueOf()) ? "Date unavailable" : new Intl.DateTimeFormat("en-IN", options).format(date);
+  return Number.isNaN(date.valueOf()) ? "Date unavailable" : new Intl.DateTimeFormat("en-IN", { ...options, timeZone: "Asia/Kolkata" }).format(date);
 }
 
 function Unavailable({ message }: { message: string }) {

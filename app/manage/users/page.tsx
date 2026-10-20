@@ -146,7 +146,7 @@ export default async function ManageUsersPage({ searchParams }: { searchParams: 
 }
 
 function formatDate(timestamp: number) {
-  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(timestamp));
+  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(timestamp));
 }
 
 function pageHref(query: string, page: number) {

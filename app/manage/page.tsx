@@ -880,6 +880,7 @@ function formatActivityDate(value: string) {
     : new Intl.DateTimeFormat("en-IN", {
         dateStyle: "medium",
         timeStyle: "short",
+        timeZone: "Asia/Kolkata",
       }).format(date);
 }
 

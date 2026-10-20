@@ -123,7 +123,7 @@ export default async function AttendanceSessionPage({
                   <tr>
                     <th scope="col" className="px-4 py-3 font-semibold">Member</th>
                     <th scope="col" className="px-4 py-3 font-semibold">Mark attendance</th>
-                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">Last marked</th>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">Last marked (IST)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -133,7 +133,7 @@ export default async function AttendanceSessionPage({
                       <td className="px-4 py-3">
                         <AttendanceStatusPicker sessionId={session.id} userId={member.user_id} memberName={member.member_name} initialStatus={member.status as AttendanceStatus} />
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-muted">{member.marked_at ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(member.marked_at)) : "—"}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-muted">{member.marked_at ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(member.marked_at)) : "—"}</td>
                     </tr>
                   ))}
                   {!rows.length && <tr><td colSpan={3} className="px-4 py-10 text-center text-muted">{search || statusFilter !== "all" ? "No members match these filters." : "No active members were present in this scope when the sheet was created."}</td></tr>}
@@ -196,7 +196,7 @@ function formatMeetingDate(value: string, time: string | null) {
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day, 12));
   if (Number.isNaN(date.valueOf())) return "Date unavailable";
-  const label = new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeZone: "UTC" }).format(date);
+  const label = new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeZone: "Asia/Kolkata" }).format(date);
   return label + (time ? " · " + time.slice(0, 5) : "");
 }
 

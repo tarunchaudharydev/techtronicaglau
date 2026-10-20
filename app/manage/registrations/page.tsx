@@ -183,7 +183,7 @@ function registrationUrl(eventId: string | null, before: string) {
 }
 
 function one<T>(value: T | T[] | null) { return Array.isArray(value) ? value[0] ?? null : value; }
-function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.valueOf()) ? "Date unavailable" : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(date); }
+function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.valueOf()) ? "Date unavailable" : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(date); }
 function parseCursor(value?: string) {
   if (!value || value.length > 120) return null;
   const [dateValue, id, ...extra] = value.split("|");
