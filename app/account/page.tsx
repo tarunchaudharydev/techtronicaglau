@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
   ArrowRight, BadgeCheck, CalendarDays, Clock3, Settings2,
-  ShieldCheck, Sparkles, Users, LogOut, BriefcaseBusiness,
+  ShieldCheck, Users, LogOut, BriefcaseBusiness,
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
