@@ -247,7 +247,7 @@ export default async function AccountPage() {
             <ProfileDetail label="Department" value={profile.department || "Add your department"} />
             <ProfileDetail label="Year of study" value={profile.year_of_study ? "Year " + profile.year_of_study : "Add your study year"} />
             <ProfileDetail label="Account email" value={user.email ?? "Email unavailable"} />
-            <ProfileDetail label="Member since" value={formatDate(user.created_at, { dateStyle: "medium" })} />
+            <ProfileDetail label="Member since" value={formatDate(user.createdAt, { dateStyle: "medium" })} />
           </dl>
         </section>
 
