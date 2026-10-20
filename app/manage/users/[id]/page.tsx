@@ -133,7 +133,7 @@ function relation<T>(value: T | T[] | null): T | null {
 }
 
 function formatDate(timestamp: number) {
-  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(timestamp));
+  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(timestamp));
 }
 
 const secondaryButtonClass = "inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-sky-500 hover:text-sky-700";
