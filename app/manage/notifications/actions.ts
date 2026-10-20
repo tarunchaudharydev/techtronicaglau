@@ -6,7 +6,6 @@ import { formString, requireManager } from "@/lib/manage/server";
 
 const route = "/manage/notifications";
 const kinds = new Set(["deployment", "release", "announcement"]);
-const audiences = new Set(["everyone", "society_members"]);
 
 export async function publishNotification(formData: FormData) {
   const { supabase, user } = await requireManager("content.manage");
@@ -14,9 +13,7 @@ export async function publishNotification(formData: FormData) {
   const title = formString(formData, "title", 160);
   const message = formString(formData, "message", 1200);
   const href = formString(formData, "href", 2048);
-  const audience = formString(formData, "audience", 30);
-
-  if (!kind || !kinds.has(kind) || !title || !message || !href || !isInternalPath(href) || !audience || !audiences.has(audience)) {
+  if (!kind || !kinds.has(kind) || !title || !message || !href || !isInternalPath(href)) {
     return redirect(`${route}?result=invalid`);
   }
 
@@ -25,7 +22,8 @@ export async function publishNotification(formData: FormData) {
     title,
     message,
     href,
-    audience,
+    // Manual updates are limited to society members by the database policy.
+    audience: "society_members",
     created_by: user.id,
   });
   if (error) return redirect(`${route}?result=error`);

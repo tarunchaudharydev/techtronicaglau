@@ -8,32 +8,45 @@ type OverviewDatum = {
   unavailable: boolean;
 };
 
-const colors = ["#0284c7", "#7c3aed", "#059669", "#d97706", "#e11d48", "#0891b2", "#4f46e5", "#64748b"];
-const circumference = 2 * Math.PI * 76;
+const colors = [
+  "#0284c7",
+  "#64748b",
+  "#d97706",
+  "#0e7490",
+  "#059669",
+  "#94a3b8",
+  "#0f766e",
+  "#475569",
+];
+const radius = 43;
+const circumference = 2 * Math.PI * radius;
 
 export function AdminOverviewDonut({ stats }: { stats: OverviewDatum[] }) {
   const [progress, setProgress] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
-  const availableValues = stats.map((stat) => stat.unavailable ? 0 : Math.max(0, stat.count ?? 0));
-  const total = availableValues.reduce((sum, value) => sum + value, 0);
+  const values = stats.map((stat) =>
+    stat.unavailable ? 0 : Math.max(0, stat.count ?? 0),
+  );
+  const total = values.reduce((sum, value) => sum + value, 0);
   const active = stats[activeIndex] ?? stats[0];
   const activeValue = active?.unavailable ? null : active?.count ?? 0;
 
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (reduceMotion) {
       setProgress(1);
       return;
     }
 
-    const duration = 1000;
+    const duration = 850;
     let frame = 0;
     let start = 0;
     const animate = (time: number) => {
       if (!start) start = time;
       const elapsed = Math.min(1, (time - start) / duration);
-      const eased = 1 - Math.pow(1 - elapsed, 3);
-      setProgress(eased);
+      setProgress(1 - Math.pow(1 - elapsed, 3));
       if (elapsed < 1) frame = window.requestAnimationFrame(animate);
     };
 
@@ -42,63 +55,104 @@ export function AdminOverviewDonut({ stats }: { stats: OverviewDatum[] }) {
   }, []);
 
   return (
-    <div className="grid min-w-0 items-center gap-6 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-violet-50/70 p-4 shadow-sm sm:grid-cols-[minmax(15rem,0.85fr)_minmax(0,1.15fr)] sm:gap-8 sm:p-6">
-      <div className="mx-auto w-full max-w-[17rem]">
-        <div className="relative mx-auto aspect-square w-full" onMouseLeave={() => setActiveIndex(0)}>
-          <svg viewBox="0 0 200 200" className="size-full" role="img" aria-label={`Pie chart showing ${stats.map((stat) => `${stat.label}: ${stat.unavailable ? "unavailable" : stat.count ?? 0}`).join(", ")}`}>
-            <circle cx="100" cy="100" r="76" fill="none" stroke="#e2e8f0" strokeWidth="22" />
-            {total > 0 && stats.map((stat, index) => {
-              const value = availableValues[index] ?? 0;
-              if (!value) return null;
-              const preceding = availableValues.slice(0, index).reduce((sum, item) => sum + item, 0);
-              const segmentLength = Math.max(0, (value / total) * circumference - 3);
-              const offset = (preceding / total) * circumference;
-              return (
-                <circle
-                  key={stat.label}
-                  cx="100"
-                  cy="100"
-                  r="76"
-                  fill="none"
-                  stroke={colors[index % colors.length]}
-                  strokeWidth={activeIndex === index ? "27" : "22"}
-                  strokeDasharray={`${segmentLength * progress} ${circumference}`}
-                  strokeDashoffset={-offset * progress}
-                  transform="rotate(-90 100 100)"
-                  strokeLinecap="round"
-                  className="cursor-pointer transition-[stroke-width,opacity] duration-200 motion-reduce:transition-none"
-                  opacity={activeIndex === index ? 1 : 0.82}
-                  role="img"
-                  aria-label={`${stat.label}: ${stat.count?.toLocaleString("en-IN") ?? "0"}`}
-                  tabIndex={0}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  onFocus={() => setActiveIndex(index)}
-                />
-              );
-            })}
-          </svg>
-          <div className="pointer-events-none absolute inset-[23%] grid place-content-center rounded-full bg-white/95 text-center shadow-inner shadow-slate-200/70">
-            {active && <span className="mx-auto mb-1.5 size-2.5 rounded-full" style={{ backgroundColor: colors[activeIndex % colors.length] }} />}
-            <span className="text-3xl font-bold tabular-nums tracking-tight text-slate-950 sm:text-4xl">
-              {activeValue === null ? "—" : Math.round(activeValue * progress).toLocaleString("en-IN")}
-            </span>
-            <span className="mx-auto mt-1 max-w-[9rem] text-xs font-semibold leading-4 text-slate-500">{active?.label ?? "Overview"}</span>
-          </div>
+    <section
+      aria-labelledby="workflow-volume-title"
+      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+    >
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h3 id="workflow-volume-title" className="text-sm font-bold text-slate-950 sm:text-base">
+            Workflow volumes
+          </h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Applications, enquiries, and registrations by status
+          </p>
         </div>
-        <p className="mt-3 text-center text-xs text-slate-500">Hover, focus, or tap a status for details</p>
+        <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold tabular-nums text-slate-600 ring-1 ring-slate-200">
+          {total.toLocaleString("en-IN")} records
+        </span>
       </div>
 
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-200/80 pb-3">
-          <div>
-            <h3 className="text-base font-bold text-slate-950">Applications, enquiries &amp; registrations</h3>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Current records visible to your admin account.</p>
+      <div className="grid items-center gap-4 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-6">
+        <div className="mx-auto w-32">
+          <div
+            className="relative aspect-square w-full"
+            onMouseLeave={() => setActiveIndex(0)}
+          >
+            <svg
+              viewBox="0 0 112 112"
+              className="size-full"
+              role="img"
+              aria-label={
+                "Workflow status chart: " +
+                stats
+                  .map(
+                    (stat) =>
+                      stat.label +
+                      ": " +
+                      (stat.unavailable ? "unavailable" : stat.count ?? 0),
+                  )
+                  .join(", ")
+              }
+            >
+              <circle
+                cx="56"
+                cy="56"
+                r={radius}
+                fill="none"
+                stroke="#e2e8f0"
+                strokeWidth="13"
+              />
+              {total > 0 &&
+                stats.map((stat, index) => {
+                  const value = values[index] ?? 0;
+                  if (!value) return null;
+                  const preceding = values
+                    .slice(0, index)
+                    .reduce((sum, item) => sum + item, 0);
+                  const segmentLength = Math.max(
+                    0,
+                    (value / total) * circumference - 2,
+                  );
+                  const offset = (preceding / total) * circumference;
+                  return (
+                    <circle
+                      key={stat.label}
+                      cx="56"
+                      cy="56"
+                      r={radius}
+                      fill="none"
+                      stroke={colors[index % colors.length]}
+                      strokeWidth={activeIndex === index ? 16 : 13}
+                      strokeDasharray={
+                        segmentLength * progress + " " + circumference
+                      }
+                      strokeDashoffset={-offset * progress}
+                      transform="rotate(-90 56 56)"
+                      strokeLinecap="round"
+                      className="transition-[stroke-width,opacity] duration-200 motion-reduce:transition-none"
+                      opacity={activeIndex === index ? 1 : 0.82}
+                    />
+                  );
+                })}
+            </svg>
+            <div className="pointer-events-none absolute inset-[25%] grid place-content-center rounded-full bg-white text-center">
+              <span className="text-2xl font-bold tabular-nums tracking-tight text-slate-950">
+                {activeValue === null
+                  ? "—"
+                  : Math.round(activeValue * progress).toLocaleString("en-IN")}
+              </span>
+              <span className="mx-auto mt-0.5 max-w-20 text-[10px] font-semibold leading-3 text-slate-500">
+                {active?.label ?? "Statuses"}
+              </span>
+            </div>
           </div>
-          <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-500 ring-1 ring-slate-200">
-            {total.toLocaleString("en-IN")} total
-          </span>
+          <p className="mt-2 text-center text-[10px] text-slate-500">
+            Hover or select a status
+          </p>
         </div>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+
+        <ul className="grid min-w-0 gap-x-3 gap-y-1 sm:grid-cols-2">
           {stats.map((stat, index) => (
             <li key={stat.label}>
               <button
@@ -106,21 +160,36 @@ export function AdminOverviewDonut({ stats }: { stats: OverviewDatum[] }) {
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
                 onClick={() => setActiveIndex(index)}
-                className={`flex min-h-[4.25rem] w-full min-w-0 items-center gap-3 rounded-2xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${activeIndex === index ? "border-sky-200 bg-white shadow-sm" : "border-white/80 bg-white/60 hover:bg-white"}`}
+                className={
+                  "flex min-h-10 w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 " +
+                  (activeIndex === index
+                    ? "bg-sky-50"
+                    : "hover:bg-slate-50")
+                }
               >
-                <span aria-hidden="true" className="size-3 shrink-0 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-medium text-slate-600">{stat.label}</span>
-                  <span className="mt-0.5 block text-lg font-bold tabular-nums text-slate-950">
-                    {stat.unavailable ? "—" : Math.round(Math.max(0, stat.count ?? 0) * progress).toLocaleString("en-IN")}
-                  </span>
+                <span
+                  aria-hidden="true"
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: colors[index % colors.length] }}
+                />
+                <span className="min-w-0 flex-1 truncate text-xs text-slate-600">
+                  {stat.label}
+                </span>
+                <span className="shrink-0 text-sm font-bold tabular-nums text-slate-900">
+                  {stat.unavailable
+                    ? "—"
+                    : Math.round(
+                        Math.max(0, stat.count ?? 0) * progress,
+                      ).toLocaleString("en-IN")}
                 </span>
               </button>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[11px] leading-4 text-slate-500">Club applications are split into pending and reviewed. Enquiries show their current workflow status; registrations show active or completed states.</p>
       </div>
-    </div>
+      <p className="mt-3 border-t border-slate-100 pt-3 text-[11px] leading-4 text-slate-500">
+        Club applications are split into pending and reviewed. Enquiries show their current workflow state; registrations show active or completed states.
+      </p>
+    </section>
   );
 }
