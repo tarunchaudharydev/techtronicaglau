@@ -1,6 +1,7 @@
 // this is the main file for the layout of the website, it contains the navbar, footer and main content of the website, it also contains the global styles and fonts, it also contains the theme provider for dark mode and light mode, it also contains the analytics and speed insights for the website, it also contains the digital clock for the website, it also contains the event popup for the website, it also contains the upcoming event data for the website
 
 import type { Metadata, Viewport } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
@@ -118,6 +119,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-900 text-foreground dark:text-white transition-colors duration-300 lg:pl-[4.5rem]`}
       >
+        <ClerkProvider>
         {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem> */}
         <RealtimePageRefresh />
         <Navbar />
@@ -131,7 +133,7 @@ export default async function RootLayout({
         <Footer />
         <PwaInstallPrompt />
         <CookieConsent />
-      
+        </ClerkProvider>
       </body>
     </html>
   );

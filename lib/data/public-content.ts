@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/database";
@@ -116,8 +117,8 @@ export const getPublicTeamMembers = unstable_cache(
 export async function getVisibleTeamMembers() {
   const supabase = await createClient();
   if (!supabase) return getPublicTeamMembers();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return getPublicTeamMembers();
+  const { userId } = await auth();
+  if (!userId) return getPublicTeamMembers();
   const { data, error } = await supabase
     .from("team_members")
     .select("id, display_name, title, member_type, roles, categories, summary, biography, avatar_url, linkedin_url, public_contact_url, birthday_month, birthday_day, club_id, display_order, is_public")
@@ -221,8 +222,8 @@ export const getPublicEvents = unstable_cache(
 export async function getVisibleEvents() {
   const supabase = await createClient();
   if (!supabase) return getPublicEvents();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return getPublicEvents();
+  const { userId } = await auth();
+  if (!userId) return getPublicEvents();
   const { data, error } = await supabase
     .from("events")
     .select("id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, min_team_members, max_team_members, cover_image_url, club_id, clubs(name, slug), is_public")
@@ -262,8 +263,8 @@ export async function getPublicEventBySlug(slug: string) {
 export async function getVisibleEventBySlug(slug: string) {
   const supabase = await createClient();
   if (!supabase) return getPublicEventBySlug(slug);
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return getPublicEventBySlug(slug);
+  const { userId } = await auth();
+  if (!userId) return getPublicEventBySlug(slug);
   const { data, error } = await supabase
     .from("events")
     .select("id, slug, title, summary, description, event_type, venue, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, min_team_members, max_team_members, cover_image_url, club_id, clubs(name, slug), is_public")

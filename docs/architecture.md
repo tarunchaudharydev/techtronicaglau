@@ -5,21 +5,20 @@
 ~~~mermaid
 flowchart LR
   Visitor[Public visitor or member] --> Next[Next.js application]
-  Next -->|Cookie-aware request| Auth[Supabase Auth]
-  Next -->|Publishable key plus user session| API[Supabase Data API]
+  Next -->|Clerk session| Auth[Clerk]
+  Next -->|Publishable key plus Clerk token| API[Supabase Data API]
   Auth --> API
   API --> RLS[Postgres RLS and permission checks]
   RLS --> DB[(Supabase Postgres)]
-  Next -->|Authorized invitation request| EF[admin-invite-user Edge Function]
-  EF --> AuthAdmin[Supabase Auth Admin API]
+  Next -->|Admin invitation request| AuthAdmin[Clerk Backend API]
   Next -->|Optional consented coarse summary| Diagnostics[Network diagnostics table]
 ~~~
 
-The application uses `@supabase/ssr` clients in server components, server actions, and route handlers. Authenticated requests carry the visitor's session. The invitation Edge Function is a narrow server-side exception for inviting users; its secret remains in Supabase configuration.
+The application uses `@supabase/ssr` clients in server components, server actions, route handlers, and browser components. Clerk session tokens authenticate those data requests through Supabase Third-Party Auth. Server-side Clerk Backend API calls handle invitations, bans, and session administration.
 
 ## Data domains
 
-- **Identity:** Supabase Auth, `profiles`, and `private_profiles`.
+- **Identity:** Clerk accounts and sessions; application-owned `profiles` and `private_profiles` retain stable profile UUIDs.
 - **Organization and access:** `clubs`, `memberships`, `positions`, `permissions`, `roles`, `role_permissions`, and `user_role_assignments`.
 - **Society content:** `site_content`, `events`, `team_members`, `alumni`, and `contact_submissions`.
 - **Participation:** `event_registrations`.
@@ -29,10 +28,11 @@ The generated API types are in `types/database.ts`. The backend repository owns 
 
 ## Authorization flow
 
-1. Supabase Auth verifies the account and provides the session JWT.
-2. The server creates a cookie-aware Supabase client for the current request.
-3. The application checks the current role/permission to render relevant management paths.
-4. Postgres RLS, permission functions, constraints, and triggers independently validate reads and writes.
+1. Clerk verifies the account and provides a signed session token.
+2. The server or browser passes that token to a request-scoped Supabase client.
+3. `private.current_profile_id()` maps the verified Clerk subject to the application's stable profile UUID.
+4. The application reads current database roles to render relevant management paths.
+5. Postgres RLS, permission functions, constraints, and triggers independently validate reads and writes.
 
 The user interface improves discoverability; the database is the security boundary. Never use client state or user-editable Auth metadata as an authorization source.
 
@@ -49,7 +49,7 @@ The user interface improves discoverability; the database is the security bounda
 ~~~text
 app/                 Next.js App Router routes and server actions
 components/          shared UI and feature components
-lib/auth/            permission lookup and auth helpers
+lib/auth/            Clerk identity resolution and permission lookup
 lib/data/            typed Supabase queries and mappers
 lib/manage/          manager authorization, validation, and shared tools
 lib/supabase/        browser and server clients

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { createClient } from "@/lib/supabase/client";
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -15,6 +16,7 @@ export default function StorageImageUpload({ name, folder, folderScopeField, fol
   privateWhenUnchecked?: boolean;
   label?: string;
 }) {
+  const { getToken } = useAuth();
   const [value, setValue] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,7 +34,7 @@ export default function StorageImageUpload({ name, folder, folderScopeField, fol
     setBusy(true);
     setStatus("Uploading…");
     try {
-      const supabase = createClient();
+      const supabase = createClient(() => getToken());
       const form = input.closest("form");
       const visibility = privateWhenUnchecked
         ? form?.querySelector<HTMLInputElement>('input[name="is_public"]')?.checked ?? true

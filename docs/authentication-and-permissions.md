@@ -2,24 +2,23 @@
 
 ## Request lifecycle
 
-1. Supabase Auth issues and refreshes the visitor's session.
-2. The Next.js request proxy refreshes the cookie using the Supabase SSR client.
-3. Server components and server actions create a cookie-aware Supabase client.
-4. The database evaluates the signed JWT, row-level policies, and scope-aware permission functions for every operation.
-5. The UI uses the returned permission set to make management areas discoverable; it does not replace the database check.
+1. Clerk verifies the user's identity and signs the session token.
+2. Clerk middleware establishes the session for Next.js routes. Server and browser Supabase clients pass the Clerk token to Supabase Third-Party Auth.
+3. `private.current_profile_id()` maps the signed Clerk subject to the stable application UUID in `profiles.id`. Migrated Clerk users use their existing profile UUID as `external_id`; new users link through `profiles.clerk_user_id`.
+4. The app reads current role grants from Postgres. Row-level security and scope-aware database functions re-check every protected operation.
+5. The UI uses permission results to show relevant management areas; it does not authorize requests.
 
-The publishable project key is safe to expose. Never use a Supabase service-role/secret key in the browser or ordinary request handlers.
+The Supabase publishable key is safe to expose. Never use a Supabase service/secret key in browser code or ordinary frontend request handlers.
 
 ## Authentication flows
 
-- /auth/sign-up: creates an email/password Auth account and basic profile data.
-- /auth/sign-in: email and password sign-in. The frontend does not offer social or phone sign-in, and signup does not grant membership or a role.
-- /auth/callback: exchanges confirmation/recovery codes and validates the local redirect path.
-- /auth/forgot-password: requests a recovery email.
-- /auth/reset-password: sets a new password for a valid recovery session.
-- /account: edits the signed-in user's profile and shows membership state.
+- `/auth/sign-up` and `/auth/sign-in` use Clerk's hosted widgets embedded in the site.
+- Clerk owns email verification, password recovery, active sessions, invitations, and account suspension.
+- `/account/settings` keeps profile fields in Supabase and opens Clerk's account UI for sign-in methods and devices.
+- A normal Clerk account does not grant society membership or an admin role.
+- On the first authenticated request, the app creates or links the user's stable `profiles` row.
 
-The database trigger creates profile rows. In Supabase Auth → Sign In / Providers, keep Email enabled and disable every other provider. Require email confirmation, configure email delivery, set NEXT_PUBLIC_SITE_URL, and allow the matching callback URL in Supabase Auth settings. The frontend code uses email/password only; the provider switch itself is a Supabase dashboard setting.
+Configure Clerk redirects and email verification in Clerk. Configure Supabase Third-Party Auth to trust the same Clerk instance. See [Operations and deployment](operations.md) and the [Clerk cutover checklist](auth-migration-checklist.md).
 
 ## Membership scope
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Bell, CheckCheck, LoaderCircle, X } from "lucide-react";
@@ -18,6 +19,7 @@ type Notice = {
 const PAGE_SIZE = 30;
 
 export default function NotificationBell({ userId }: { userId: string }) {
+  const { getToken } = useAuth();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   const refresh = useCallback(async (): Promise<boolean> => {
     try {
-      const supabase = createClient();
+      const supabase = createClient(() => getToken());
       const pageLimit = Math.max(PAGE_SIZE, loadedPagesRef.current * PAGE_SIZE);
       const { data, error } = await supabase
         .from("notifications")
@@ -85,7 +87,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
       let channelStarting = false;
       let retryTimer: number | null = null;
       let retryDelayMs = 1_000;
-      const supabase = createClient();
+      const supabase = createClient(() => getToken());
   
       const scheduleRetry = () => {
         if (!active || retryTimer !== null) return;
@@ -209,7 +211,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
   async function markRead(notificationId: string) {
     if (readIds.has(notificationId)) return;
     try {
-      const supabase = createClient();
+      const supabase = createClient(() => getToken());
       const { error } = await supabase.from("notification_reads").upsert(
         { notification_id: notificationId, user_id: userId, read_at: new Date().toISOString() },
         { onConflict: "notification_id,user_id" },
@@ -226,7 +228,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
     setSaving(true);
     try {
       const now = new Date().toISOString();
-      const { error } = await createClient().from("notification_reads").upsert(
+      const { error } = await createClient(() => getToken()).from("notification_reads").upsert(
         unread.map((notice) => ({ notification_id: notice.id, user_id: userId, read_at: now })),
         { onConflict: "notification_id,user_id" },
       );
@@ -243,7 +245,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const supabase = createClient();
+      const supabase = createClient(() => getToken());
       const start = notices.length;
       const { data, error } = await supabase
         .from("notifications")

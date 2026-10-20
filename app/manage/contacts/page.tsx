@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
 import { updateContactStatus } from "./actions";
 import AdminDataTable from "@/components/manage/AdminDataTable";
@@ -27,13 +28,8 @@ export default async function ManageContactsPage({
   const supabase = await createClient();
   if (!supabase) return <Unavailable />;
 
-  let userId = "";
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    if (!error) userId = data.user?.id ?? "";
-  } catch {
-    return <Unavailable message="We could not verify your session. Sign in again." />;
-  }
+  const appUser = await getCurrentAppUser();
+  const userId = appUser?.id ?? "";
   if (!userId) redirect("/auth/sign-in?next=/manage/contacts");
 
   const { permissionKeys, error: permissionError } = await getMyPermissionKeys(supabase, userId);

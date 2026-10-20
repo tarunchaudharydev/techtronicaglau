@@ -6,6 +6,7 @@ import MembershipDecision from "@/components/manage/MembershipDecision";
 import BulkInviteForm from "@/components/manage/BulkInviteForm";
 import ResultMessage from "@/components/manage/ResultMessage";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
 import { addSocietyMember } from "./actions";
 import AdminDataTable from "@/components/manage/AdminDataTable";
@@ -27,13 +28,8 @@ export default async function ManageMembershipsPage({
   const supabase = await createClient();
   if (!supabase) return <Unavailable />;
 
-  let userId = "";
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    if (!error) userId = data.user?.id ?? "";
-  } catch {
-    return <Unavailable message="We could not verify your session. Please sign in again." />;
-  }
+  const appUser = await getCurrentAppUser();
+  const userId = appUser?.id ?? "";
   if (!userId) redirect("/auth/sign-in?next=/manage/memberships");
 
   const { permissionKeys, error: permissionError } = await getMyPermissionKeys(supabase, userId);

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
 import { safeSlug, validId } from "@/lib/manage/server";
 
 export async function registerForEvent(formData: FormData) {
@@ -12,8 +13,8 @@ export async function registerForEvent(formData: FormData) {
   const destination = `/events/${slug}`;
   const supabase = await createClient();
   if (!supabase) redirect(`${destination}?registration=error`);
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect(`/auth/sign-in?next=${encodeURIComponent(destination)}`);
+  const appUser = await getCurrentAppUser();
+  if (!appUser) redirect(`/auth/sign-in?next=${encodeURIComponent(destination)}`);
   const names = formData.getAll("member_name");
   const emails = formData.getAll("member_email");
   const years = formData.getAll("member_year");
@@ -48,9 +49,9 @@ export async function cancelEventRegistration(formData: FormData) {
   const destination = `/events/${slug}`;
   const supabase = await createClient();
   if (!supabase) redirect(`${destination}?registration=error`);
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect(`/auth/sign-in?next=${encodeURIComponent(destination)}`);
-  const { data, error } = await supabase.from("event_registrations").delete().eq("id", registrationId).eq("user_id", auth.user.id).in("status", ["registered", "waitlisted"]).select("id").maybeSingle();
+  const appUser = await getCurrentAppUser();
+  if (!appUser) redirect(`/auth/sign-in?next=${encodeURIComponent(destination)}`);
+  const { data, error } = await supabase.from("event_registrations").delete().eq("id", registrationId).eq("user_id", appUser.id).in("status", ["registered", "waitlisted"]).select("id").maybeSingle();
   revalidatePath(destination);
   revalidatePath("/account");
   redirect(`${destination}?registration=${error || !data ? "error" : "cancelled"}`);

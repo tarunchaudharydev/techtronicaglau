@@ -2,16 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getCurrentAppUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 
 export type ProfileActionState = { status: "idle" | "success" | "error"; message: string };
-
 const errorState = (message: string): ProfileActionState => ({ status: "error", message });
 
 function readText(formData: FormData, field: string) {
   const value = formData.get(field);
-  if (typeof value !== "string") return "";
-  return value.trim().replace(/\s+/g, " ");
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
 }
 
 export async function updateProfileAction(
@@ -24,134 +23,30 @@ export async function updateProfileAction(
   const avatarUrl = readText(formData, "avatar_url");
   const year = yearText ? Number(yearText) : null;
 
-  if (fullName.length < 2) return errorState("Enter a name with at least 2 characters.");
-  if (fullName.length > 120) return errorState("Name must be 120 characters or fewer.");
+  if (fullName.length < 2 || fullName.length > 120) return errorState("Enter a name between 2 and 120 characters.");
   if (department.length > 120) return errorState("Department must be 120 characters or fewer.");
-  if (avatarUrl.length > 500) return errorState("Image URL must be 500 characters or fewer.");
+  if (avatarUrl.length > 500 || (avatarUrl && !isSafeAvatarUrl(avatarUrl))) {
+    return errorState("Use a secure image URL (https://) or a site-relative path beginning with /.");
+  }
   if (year !== null && (!Number.isInteger(year) || year < 1 || year > 8)) {
     return errorState("Study year must be between 1 and 8.");
   }
-  if (avatarUrl && !isSafeAvatarUrl(avatarUrl)) {
-    return errorState("Use a secure image URL (https://) or a site-relative path beginning with /.");
-  }
 
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([getCurrentAppUser(), createClient()]);
+  if (!user) redirect("/auth/sign-in?next=/account");
   if (!supabase) return errorState("Profile updates are temporarily unavailable.");
 
-  let userId: string;
-  try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    userId = user?.id ?? "";
-    if (authError) userId = "";
-  } catch {
-    return errorState("We could not verify your session. Refresh and sign in again.");
-  }
-  if (!userId) redirect("/auth/sign-in?next=/account");
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ full_name: fullName, department: department || null, year_of_study: year, avatar_url: avatarUrl || null })
+    .eq("id", user.id)
+    .select("id")
+    .maybeSingle();
 
-  try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: fullName,
-        department: department || null,
-        year_of_study: year,
-        avatar_url: avatarUrl || null,
-      })
-      .eq("id", userId)
-      .select("id")
-      .maybeSingle();
-
-    if (error) return errorState("We could not save your profile. Refresh the page and try again.");
-    if (!data) return errorState("Your profile could not be found. Refresh the page and try again.");
-  } catch {
-    return errorState("Profile updates are temporarily unavailable. Please try again.");
-  }
-
+  if (error || !data) return errorState("We could not save your profile. Refresh and try again.");
   revalidatePath("/account");
   revalidatePath("/account/settings");
   return { status: "success", message: "Your profile has been updated." };
-}
-
-export async function updateAccountEmailAction(
-  _previousState: ProfileActionState,
-  formData: FormData,
-): Promise<ProfileActionState> {
-  const email = readText(formData, "email").toLowerCase();
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return errorState("Enter a valid email address.");
-  }
-
-  const supabase = await createClient();
-  if (!supabase) return errorState("Account settings are temporarily unavailable.");
-
-  let currentEmail = "";
-  let authenticated = false;
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    authenticated = !error && Boolean(data.user);
-    currentEmail = data.user?.email?.toLowerCase() ?? "";
-  } catch {
-    return errorState("We could not verify your session. Refresh and sign in again.");
-  }
-  if (!authenticated) redirect("/auth/sign-in?next=/account/settings");
-  if (email === currentEmail) return errorState("That is already the email on your account.");
-
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://techtronicaglau.vercel.app").replace(/\/$/, "");
-  try {
-    const { error } = await supabase.auth.updateUser(
-      { email },
-      { emailRedirectTo: `${siteUrl}/auth/callback?next=/account/settings` },
-    );
-    if (error) return errorState("We could not start the email change. Check the address and try again.");
-  } catch {
-    return errorState("The email change could not be started. Please try again.");
-  }
-
-  revalidatePath("/account");
-  revalidatePath("/account/settings");
-  return {
-    status: "success",
-    message: "Check your inbox for the confirmation link. Your email changes after you confirm it.",
-  };
-}
-
-export async function updatePasswordAction(
-  _previousState: ProfileActionState,
-  formData: FormData,
-): Promise<ProfileActionState> {
-  const password = formData.get("password");
-  const confirmPassword = formData.get("confirm_password");
-  if (typeof password !== "string" || typeof confirmPassword !== "string") {
-    return errorState("Enter and confirm your new password.");
-  }
-  if (password.length < 12 || password.length > 72) {
-    return errorState("Use a password between 12 and 72 characters.");
-  }
-  if (password !== confirmPassword) {
-    return errorState("The password fields do not match.");
-  }
-
-  const supabase = await createClient();
-  if (!supabase) return errorState("Password updates are temporarily unavailable.");
-
-  let authenticated = false;
-  try {
-    const { data, error: authError } = await supabase.auth.getUser();
-    authenticated = !authError && Boolean(data.user);
-  } catch {
-    return errorState("We could not verify your session. Refresh and sign in again.");
-  }
-  if (!authenticated) redirect("/auth/sign-in?next=/account/settings");
-
-  try {
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) return errorState("We could not update your password. Check the requirements and try again.");
-  } catch {
-    return errorState("Password updates are temporarily unavailable. Please try again.");
-  }
-
-  revalidatePath("/account/settings");
-  return { status: "success", message: "Your password has been updated." };
 }
 
 function isSafeAvatarUrl(value: string) {
@@ -162,4 +57,3 @@ function isSafeAvatarUrl(value: string) {
     return false;
   }
 }
-
