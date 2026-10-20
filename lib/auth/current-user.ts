@@ -113,7 +113,9 @@ export async function getCurrentAppUser(): Promise<CurrentAppUser | null> {
     createdAt: profile.created_at,
     department: profile.department,
     yearOfStudy: profile.year_of_study,
-    avatarUrl: profile.avatar_url,
+    // Prefer the photo Clerk received from Google OAuth (or the Clerk profile),
+    // and retain the saved Techtronica image as a fallback.
+    avatarUrl: (clerkUser.hasImage ? clerkUser.imageUrl : null) || profile.avatar_url,
   };
 }
 

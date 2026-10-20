@@ -1,4 +1,3 @@
-import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -6,13 +5,13 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import {
   ArrowRight, BadgeCheck, CalendarDays, Clock3, Settings2,
-  ShieldCheck, Users, LogOut, BriefcaseBusiness,
+  ShieldCheck, Users, BriefcaseBusiness,
 } from "lucide-react";
-import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentAppUser } from "@/lib/auth/current-user";
 import { clerkClient } from "@clerk/nextjs/server";
 import { getMyPermissionKeys } from "@/lib/auth/permissions";
+import AccountSignOutButton from "@/components/account/AccountSignOutButton";
 import ClerkSessionList from "@/components/account/ClerkSessionList";
 import AdminDataTable, { type AdminDataColumn, type AdminDataRow } from "@/components/manage/AdminDataTable";
 
@@ -71,6 +70,7 @@ export default async function AccountPage() {
     full_name: user.fullName,
     department: null, year_of_study: null, avatar_url: null,
   };
+  const avatarUrl = user.avatarUrl || profile.avatar_url;
   const name = profile.full_name.trim() || user.fullName || user.email?.split("@")[0] || "Techtronica member";
   const memberships = membershipsResult.data ?? [];
   const registrations = registrationsResult.data ?? [];
@@ -86,7 +86,7 @@ export default async function AccountPage() {
     const eventB = relation(b.events)?.starts_at ?? "";
     return eventA.localeCompare(eventB);
   })[0];
-  const profileFields = [profile.full_name.trim(), profile.department?.trim(), profile.year_of_study, profile.avatar_url?.trim()];
+  const profileFields = [profile.full_name.trim(), profile.department?.trim(), profile.year_of_study, avatarUrl?.trim()];
   const profileProgress = Math.round(profileFields.filter(Boolean).length / profileFields.length * 100);
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
     .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "").join("") || "T";
@@ -169,19 +169,15 @@ export default async function AccountPage() {
           {canManageSociety && <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800" href="/manage">
             <BriefcaseBusiness className="size-4" /> Manage society
           </Link>}
-          <form action={signOutAction}>
-            <PendingSubmitButton className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">
-              <LogOut className="size-4" /> Sign out
-            </PendingSubmitButton>
-          </form>
+          <AccountSignOutButton />
         </div>
       </header>
 
       <section aria-label="Profile summary" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            {profile.avatar_url ? (
-              <Image alt={name + "'s profile"} className="size-16 shrink-0 rounded-full border border-slate-200 object-cover sm:size-[4.5rem]" height={72} src={profile.avatar_url} unoptimized width={72} />
+            {avatarUrl ? (
+              <Image alt={name + "'s profile"} className="size-16 shrink-0 rounded-full border border-slate-200 object-cover sm:size-[4.5rem]" height={72} src={avatarUrl} unoptimized width={72} />
             ) : (
               <div aria-label={name + " initials"} className="grid size-16 shrink-0 place-items-center rounded-full bg-sky-50 text-xl font-semibold text-sky-800 ring-1 ring-sky-100 sm:size-[4.5rem] sm:text-2xl dark:bg-sky-950 dark:text-sky-200 dark:ring-sky-900" role="img">{initials}</div>
             )}
