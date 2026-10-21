@@ -1,7 +1,7 @@
 import { techtronicaResultMessage } from "@/lib/techtronica/messages";
 
 const successResults = new Set(["saved", "saved_draft", "member_added", "registered", "cancelled"]);
-const errorResults = new Set(["error", "invalid"]);
+const errorResults = new Set(["error", "invalid", "club_access"]);
 
 export default function ResultMessage({ result }: { result?: string }) {
   if (!result) return null;

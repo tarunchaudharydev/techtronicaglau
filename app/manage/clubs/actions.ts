@@ -59,7 +59,7 @@ export async function createClub(formData: FormData) {
   if (!valid) return redirectResult(route, "invalid");
   const { error } = await supabase.from("clubs").insert(payload);
   refresh(payload.slug);
-  return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : "saved");
+  return redirectResult(route, error ? error.code === "23505" ? "conflict" : error.code === "42501" ? "club_access" : "error" : "saved");
 }
 export async function updateClub(formData: FormData) {
   const { supabase } = await requireManager("clubs.manage");
@@ -68,5 +68,5 @@ export async function updateClub(formData: FormData) {
   if (!validId(id) || !valid) return redirectResult(route, "invalid");
   const { data, error } = await supabase.from("clubs").update(payload).eq("id", id).select("id").maybeSingle();
   refresh(payload.slug);
-  return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : data ? "saved" : "error");
+  return redirectResult(route, error ? error.code === "23505" ? "conflict" : error.code === "42501" ? "club_access" : "error" : data ? "saved" : "club_access");
 }
