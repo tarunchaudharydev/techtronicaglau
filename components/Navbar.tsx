@@ -57,7 +57,7 @@ export default function Navbar() {
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const sidebarExpanded = sidebarPinned || sidebarHovered;
-  const userId = account.status === "signed-in" ? account.userId : null;
+  const userId = account.status === "signed-in" && isProfileId(account.userId) ? account.userId : null;
 
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
   const pageLabel = navLinks.find((link) => isActive(link.href))?.label ?? "Techtronica";
@@ -180,7 +180,7 @@ export default function Navbar() {
           <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{pageLabel}</p><p className="hidden text-[11px] text-slate-400 xl:block">Techtronica Society · GLA University</p></div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          {account.status === "signed-in" && account.userId && <NotificationBell userId={account.userId} />}
+          {userId && <NotificationBell userId={userId} />}
           {account.status === "signed-in" ? <Link href="/account" className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 py-1 pl-1 pr-3 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"><Avatar account={account} size="size-8" /><span className="max-w-36 truncate">{account.name}</span><ChevronDown className="size-4 text-slate-400" /></Link> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700"><LogIn className="size-4" />Sign in</Link> : <span className="size-9 animate-pulse rounded-full bg-slate-200" aria-label="Loading account" />}
         </div>
       </header>
@@ -189,7 +189,7 @@ export default function Navbar() {
         <div className="mx-auto flex h-12 max-w-7xl items-center justify-between gap-3">
           <button ref={triggerRef} type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation menu" aria-expanded={menuOpen} aria-controls="mobile-navigation" className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 text-slate-700 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:bg-slate-800 dark:text-slate-100"><Menu aria-hidden="true" className="size-5" /></button>
           <Link href="/" className="relative h-10 w-32 flex-1" aria-label="Techtronica home"><Image src="/logo.png" alt="" fill sizes="128px" className="object-contain" priority /></Link>
-          {account.status === "signed-in" && <NotificationBell userId={account.userId} />}
+          {userId && <NotificationBell userId={userId} />}
           {account.status === "signed-in" ? <Link href="/account" aria-label={`Open ${account.name}'s profile`} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"><Avatar account={account} size="size-10" /></Link> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} aria-label="Sign in" className="grid size-10 place-items-center rounded-full bg-sky-50 text-sky-700 dark:bg-slate-800 dark:text-sky-200"><LogIn className="size-5" /></Link> : <span className="size-10 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" aria-label="Loading account" />}
         </div>
       </header>
@@ -205,7 +205,7 @@ export default function Navbar() {
   );
 }
 
-function accountStateFor(userId: string, value: string, avatarUrl: string | null): HeaderAccountState {
+function isProfileId(value: string) {\n  return /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value);\n}\n\nfunction accountStateFor(userId: string, value: string, avatarUrl: string | null): HeaderAccountState {
   const name = value.trim().replace(/\s+/g, " ") || "Techtronica member";
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
     .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "").join("") || "T";
