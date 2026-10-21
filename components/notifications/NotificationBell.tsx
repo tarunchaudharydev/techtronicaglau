@@ -79,7 +79,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [getToken, userId]);
 
   useEffect(() => {
       let active = true;
