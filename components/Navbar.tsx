@@ -218,7 +218,11 @@ export default function Navbar() {
   );
 }
 
-function isProfileId(value: string) {\n  return /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value);\n}\n\nfunction accountStateFor(userId: string, value: string, avatarUrl: string | null): HeaderAccountState {
+function isProfileId(value: string) {
+  return /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value);
+}
+
+function accountStateFor(userId: string, value: string, avatarUrl: string | null): HeaderAccountState {
   const name = value.trim().replace(/\s+/g, " ") || "Techtronica member";
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
     .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "").join("") || "T";
