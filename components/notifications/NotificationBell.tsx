@@ -22,6 +22,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
   const { getToken } = useAuth();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
+  const [pendingReadIds, setPendingReadIds] = useState<Set<string>>(() => new Set());
+  const [readActionError, setReadActionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
@@ -34,7 +36,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
-  const unreadCount = notices.reduce((count, notice) => count + Number(!readIds.has(notice.id)), 0);
+  const unreadCount = notices.reduce((count, notice) => count + Number(!readIds.has(notice.id) && !pendingReadIds.has(notice.id)), 0);
 
   const refresh = useCallback(async (): Promise<boolean> => {
     try {
@@ -70,7 +72,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
         .in("notification_id", data.map((notice) => notice.id));
 
       if (!readsError) {
-        setReadIds(new Set((reads ?? []).map((read) => read.notification_id)));
+        // Read receipts are monotonic: a notification cannot become unread again.
+        // Merge server results so a slow refresh cannot undo a newer local read.
+        setReadIds((current) => new Set([...current, ...(reads ?? []).map((read) => read.notification_id)]));
       }
       return true;
     } catch {
@@ -209,22 +213,50 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }, [open]);
 
   async function markRead(notificationId: string) {
-    if (readIds.has(notificationId)) return;
+    if (readIds.has(notificationId) || pendingReadIds.has(notificationId)) return;
+
+    setReadActionError(null);
+    setPendingReadIds((current) => new Set(current).add(notificationId));
     try {
       const supabase = createClient(() => getToken());
       const { error } = await supabase.from("notification_reads").upsert(
         { notification_id: notificationId, user_id: userId, read_at: new Date().toISOString() },
         { onConflict: "notification_id,user_id" },
       );
-      if (!error) setReadIds((current) => new Set(current).add(notificationId));
+      if (error) {
+        setPendingReadIds((current) => {
+          const next = new Set(current);
+          next.delete(notificationId);
+          return next;
+        });
+        setReadActionError("Could not save this read status. Please try again.");
+        return;
+      }
+
+      setReadIds((current) => new Set(current).add(notificationId));
+      setPendingReadIds((current) => {
+        const next = new Set(current);
+        next.delete(notificationId);
+        return next;
+      });
     } catch {
-      // Keep the notice unread so the user can retry.
+      setPendingReadIds((current) => {
+        const next = new Set(current);
+        next.delete(notificationId);
+        return next;
+      });
+      setReadActionError("Could not save this read status. Please try again.");
     }
   }
 
   async function markAllRead() {
-    const unread = notices.filter((notice) => !readIds.has(notice.id));
+    const unread = notices.filter((notice) => !readIds.has(notice.id) && !pendingReadIds.has(notice.id));
     if (!unread.length) return;
+
+    const unreadIds = unread.map((notice) => notice.id);
+    setReadActionError(null);
+    // Update the badge and rows immediately, then reconcile with the database.
+    setPendingReadIds((current) => new Set([...current, ...unreadIds]));
     setSaving(true);
     try {
       const now = new Date().toISOString();
@@ -232,9 +264,29 @@ export default function NotificationBell({ userId }: { userId: string }) {
         unread.map((notice) => ({ notification_id: notice.id, user_id: userId, read_at: now })),
         { onConflict: "notification_id,user_id" },
       );
-      if (!error) setReadIds((current) => new Set([...current, ...unread.map((notice) => notice.id)]));
+      if (error) {
+        setPendingReadIds((current) => {
+          const next = new Set(current);
+          unreadIds.forEach((id) => next.delete(id));
+          return next;
+        });
+        setReadActionError("Could not save read status. Please try again.");
+        return;
+      }
+
+      setReadIds((current) => new Set([...current, ...unreadIds]));
+      setPendingReadIds((current) => {
+        const next = new Set(current);
+        unreadIds.forEach((id) => next.delete(id));
+        return next;
+      });
     } catch {
-      // Leave the current read state intact if the request fails.
+      setPendingReadIds((current) => {
+        const next = new Set(current);
+        unreadIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      setReadActionError("Could not save read status. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -332,6 +384,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
               </div>
             </header>
 
+            {readActionError && <p role="alert" className="shrink-0 border-b border-rose-100 bg-rose-50 px-4 py-2 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">{readActionError}</p>}
+
             <div
               className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-y-contain"
               style={{ WebkitOverflowScrolling: "touch" }}
@@ -343,7 +397,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
               }}
             >
               {loading ? <p className="p-8 text-center text-sm text-slate-500"><LoaderCircle className="mx-auto mb-2 size-5 animate-spin" />Loading notifications…</p> : notices.length ? notices.map((notice) => {
-                const isRead = readIds.has(notice.id);
+                const isRead = readIds.has(notice.id) || pendingReadIds.has(notice.id);
                 return <Link key={notice.id} href={notice.href} onClick={() => { void markRead(notice.id); setOpen(false); }} className={`block border-b border-slate-100 px-4 py-4 transition hover:bg-sky-50/70 dark:border-slate-800 dark:hover:bg-slate-800/70 ${isRead ? "" : "bg-sky-50/50 dark:bg-sky-950/20"}`}>
                   <span className="flex items-start gap-3"><span className={`mt-1 size-2 shrink-0 rounded-full ${isRead ? "bg-slate-300 dark:bg-slate-600" : "bg-sky-600"}`} /><span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-3"><strong className="line-clamp-1 text-sm">{notice.title}</strong><span className="shrink-0 text-[10px] capitalize text-slate-500">{notice.kind}</span></span><span className="mt-1 block line-clamp-3 text-xs leading-5 text-slate-600 dark:text-slate-300">{notice.message}</span><time className="mt-1 block text-[10px] text-slate-400" dateTime={notice.published_at}>{formatDate(notice.published_at)}</time></span></span>
                 </Link>;
