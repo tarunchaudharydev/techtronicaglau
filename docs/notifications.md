@@ -21,3 +21,7 @@ Attendance controls update their visible selection as soon as the manager choose
 The backend migration adds the activity kind, backfills historical notices to the member-only audience, and enforces membership-only reads with RLS. Notification generation runs in database triggers so activity is captured consistently for changes made through the app or database. The frontend only reads notification rows allowed by RLS and stores each member’s own read receipts.
 
 For deployment steps, use the [backend migration runbook](https://github.com/tarunchaudharydev/techtronica-backend/blob/main/supabase/migrations/README.md) and [Realtime guide](realtime.md).
+
+### Read receipts and personal activity
+
+Each notification receipt stores the matching `public.profiles.id`, which is the application identity used for Clerk sign-ins. The receipt foreign key and the `private.current_profile_id()` row-level security checks use the same profile identity, so Clerk-only users can save read status without an `auth.users` row. Members can also read only their own meeting attendance rows and the meeting session details for those rows; this supplies the private latest-activity list on their account page.

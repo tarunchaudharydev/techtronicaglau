@@ -311,6 +311,13 @@ export type Database = {
             referencedRelation: "notifications"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notification_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_registration_members: {

@@ -37,7 +37,6 @@ const sections = [
     description:
       "Review society and club applications, then welcome new members.",
     icon: UsersRound,
-    tone: "sky",
   },
   {
     title: "Team directory",
@@ -47,7 +46,6 @@ const sections = [
     description:
       "Update team, mentor, and faculty profiles and their visibility.",
     icon: Network,
-    tone: "slate",
   },
   {
     title: "Alumni directory",
@@ -112,7 +110,6 @@ const sections = [
     description:
       "Create meeting sheets, mark active members present, absent, or excused, and export attendance.",
     icon: ClipboardCheck,
-    tone: "emerald",
   },
   {
     title: "Registrations",
@@ -121,7 +118,6 @@ const sections = [
     group: "Clubs & events",
     description: "Review attendees and record cancellations or attendance.",
     icon: TicketCheck,
-    tone: "emerald",
   },
   {
     title: "Contact inbox",
@@ -178,24 +174,6 @@ const groupStyles = {
   },
 } as const;
 
-const toneStyles = {
-  sky: "bg-sky-50 text-sky-700 group-hover:bg-sky-600 group-hover:text-white",
-  slate: "bg-slate-100 text-slate-700 group-hover:bg-slate-700 group-hover:text-white",
-  amber:
-    "bg-amber-50 text-amber-700 group-hover:bg-amber-500 group-hover:text-white",
-  rose: "bg-rose-50 text-rose-700 group-hover:bg-rose-600 group-hover:text-white",
-  cyan: "bg-cyan-50 text-cyan-700 group-hover:bg-cyan-600 group-hover:text-white",
-  indigo:
-    "bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white",
-  fuchsia:
-    "bg-cyan-50 text-cyan-800 group-hover:bg-cyan-700 group-hover:text-white",
-  emerald:
-    "bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white",
-  orange:
-    "bg-orange-50 text-orange-700 group-hover:bg-orange-500 group-hover:text-white",
-  blue: "bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white",
-} as const;
-
 type GroupName = keyof typeof groupStyles;
 type Section = (typeof sections)[number];
 
@@ -225,12 +203,10 @@ export default async function ManageHomePage() {
           supabase
             .from("memberships")
             .select("id", { count: "exact", head: true })
-            .not("club_id", "is", "null")
             .eq("status", "pending"),
           supabase
             .from("memberships")
             .select("id", { count: "exact", head: true })
-            .not("club_id", "is", "null")
             .in("status", ["active", "inactive", "rejected"]),
           supabase
             .from("contact_submissions")
@@ -269,12 +245,12 @@ export default async function ManageHomePage() {
   const overviewStats = overview
     ? [
         {
-          label: "Club applications pending",
+          label: "Membership applications pending",
           count: overview[0].count,
           error: overview[0].error,
         },
         {
-          label: "Club applications reviewed",
+          label: "Membership applications reviewed",
           count: overview[1].count,
           error: overview[1].error,
         },
@@ -304,7 +280,7 @@ export default async function ManageHomePage() {
           error: overview[6].error,
         },
         {
-          label: "Completed registrations",
+          label: "Closed registrations",
           count: overview[7].count,
           error: overview[7].error,
         },
@@ -326,17 +302,16 @@ export default async function ManageHomePage() {
       : null;
   const overviewHasError =
     overviewStats.some((stat) => stat.error) || Boolean(memberTotals?.error);
-  const needsAttentionCount = overview
-    ? Math.max(0, overview[0].count ?? 0) +
-      Math.max(0, overview[2].count ?? 0)
-    : 0;
+  const needsAttentionCount =
+    overview && !overview[0].error && !overview[2].error
+      ? Math.max(0, overview[0].count ?? 0) + Math.max(0, overview[2].count ?? 0)
+      : null;
   const activity =
     isAdmin && !error
       ? await Promise.all([
           supabase
             .from("memberships")
             .select("id, created_at, profiles(full_name), clubs(name)")
-            .not("club_id", "is", "null")
             .eq("status", "pending")
             .order("created_at", { ascending: false })
             .limit(10),
@@ -360,10 +335,10 @@ export default async function ManageHomePage() {
         ...(activity[0].data ?? []).map((row) => ({
           id: `membership-${row.id}`,
           title: one(row.profiles)?.full_name || "Someone",
-          detail: `Applied to ${one(row.clubs)?.name || "a club"}`,
+          detail: `Applied to ${one(row.clubs)?.name || "the society"}`,
           date: row.created_at,
           href: "/manage/memberships",
-          type: "Club application",
+          type: "Membership application",
           status: "Needs review",
         })),
         ...(activity[1].data ?? []).map((row) => ({
@@ -493,13 +468,13 @@ export default async function ManageHomePage() {
     },
   ] as const;
   return (
-    <main className="min-h-[calc(100vh-5rem)] bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
+    <main className="min-h-[calc(100vh-5rem)] bg-[#f8f9fa] px-4 py-5 sm:px-6 sm:py-7">
       <div className="mx-auto max-w-[1440px]">
-        <header className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Society workspace</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
                 Manage society
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
@@ -516,7 +491,7 @@ export default async function ManageHomePage() {
               </span>
             </div>
           </div>
-          <div className="mt-5 flex items-start gap-2 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500 sm:text-sm">
+          <div className="mt-4 flex items-start gap-2 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500 sm:text-sm">
             <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-sky-700" />
             <p>
               Changes are checked against your permissions when you save. You only see areas assigned to your active society or club roles.
@@ -527,7 +502,7 @@ export default async function ManageHomePage() {
         {!error && groups.length > 0 && (
           <nav
             aria-label="Management areas"
-            className="sticky top-24 z-20 mt-5 flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-sm backdrop-blur"
+            className="sticky top-20 z-20 mt-3 flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-2 py-1"
           >
             {groups.map(({ name }) => (
               <a
@@ -542,7 +517,7 @@ export default async function ManageHomePage() {
         )}
 
         {isAdmin && !error && (
-          <section aria-labelledby="admin-overview" className="mt-7">
+          <section aria-labelledby="admin-overview" className="mt-5">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">
@@ -575,7 +550,6 @@ export default async function ManageHomePage() {
                   memberTotals?.error ? null : (memberTotals?.accounts ?? null)
                 }
                 detail="Accounts with a Techtronica profile"
-                tone="sky"
               />
               <MemberTotalCard
                 label="Active society members"
@@ -583,23 +557,28 @@ export default async function ManageHomePage() {
                   memberTotals?.error ? null : (memberTotals?.members ?? null)
                 }
                 detail="Current society-wide memberships"
-                tone="emerald"
               />
               <MemberTotalCard
                 label="Not society members"
                 count={nonMembers}
                 detail="Registered accounts without active society membership"
-                tone="slate"
               />
             </div>
             <AdminOverviewDonut
-              stats={overviewStats.map(
-                ({ label, count, error: statError }) => ({
-                  label,
-                  count,
-                  unavailable: Boolean(statError),
-                }),
-              )}
+              workflows={[
+                {
+                  label: "Membership requests",
+                  stats: overviewStats.slice(0, 2).map(({ label, count, error: statError }) => ({ label, count, unavailable: Boolean(statError) })),
+                },
+                {
+                  label: "Contact enquiries",
+                  stats: overviewStats.slice(2, 6).map(({ label, count, error: statError }) => ({ label, count, unavailable: Boolean(statError) })),
+                },
+                {
+                  label: "Event registrations",
+                  stats: overviewStats.slice(6, 8).map(({ label, count, error: statError }) => ({ label, count, unavailable: Boolean(statError) })),
+                },
+              ]}
             />
             <section
               aria-labelledby="incoming-activity"
@@ -614,12 +593,12 @@ export default async function ManageHomePage() {
                     Latest activity
                   </h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Search, sort, switch views, and export recent applications, enquiries, and registrations.
+                    Search, sort, switch views, and export recent membership applications, enquiries, and registrations.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="inline-flex min-h-10 items-center rounded-xl bg-amber-50 px-3 text-xs font-semibold text-amber-900 ring-1 ring-amber-200">
-                    {needsAttentionCount.toLocaleString("en-IN")} need review
+                    {needsAttentionCount === null ? "— need review" : `${needsAttentionCount.toLocaleString("en-IN")} need review`}
                   </span>
                   <AdminDashboardRefresh />
                 </div>
@@ -637,7 +616,7 @@ export default async function ManageHomePage() {
                 columns={activityColumns}
                 rows={activityRows}
                 pageSizes={[5, 10, 25]}
-                emptyMessage="No new applications, enquiries, or registrations in the latest activity."
+                emptyMessage={activityHasError ? "Activity is temporarily unavailable. Refresh to try again." : "No new membership applications, enquiries, or registrations in the latest activity."}
               />
             </section>
           </section>
@@ -646,7 +625,7 @@ export default async function ManageHomePage() {
         {isAdmin && !error && (
           <section
             aria-labelledby="admin-shortcuts"
-            className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+            className="mt-6 border-t border-slate-200 bg-white py-5"
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -737,7 +716,7 @@ export default async function ManageHomePage() {
         )}
 
         {!error && groups.length > 0 && (
-          <div className="mt-8 space-y-9 sm:mt-10 sm:space-y-11">
+          <div className="mt-6 space-y-6">
             {groups.map(({ name, sections: groupSections }) => {
               const style = groupStyles[name];
               const GroupIcon = style.icon;
@@ -746,21 +725,21 @@ export default async function ManageHomePage() {
                   key={name}
                   id={`group-${style.number}`}
                   aria-labelledby={`group-title-${style.number}`}
-                  className="scroll-mt-40 rounded-3xl border border-slate-200/80 bg-white/65 p-4 sm:p-6"
+                  className="scroll-mt-32 border-t border-slate-200 pt-5"
                 >
-                  <div className="mb-4 flex items-center gap-3 sm:mb-5">
+                  <div className="mb-3 flex items-center gap-3">
                     <span
-                      className={`grid size-11 shrink-0 place-items-center rounded-2xl ring-1 ${style.tint}`}
+                      className="grid size-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600"
                     >
                       <GroupIcon aria-hidden="true" className="size-5" />
                     </span>
                     <div>
-                      <p className="text-[11px] font-bold tracking-[0.16em] text-slate-400">
+                      <p className="text-[11px] font-medium tracking-wide text-slate-500">
                         {style.number} / WORKSPACE
                       </p>
                       <h2
                         id={`group-title-${style.number}`}
-                        className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl"
+                        className="text-base font-semibold tracking-tight text-slate-900 sm:text-lg"
                       >
                         {name}
                       </h2>
@@ -773,13 +752,9 @@ export default async function ManageHomePage() {
                       {groupSections.length === 1 ? "area" : "areas"}
                     </span>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-                    {groupSections.map((section, index) => (
-                      <ManagementCard
-                        key={section.href}
-                        section={section}
-                        number={index + 1}
-                      />
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {groupSections.map((section) => (
+                      <ManagementCard key={section.href} section={section} />
                     ))}
                   </div>
                 </section>
@@ -792,53 +767,21 @@ export default async function ManageHomePage() {
   );
 }
 
-function ManagementCard({
-  section,
-  number,
-}: {
-  section: Section;
-  number: number;
-}) {
+function ManagementCard({ section }: { section: Section }) {
   const Icon: LucideIcon = section.icon;
   return (
     <Link
       href={section.href}
-      className="group relative flex min-h-52 flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-[0_8px_30px_-24px_rgba(15,23,42,0.3)] transition duration-200 hover:-translate-y-1 hover:border-sky-200 hover:shadow-[0_22px_40px_-28px_rgba(14,116,144,0.42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 sm:p-6"
+      className="group flex min-h-[76px] items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 hover:bg-slate-50"
     >
-      <span
-        aria-hidden="true"
-        className="absolute -right-8 -top-10 size-28 rounded-full bg-gradient-to-br from-sky-50 to-slate-100 transition duration-300 group-hover:scale-125"
-      />
-      <div className="relative flex items-start justify-between gap-4">
-        <span
-          className={`grid size-12 place-items-center rounded-2xl transition duration-200 ${toneStyles[section.tone]}`}
-        >
-          <Icon aria-hidden="true" className="size-5" />
-        </span>
-        <span className="grid size-9 place-items-center rounded-full border border-slate-200 text-slate-400 transition group-hover:border-sky-200 group-hover:bg-sky-50 group-hover:text-sky-700">
-          <ArrowUpRight aria-hidden="true" className="size-4" />
-        </span>
-      </div>
-      <div className="relative mt-5 flex-1">
-        <div className="flex items-center gap-2">
-          <h3 className="text-base font-bold tracking-tight text-slate-900 group-hover:text-sky-800 sm:text-lg">
-            {section.title}
-          </h3>
-          <span className="text-[10px] font-bold tabular-nums text-slate-300">
-            {String(number).padStart(2, "0")}
-          </span>
-        </div>
-        <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-          {section.description}
-        </p>
-      </div>
-      <span className="relative mt-5 inline-flex min-h-10 items-center text-sm font-semibold text-sky-700">
-        Open workspace{" "}
-        <ArrowUpRight
-          aria-hidden="true"
-          className="ml-1.5 size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-        />
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-700">
+        <Icon aria-hidden="true" className="size-[18px]" />
       </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-slate-900">{section.title}</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-500">{section.description}</span>
+      </span>
+      <ArrowUpRight aria-hidden="true" className="size-4 shrink-0 text-slate-400" />
     </Link>
   );
 }
@@ -884,26 +827,15 @@ function formatActivityDate(value: string) {
       }).format(date);
 }
 
-function MemberTotalCard({
-  label,
-  count,
-  detail,
-  tone,
-}: {
+function MemberTotalCard({ label, count, detail }: {
   label: string;
   count: number | null;
   detail: string;
-  tone: "sky" | "emerald" | "slate";
 }) {
-  const tones = {
-    sky: "border-sky-100 bg-sky-50/70 text-sky-800",
-    emerald: "border-emerald-100 bg-emerald-50/70 text-emerald-800",
-    slate: "border-slate-200 bg-slate-50 text-slate-700",
-  };
   return (
-    <article className={`min-w-0 rounded-2xl border p-4 ${tones[tone]}`}>
-      <p className="text-xs font-bold uppercase tracking-wide">{label}</p>
-      <p className="mt-2 text-3xl font-bold tabular-nums text-slate-950">
+    <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4">
+      <p className="text-sm font-medium text-slate-600">{label}</p>
+      <p className="mt-2 text-2xl font-semibold tabular-nums text-slate-950">
         {count === null ? "—" : count.toLocaleString("en-IN")}
       </p>
       <p className="mt-1 text-xs leading-5 text-slate-600">{detail}</p>
