@@ -82,7 +82,7 @@ export default function Navbar() {
           const response = await fetch("/api/account/identity", { cache: "no-store", credentials: "same-origin" });
           if (!response.ok) {
             if (attempt < retryDelays.length && (response.status === 401 || response.status >= 500)) {
-              await new Promise((resolve) => window.setTimeout(resolve, retryDelays[attempt]));
+              await new Promise((resolve) => window.setTimeout(resolve, retryDelays[attempt] ?? 900));
               continue;
             }
             return;
@@ -93,7 +93,7 @@ export default function Navbar() {
           return;
         } catch {
           if (attempt >= retryDelays.length) return;
-          await new Promise((resolve) => window.setTimeout(resolve, retryDelays[attempt]));
+          await new Promise((resolve) => window.setTimeout(resolve, retryDelays[attempt] ?? 900));
         }
       }
     };
