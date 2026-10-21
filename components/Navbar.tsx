@@ -75,17 +75,30 @@ export default function Navbar() {
       || "Techtronica member";
     setAccount(accountStateFor("", fallbackName, clerkUser?.imageUrl ?? null));
 
-    void fetch("/api/account/identity", { cache: "no-store", credentials: "same-origin" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Profile identity unavailable");
-        return response.json() as Promise<{ id: string; fullName: string; avatarUrl: string | null }>;
-      })
-      .then((identity) => {
-        if (active) setAccount(accountStateFor(identity.id, identity.fullName || fallbackName, identity.avatarUrl));
-      })
-      .catch(() => {
-        // Keep the Clerk account visible; the profile UUID is needed only for database notifications.
-      });
+    const resolveIdentity = async () => {
+      const retryDelays = [300, 900];
+      for (let attempt = 0; active; attempt += 1) {
+        try {
+          const response = await fetch("/api/account/identity", { cache: "no-store", credentials: "same-origin" });
+          if (!response.ok) {
+            if (attempt < retryDelays.length && (response.status === 401 || response.status >= 500)) {
+              await new Promise((resolve) => window.setTimeout(resolve, retryDelays[attempt]));
+              continue;
+            }
+            return;
+          }
+
+          const identity = await response.json() as { id: string; fullName: string; avatarUrl: string | null };
+          if (active) setAccount(accountStateFor(identity.id, identity.fullName || fallbackName, identity.avatarUrl));
+          return;
+        } catch {
+          if (attempt >= retryDelays.length) return;
+          await new Promise((resolve) => window.setTimeout(resolve, retryDelays[attempt]));
+        }
+      }
+    };
+
+    void resolveIdentity();
 
     return () => { active = false; };
   }, [authLoaded, clerkId, clerkUser?.id, clerkUser?.fullName, clerkUser?.imageUrl, clerkUser?.primaryEmailAddress?.emailAddress]);
