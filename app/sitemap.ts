@@ -11,6 +11,7 @@ const publicPages = [
   ["", 1],
   ["/about", 0.8],
   ["/clubs", 0.9],
+  ["/how-to-join", 0.7],
   ["/events", 0.9],
   ["/alumni", 0.6],
   ["/academics", 0.6],
