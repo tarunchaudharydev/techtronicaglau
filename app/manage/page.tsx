@@ -203,12 +203,10 @@ export default async function ManageHomePage() {
           supabase
             .from("memberships")
             .select("id", { count: "exact", head: true })
-            .not("club_id", "is", "null")
             .eq("status", "pending"),
           supabase
             .from("memberships")
             .select("id", { count: "exact", head: true })
-            .not("club_id", "is", "null")
             .in("status", ["active", "inactive", "rejected"]),
           supabase
             .from("contact_submissions")
@@ -247,12 +245,12 @@ export default async function ManageHomePage() {
   const overviewStats = overview
     ? [
         {
-          label: "Club applications pending",
+          label: "Membership applications pending",
           count: overview[0].count,
           error: overview[0].error,
         },
         {
-          label: "Club applications reviewed",
+          label: "Membership applications reviewed",
           count: overview[1].count,
           error: overview[1].error,
         },
@@ -314,7 +312,6 @@ export default async function ManageHomePage() {
           supabase
             .from("memberships")
             .select("id, created_at, profiles(full_name), clubs(name)")
-            .not("club_id", "is", "null")
             .eq("status", "pending")
             .order("created_at", { ascending: false })
             .limit(10),
@@ -338,10 +335,10 @@ export default async function ManageHomePage() {
         ...(activity[0].data ?? []).map((row) => ({
           id: `membership-${row.id}`,
           title: one(row.profiles)?.full_name || "Someone",
-          detail: `Applied to ${one(row.clubs)?.name || "a club"}`,
+          detail: `Applied to ${one(row.clubs)?.name || "the society"}`,
           date: row.created_at,
           href: "/manage/memberships",
-          type: "Club application",
+          type: "Membership application",
           status: "Needs review",
         })),
         ...(activity[1].data ?? []).map((row) => ({
@@ -596,7 +593,7 @@ export default async function ManageHomePage() {
                     Latest activity
                   </h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Search, sort, switch views, and export recent applications, enquiries, and registrations.
+                    Search, sort, switch views, and export recent membership applications, enquiries, and registrations.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -619,7 +616,7 @@ export default async function ManageHomePage() {
                 columns={activityColumns}
                 rows={activityRows}
                 pageSizes={[5, 10, 25]}
-                emptyMessage={activityHasError ? "Activity is temporarily unavailable. Refresh to try again." : "No new applications, enquiries, or registrations in the latest activity."}
+                emptyMessage={activityHasError ? "Activity is temporarily unavailable. Refresh to try again." : "No new membership applications, enquiries, or registrations in the latest activity."}
               />
             </section>
           </section>
@@ -837,8 +834,8 @@ function MemberTotalCard({ label, count, detail }: {
 }) {
   return (
     <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4">
-      <p className="text-xs font-bold uppercase tracking-wide">{label}</p>
-      <p className="mt-2 text-3xl font-bold tabular-nums text-slate-950">
+      <p className="text-sm font-medium text-slate-600">{label}</p>
+      <p className="mt-2 text-2xl font-semibold tabular-nums text-slate-950">
         {count === null ? "—" : count.toLocaleString("en-IN")}
       </p>
       <p className="mt-1 text-xs leading-5 text-slate-600">{detail}</p>
