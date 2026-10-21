@@ -54,12 +54,19 @@ export default async function AccountPage() {
       return { data: [], error: true };
     }
   })();
-  const [profileResult, membershipsResult, registrationsResult, accessResult, sessionsResult] = await Promise.all([
+  const [profileResult, membershipsResult, registrationsResult, attendanceResult, accessResult, sessionsResult] = await Promise.all([
     supabase.from("profiles").select("full_name, department, year_of_study, avatar_url").eq("id", user.id).maybeSingle(),
     supabase.from("memberships").select("id, status, created_at, club_id, clubs(name, slug), positions(name)")
       .eq("user_id", user.id).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(25),
     supabase.from("event_registrations").select("id, status, registered_at, events(title, slug, starts_at)")
       .eq("user_id", user.id).order("registered_at", { ascending: false }).order("id", { ascending: false }).limit(25),
+    supabase.from("meeting_attendance")
+      .select("session_id, status, marked_at, meeting_attendance_sessions!inner(name, meeting_date, scope)")
+      .eq("user_id", user.id)
+      .neq("status", "unmarked")
+      .not("marked_at", "is", null)
+      .order("marked_at", { ascending: false })
+      .limit(12),
     accessPromise,
     sessionsPromise,
   ]);
@@ -73,9 +80,12 @@ export default async function AccountPage() {
   const avatarUrl = user.avatarUrl || profile.avatar_url;
   const name = profile.full_name.trim() || user.fullName || user.email?.split("@")[0] || "Techtronica member";
   const memberships = membershipsResult.data ?? [];
+  const clubMemberships = memberships.filter((membership) => membership.club_id !== null);
   const registrations = registrationsResult.data ?? [];
-  const activeMemberships = memberships.filter((membership) => membership.status === "active").length;
-  const pendingMemberships = memberships.filter((membership) => membership.status === "pending").length;
+  const attendanceRecords = attendanceResult.data ?? [];
+  const activeMemberships = clubMemberships.filter((membership) => membership.status === "active").length;
+  const pendingMemberships = clubMemberships.filter((membership) => membership.status === "pending").length;
+  const hasSocietyMembership = memberships.some((membership) => membership.club_id === null && membership.status === "active");
   const now = Date.now();
   const upcomingRegistrations = registrations.filter((registration) => {
     const event = relation(registration.events);
@@ -95,7 +105,7 @@ export default async function AccountPage() {
   const sessionCount = sessionsResult.error ? null : sessionsResult.data.length;
 
   const membershipColumns: AdminDataColumn[] = [
-    { key: "club", label: "Club" }, { key: "position", label: "Position" },
+    { key: "club", label: "Membership" }, { key: "position", label: "Position" },
     { key: "status", label: "Status" }, { key: "joined", label: "Joined" },
   ];
   const membershipRows: AdminDataRow[] = memberships.map((membership) => {
@@ -142,7 +152,7 @@ export default async function AccountPage() {
   const membershipChart = [
     { label: "Active", value: activeMemberships, color: "#1a73e8" },
     { label: "Pending", value: pendingMemberships, color: "#f9ab00" },
-    { label: "Other", value: Math.max(0, memberships.length - activeMemberships - pendingMemberships), color: "#9aa0a6" },
+    { label: "Other", value: Math.max(0, clubMemberships.length - activeMemberships - pendingMemberships), color: "#9aa0a6" },
   ];
   const attendedRegistrations = registrations.filter((item) => item.status === "attended").length;
   const closedRegistrations = registrations.filter((item) => ["cancelled", "rejected", "no_show"].includes(item.status)).length;
@@ -153,6 +163,68 @@ export default async function AccountPage() {
     { label: "Other", value: Math.max(0, registrations.length - upcomingRegistrations.length - attendedRegistrations - closedRegistrations), color: "#f9ab00" },
     { label: "Closed", value: closedRegistrations, color: "#9aa0a6" },
   ];
+
+  const personalActivity = [
+    ...memberships.map((membership) => {
+      const club = relation(membership.clubs);
+      const membershipName = club?.name ?? "Society";
+      return {
+        id: "membership-" + membership.id,
+        title: membership.status === "active" ? "Membership active" : "Membership update",
+        detail: membershipName + " · " + membership.status.replaceAll("_", " "),
+        date: membership.created_at,
+        status: membership.status,
+      };
+    }),
+    ...registrations.map((registration) => {
+      const event = relation(registration.events);
+      return {
+        id: "registration-" + registration.id,
+        title: "Event registration",
+        detail: (event?.title ?? "Event") + " · " + registration.status.replaceAll("_", " "),
+        date: registration.registered_at,
+        status: registration.status,
+      };
+    }),
+    ...attendanceRecords.map((attendance) => {
+      const meeting = relation(attendance.meeting_attendance_sessions);
+      return {
+        id: "attendance-" + attendance.session_id,
+        title: "Meeting attendance",
+        detail: (meeting?.name ?? "Meeting") + " · " + (meeting?.scope === "society" ? "Society meeting" : "Club meeting"),
+        date: attendance.marked_at ?? meeting?.meeting_date ?? "",
+        status: attendance.status,
+      };
+    }),
+  ].filter((item) => item.date).sort((left, right) => new Date(right.date).valueOf() - new Date(left.date).valueOf()).slice(0, 12);
+
+  const activityHasError = Boolean(membershipsResult.error || registrationsResult.error || attendanceResult.error);
+  const activityColumns: AdminDataColumn[] = [
+    { key: "activity", label: "Activity", sortable: false },
+    { key: "details", label: "Details", sortable: false },
+    { key: "status", label: "Status" },
+    { key: "date", label: "Date" },
+  ];
+  const activityRows: AdminDataRow[] = personalActivity.map((item) => ({
+    id: item.id,
+    searchText: [item.title, item.detail, item.status, item.date].join(" "),
+    values: { activity: item.title, details: item.detail, status: item.status, date: item.date },
+    cells: {
+      activity: <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>,
+      details: <span className="text-slate-600 dark:text-slate-300">{item.detail}</span>,
+      status: <StatusBadge status={item.status} />,
+      date: <time className="whitespace-nowrap text-xs text-slate-500" dateTime={item.date}>{formatDate(item.date)}</time>,
+    },
+    card: <article className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-medium text-slate-900 dark:text-white">{item.title}</h3>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.detail} · {formatDate(item.date)}</p>
+        </div>
+        <StatusBadge status={item.status} />
+      </div>
+    </article>,
+  }));
 
   return (
     <main className="workspace-ui mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
@@ -183,7 +255,7 @@ export default async function AccountPage() {
             )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">{activeMemberships > 0 ? "Society member" : "Community account"}</span>
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">{hasSocietyMembership ? "Society member" : "Community account"}</span>
                 {isVerified ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"><BadgeCheck className="size-3.5" /> Email verified</span>
                 ) : (
@@ -217,7 +289,7 @@ export default async function AccountPage() {
 
       <section aria-label="Activity charts" className="mt-4 grid gap-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-2">
         <p className="text-xs text-slate-500 sm:col-span-2">Status mix from the latest account records.</p>
-        <ActivityBar title="Club membership status" items={membershipChart} total={memberships.length} unavailable={Boolean(membershipsResult.error)} />
+        <ActivityBar title="Club membership status" items={membershipChart} total={clubMemberships.length} unavailable={Boolean(membershipsResult.error)} />
         <ActivityBar title="Event registration status" items={registrationChart} total={registrations.length} unavailable={Boolean(registrationsResult.error)} />
       </section>
 
@@ -273,6 +345,16 @@ export default async function AccountPage() {
         </section>
       </div>
 
+      <section aria-label="Latest activity" className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-3">
+          <h2 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white">Latest activity</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Your recent membership changes, event registrations, and meeting attendance.</p>
+        </div>
+        {activityHasError && <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status">Some activity could not be loaded. Refresh to try again.</p>}
+        {activityRows.length ? <AdminDataTable id="account-latest-activity" columns={activityColumns} rows={activityRows} pageSizes={[5, 10, 25]} emptyMessage="No recent activity." />
+          : <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">{activityHasError ? "Your latest activity is temporarily unavailable." : "Your latest activity will appear here when you join a club, register for an event, or attend a meeting."}</p>}
+      </section>
+
       <section aria-label="Quick links" className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-3">
           <h2 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white">Explore Techtronica</h2>
@@ -303,9 +385,9 @@ export default async function AccountPage() {
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
         <CollectionPanel
           id="account-memberships"
-          title="Club memberships"
+          title="Memberships"
           eyebrow="Your community"
-          description="Your position and current application status across Techtronica clubs."
+          description="Society-wide and club memberships, positions, and application status."
           error={membershipsResult.error ? "Memberships could not be loaded. Refresh to try again." : null}
           empty="You have not joined a club yet. Explore the clubs and apply to join a community."
           emptyHref="/clubs"
@@ -400,6 +482,9 @@ function StatusBadge({ status }: { status: string }) {
     active: "bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
     registered: "bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
     attended: "bg-sky-50 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
+    present: "bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
+    absent: "bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-200",
+    excused: "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
     waitlisted: "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
     pending: "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
     rejected: "bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-200",
