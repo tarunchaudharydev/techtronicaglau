@@ -2,7 +2,7 @@
 
 ## Who receives notifications
 
-The in-app feed is available only to signed-in users with an active society membership. Database row-level security enforces this rule for reads and read receipts. A manager permission alone does not grant feed access. Public events can still be viewed on the public Events page; event notifications remain member-only.
+The in-app feed is available to signed-in users with an active society membership and Society Admins. Database row-level security enforces this audience for reads and read receipts; other manager permissions alone do not grant feed access. Public events can still be viewed on the public Events page; event notifications remain limited to society members and Society Admins.
 
 ## Activity included
 
