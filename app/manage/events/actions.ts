@@ -65,7 +65,7 @@ export async function createEvent(formData: FormData) {
   revalidatePath(route);
   revalidatePath("/events");
   if (!error) updateTag("public-events");
-  return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : "saved");
+  return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : payload.status === "draft" ? "saved_draft" : "saved");
 }
 
 export async function updateEvent(formData: FormData) {
@@ -78,7 +78,7 @@ export async function updateEvent(formData: FormData) {
   revalidatePath("/events");
   revalidatePath(`/events/${String(formData.get("slug") ?? "")}`);
   if (!error && data) updateTag("public-events");
-  return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : data ? "saved" : "error");
+  return redirectResult(route, error ? error.code === "23505" ? "conflict" : "error" : data ? payload.status === "draft" ? "saved_draft" : "saved" : "error");
 }
 
 export async function deleteEvent(formData: FormData) {

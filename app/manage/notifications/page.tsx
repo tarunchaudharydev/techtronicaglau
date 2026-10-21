@@ -48,10 +48,10 @@ export default async function ManageNotificationsPage({ searchParams }: { search
     <ResultMessage result={result} />
 
     <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-      <div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.14em] text-sky-700">Publish an update</p><h2 className="mt-1 text-xl font-semibold">Share a release or deployment</h2><p className="mt-1 text-sm text-muted">This publishes immediately to active society members. Add a version number in the title for release notes, such as “Version 1.2.0 is live”.</p></div>
+      <div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.14em] text-sky-700">Publish an update</p><h2 className="mt-1 text-xl font-semibold">Share a release or deployment</h2><p className="mt-1 text-sm text-muted">This publishes immediately. Active society members see all updates; choosing all signed-in users also shares it with users who are not members. Add a version number in the title for release notes, such as “Version 1.2.0 is live”.</p></div>
       <form action={publishNotification} className="mt-5 grid gap-4 md:grid-cols-2">
         <Field label="Update type"><select name="kind" defaultValue="deployment" className={inputClass}><option value="deployment">Deployment</option><option value="release">Version release</option><option value="announcement">General announcement</option></select></Field>
-        <Field label="Audience"><span className="flex min-h-11 items-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700">Active society members</span></Field>
+        <Field label="Who can see this"><select name="audience" defaultValue="everyone" className={inputClass}><option value="everyone">All signed-in users</option><option value="society_members">Active society members</option></select></Field>
         <div className="md:col-span-2"><Field label="Title"><input name="title" required minLength={1} maxLength={160} placeholder="Version 1.2.0 is live" className={inputClass} /></Field></div>
         <div className="md:col-span-2"><Field label="Message"><textarea name="message" required minLength={1} maxLength={1200} rows={4} placeholder="Tell users what changed or what is new." className={inputClass} /></Field></div>
         <div className="md:col-span-2"><Field label="Internal destination"><input name="href" required maxLength={2048} defaultValue="/events" placeholder="/events" className={inputClass} /></Field><p className="mt-1 text-xs text-muted">Use a path on this website, for example /events or /about. External URLs are not accepted.</p></div>
@@ -61,7 +61,7 @@ export default async function ManageNotificationsPage({ searchParams }: { search
 
     <section className="mt-9">
       <h2 className="text-xl font-semibold">Recent notifications <span className="text-sm font-normal text-muted">({data?.length ?? 0})</span></h2>
-      <p className="mt-1 text-sm text-muted">Event notifications are generated when an event is first published. Use the table controls to search, sort, switch views, choose columns, and export the recent list.</p>
+      <p className="mt-1 text-sm text-muted">Public published events notify all signed-in users; private published events notify active society members. Use the table controls to search, sort, switch views, choose columns, and export the recent list.</p>
       {error ? <p role="alert" className="mt-4 rounded-xl bg-rose-50 p-4 text-sm text-rose-800">Notifications could not be loaded.</p> : <AdminDataTable id="manage-notifications" columns={columns} rows={rows} emptyMessage="No notifications have been published yet." />}
     </section>
   </main>;
