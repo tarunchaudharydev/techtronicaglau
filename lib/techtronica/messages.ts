@@ -32,6 +32,7 @@ export const techtronicaSuccessMessage = {
 
 export const techtronicaInfoMessage = {
   inviteSent: "Invitation sent. The person can use the link in their email to finish setting up the account.",
+  eventSavedAsDraft: "Event saved as a draft. It will appear in Upcoming Events after you publish it.",
   memberAlreadyActive: "This account is already an active society member.",
   memberAccountMissing: "No account uses that email yet. The person must sign up and verify their email first.",
   memberEmailUnverified: "This account has not confirmed its email address yet. Add the member after email verification.",
@@ -57,6 +58,7 @@ export const techtronicaAuthMessage = {
 
 export const techtronicaResultMessage = {
   saved: techtronicaSuccessMessage.changesSaved,
+  saved_draft: techtronicaInfoMessage.eventSavedAsDraft,
   invited: techtronicaInfoMessage.inviteSent,
   member_added: techtronicaSuccessMessage.memberAdded,
   member_exists: techtronicaInfoMessage.memberAlreadyActive,
