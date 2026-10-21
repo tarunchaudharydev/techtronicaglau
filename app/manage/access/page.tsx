@@ -1,4 +1,5 @@
 import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
+import ProfileAccountPicker from "@/components/manage/ProfileAccountPicker";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FiKey, FiPlus, FiShield, FiUserPlus, FiUsers } from "react-icons/fi";
@@ -48,7 +49,7 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
     supabase.from("user_role_assignments").select("id, user_id, role_id, club_id, created_at, profiles!user_role_assignments_user_id_fkey(full_name), roles(name, scope), clubs(name)").order("created_at", { ascending: false }).order("id", { ascending: false }).limit(100),
     supabase.from("clubs").select("id, name").eq("is_active", true).order("display_order").limit(20),
     (() => {
-      let profiles = supabase.from("profiles").select("id, full_name, department").order("full_name").order("id").limit(25);
+      let profiles = supabase.from("profiles").select("id, full_name, department, year_of_study, avatar_url").order("full_name").order("id").limit(25);
       if (query) profiles = profiles.ilike("full_name", `%${query}%`);
       return profiles;
     })(),
@@ -287,16 +288,18 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
             {!profilesResult.error && query && profiles.length === 0 && <p className="mt-3 text-sm text-muted">No accounts matched. Try a shorter part of the person&apos;s name.</p>}
             {!profilesResult.error && !query && profiles.length === 25 && <p className="mt-3 text-xs text-muted">Showing the first 25 accounts. Search by name to find someone else.</p>}
             <form action={assignRole} className="mt-4 space-y-4">
-              <label className="block text-sm font-medium" htmlFor="assignment-user">Person
-                <select className={inputClass} id="assignment-user" name="user_id" required defaultValue="">
-                  <option disabled value="">Choose an account</option>
-                  {profiles.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {(profile.full_name || "Unnamed account").slice(0, 80)}{profile.department ? ` · ${profile.department}` : ""} · …{profile.id.slice(-6)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div>
+              <span className="text-sm font-medium">Person</span>
+              <div className="mt-1">
+                <ProfileAccountPicker accounts={profiles.map((profile) => ({
+                  id: profile.id,
+                  fullName: profile.full_name?.trim() || "Unnamed account",
+                  department: profile.department,
+                  yearOfStudy: profile.year_of_study,
+                  avatarUrl: profile.avatar_url,
+                }))} />
+              </div>
+            </div>
               <label className="block text-sm font-medium" htmlFor="assignment-role">Role
                 <select className={inputClass} id="assignment-role" name="role_id" required defaultValue="">
                   <option disabled value="">Choose a role</option>
