@@ -17,7 +17,7 @@ import AdminDataTable, { type AdminDataColumn, type AdminDataRow } from "@/compo
 
 const MANAGEMENT_PERMISSION_KEYS = [
   "admin.manage", "members.manage", "team.manage", "alumni.manage", "clubs.manage",
-  "positions.manage", "events.manage", "registrations.manage", "contacts.manage", "content.manage",
+  "positions.manage", "events.manage", "registrations.manage", "attendance.manage", "contacts.manage", "content.manage",
 ] as const;
 
 export const metadata: Metadata = {
