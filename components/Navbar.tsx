@@ -17,6 +17,7 @@ import { signOutAction } from "@/app/auth/actions";
 const navLinks = [
   { href: "/", label: "Home", icon: House },
   { href: "/clubs", label: "Clubs", icon: Users },
+  { href: "/how-to-join", label: "How to join", icon: UserPlus },
   { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/projects", label: "Projects", icon: Code2 },
   { href: "/research", label: "Research", icon: Sparkles },
