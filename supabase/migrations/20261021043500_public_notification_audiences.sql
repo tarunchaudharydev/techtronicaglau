@@ -10,7 +10,10 @@ alter table public.notifications
 
 -- Previously published event notices follow the event's current visibility.
 update public.notifications as n
-set audience = case when e.is_public then 'everyone' else 'society_members' end
+set audience = case
+  when e.is_public and e.status in ('published', 'completed') then 'everyone'
+  else 'society_members'
+end
 from public.events as e
 where n.event_id = e.id;
 
@@ -154,12 +157,20 @@ begin
           created_by = excluded.created_by,
           published_at = excluded.published_at;
   elsif tg_op = 'UPDATE'
-     and new.status = 'published'
-     and old.status = 'published'
-     and old.is_public is distinct from new.is_public then
+     and old.status in ('published', 'completed')
+     and (
+       new.status not in ('published', 'completed')
+       or old.is_public is distinct from new.is_public
+     ) then
     update public.notifications
-       set audience = notice_audience,
-           published_at = now()
+       set audience = case
+             when new.is_public and new.status in ('published', 'completed') then 'everyone'
+             else 'society_members'
+           end,
+           published_at = case
+             when new.is_public and new.status in ('published', 'completed') then now()
+             else published_at
+           end
      where event_id = new.id;
   end if;
 
