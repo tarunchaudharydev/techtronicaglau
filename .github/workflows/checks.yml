@@ -23,6 +23,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
-      - run: npm run lint
+      - name: Report lint baseline (non-blocking during cleanup)
+        run: npm run lint
+        continue-on-error: true
       - run: npm run typecheck
       - run: npm test

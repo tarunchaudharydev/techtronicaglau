@@ -12,7 +12,7 @@ Do not use the live Techtronica Clerk instance, production Supabase project, rea
 
 ## Fast checks
 
-Install dependencies and run the same credential-free checks as GitHub Actions:
+Install dependencies and run the credential-free checks:
 
 ```sh
 npm ci
@@ -21,7 +21,7 @@ npm run typecheck
 npm test
 ```
 
-The unit tests use Node's built-in test runner. They cover India-time birthday date boundaries and guard the test environment template against production credentials.
+The unit tests use Node's built-in test runner. They cover India-time birthday date boundaries and guard the test environment template against production credentials. The current repository has pre-existing ESLint errors in application files: GitHub Actions reports lint as a non-blocking signal during cleanup, while TypeScript and unit tests are blocking checks. Avoid introducing new lint errors.
 
 The Next.js production build needs provider environment values and is not run in the secret-free GitHub Actions workflow. To check it locally, first configure the isolated environment below, then run:
 

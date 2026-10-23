@@ -115,7 +115,7 @@ npm test
 npm run build
 ~~~
 
-The automated test runner uses Node's built-in test framework and does not require external credentials. The production build and service-backed flows need your local non-production keys; CI runs lint, type checking, and unit tests without secrets. Follow [Testing](docs/testing.md) for the isolated integration environment and smoke checklist.
+The automated test runner uses Node's built-in test framework and does not require external credentials. The production build and service-backed flows need your local non-production keys. The current repository has pre-existing ESLint errors; CI reports lint without blocking while that baseline is cleaned up, and gates on type checking and unit tests. Follow [Testing](docs/testing.md) for the isolated integration environment and smoke checklist.
 
 ## Database and backend
 

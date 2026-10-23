@@ -44,7 +44,7 @@ npm run typecheck
 npm test
 ~~~
 
-Run `npm run build` when you have configured the isolated test services. CI intentionally does not need auth or database secrets. For service-backed flows, include the relevant smoke checks from [Testing](docs/testing.md) in the pull request.
+The current main branch has pre-existing ESLint errors in application files. CI runs lint as a non-blocking signal while that baseline is cleaned up; TypeScript and unit tests are required checks. Avoid adding new lint errors. Run `npm run build` when you have configured the isolated test services. CI intentionally does not need auth or database secrets. For service-backed flows, include the relevant smoke checks from [Testing](docs/testing.md) in the pull request.
 
 ## Pull request checklist
 
