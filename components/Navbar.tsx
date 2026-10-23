@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity, BriefcaseBusiness, CalendarDays, ChevronDown, ChevronRight,
   Code2, GraduationCap, House, Info, Library, LogIn, LogOut, Mail, Menu,
-  Settings2, Sparkles, UserPlus, UserRound, Users, X,
+  Settings2, Sparkles, UserPlus, UserRound, Users, X, type LucideIcon,
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 
