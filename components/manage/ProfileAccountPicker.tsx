@@ -9,6 +9,7 @@ type AccountOption = {
   department: string | null;
   yearOfStudy: number | null;
   avatarUrl: string | null;
+  currentRoles: string[] | null;
 };
 
 export default function ProfileAccountPicker({ accounts }: { accounts: AccountOption[] }) {
@@ -24,6 +25,7 @@ export default function ProfileAccountPicker({ accounts }: { accounts: AccountOp
       account.department ?? "",
       account.yearOfStudy ? `year ${account.yearOfStudy}` : "",
       account.id.slice(-6),
+      ...(account.currentRoles ?? []),
     ].join(" ").toLocaleLowerCase().includes(normalizedSearch)) : accounts;
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export default function ProfileAccountPicker({ accounts }: { accounts: AccountOp
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{selected?.fullName ?? "Choose an account"}</span>
           {selected && <span className="block truncate text-xs text-muted">{accountDetails(selected)}</span>}
+          {selected && <span className="block truncate text-[11px] font-medium text-sky-700">{currentRoleDetails(selected)}</span>}
         </span>
         {selected && <span className="hidden shrink-0 text-xs text-muted sm:inline">…{selected.id.slice(-6)}</span>}
         <svg aria-hidden="true" className="size-4 shrink-0 text-slate-500" fill="none" viewBox="0 0 20 20">
@@ -99,7 +102,7 @@ export default function ProfileAccountPicker({ accounts }: { accounts: AccountOp
               <li key={account.id}>
                 <button
                   aria-pressed={selectedId === account.id}
-                  className={`flex min-h-14 w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition ${selectedId === account.id ? "bg-sky-50 dark:bg-sky-950/50" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+                  className={`flex min-h-[4.5rem] w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition ${selectedId === account.id ? "bg-sky-50 dark:bg-sky-950/50" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
                   onClick={() => chooseAccount(account.id)}
                   type="button"
                 >
@@ -107,6 +110,7 @@ export default function ProfileAccountPicker({ accounts }: { accounts: AccountOp
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-slate-900 dark:text-slate-100">{account.fullName}</span>
                     <span className="block truncate text-xs text-muted">{accountDetails(account)}</span>
+                    <span className="block truncate text-[11px] font-medium text-sky-700">{currentRoleDetails(account)}</span>
                   </span>
                   <span className="shrink-0 text-xs text-muted">…{account.id.slice(-6)}</span>
                 </button>
@@ -132,6 +136,12 @@ function AccountAvatar({ account }: { account: AccountOption }) {
         : initials}
     </span>
   );
+}
+
+function currentRoleDetails(account: AccountOption) {
+  if (account.currentRoles === null) return "Current role unavailable";
+  if (account.currentRoles.length === 0) return "No role assigned";
+  return account.currentRoles.join(" · ");
 }
 
 function accountDetails(account: AccountOption) {

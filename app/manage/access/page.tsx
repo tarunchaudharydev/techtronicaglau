@@ -61,6 +61,25 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
   const assignments = assignmentsResult.data ?? [];
   const clubs = clubsResult.data ?? [];
   const profiles = profilesResult.data ?? [];
+  const currentRoleAssignmentsResult = profiles.length
+    ? await supabase
+        .from("user_role_assignments")
+        .select("user_id, roles(name, scope), clubs(name)")
+        .in("user_id", profiles.map((profile) => profile.id))
+        .order("created_at", { ascending: false })
+        .limit(1000)
+    : null;
+  const currentRolesByUser = new Map<string, string[]>();
+  for (const assignment of currentRoleAssignmentsResult?.data ?? []) {
+    const role = one(assignment.roles);
+    if (!role) continue;
+    const club = one(assignment.clubs);
+    const scope = role.scope === "society" ? "Society-wide" : club?.name || "Club-scoped";
+    const label = role.name + " · " + scope;
+    const rolesForUser = currentRolesByUser.get(assignment.user_id) ?? [];
+    if (!rolesForUser.includes(label)) rolesForUser.push(label);
+    currentRolesByUser.set(assignment.user_id, rolesForUser);
+  }
   const displayedRoles = roles.filter((role) =>
     `${role.name} ${role.description ?? ""} ${role.scope}`.toLocaleLowerCase().includes(roleQuery.toLocaleLowerCase()),
   );
@@ -297,6 +316,9 @@ export default async function AccessManagementPage({ searchParams }: { searchPar
                   department: profile.department,
                   yearOfStudy: profile.year_of_study,
                   avatarUrl: profile.avatar_url,
+                  currentRoles: currentRoleAssignmentsResult?.error
+                    ? null
+                    : currentRolesByUser.get(profile.id) ?? [],
                 }))} />
               </div>
             </div>
