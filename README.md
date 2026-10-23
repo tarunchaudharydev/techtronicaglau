@@ -44,7 +44,7 @@ The seeded clubs are Technovation, Code-E-Phobia, Unnati, Gizmo, and Mindblogger
 
 [![Techtronica application architecture](docs/images/figma-application-architecture.png)](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=1-2)
 
-Clerk manages login identity and sessions. Supabase stores profiles and app data, and validates Clerk session tokens through Third-Party Auth. Postgres row-level security (RLS) and database permissions enforce access. The frontend does not use a Supabase service-role key or grant app roles from Clerk metadata. UI hiding is not an authorization boundary.
+Clerk manages login identity and sessions. Supabase stores profiles and app data, and validates Clerk session tokens through Third-Party Auth. Postgres row-level security (RLS) and database permissions enforce access. The frontend does not use a Supabase service-role key or grant app roles from Clerk metadata. UI hiding is not an authorization boundary. Run `npm run audit` to check the dependency tree; CI blocks on moderate and higher advisories.
 
 Read [Architecture](docs/architecture.md), [Authentication and permissions](docs/authentication-and-permissions.md), and [Security and access control](docs/security-and-access-control.md) before changing data access or roles. Database schema, migrations, RLS policies, Storage policies, and Edge Functions live in the [backend repository](https://github.com/tarunchaudharydev/techtronica-backend).
 
@@ -105,10 +105,11 @@ Open [http://localhost:3000](http://localhost:3000).
 npm run lint
 npm run typecheck
 npm test
+npm run audit
 npm run build
 ~~~
 
-The automated test runner uses Node's built-in test framework and does not require external credentials. The production build and service-backed flows need your local non-production keys. The current repository has pre-existing ESLint errors; CI reports lint without blocking while that baseline is cleaned up, and gates on type checking and unit tests. Follow [Testing](docs/testing.md) for the isolated integration environment and smoke checklist.
+The automated test runner uses Node's built-in test framework and does not require external credentials. It covers streamed request-body limits, the test environment template, and India-time birthday boundaries. CI gates on the dependency audit, type checking, and unit tests; lint remains a non-blocking cleanup signal until the existing baseline is resolved. The production build and service-backed flows need your local non-production keys. Follow [Testing](docs/testing.md) for the isolated integration environment and smoke checklist.
 
 ## Database and backend
 
