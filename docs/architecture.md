@@ -4,15 +4,36 @@
 
 ~~~mermaid
 flowchart LR
-  Visitor[Public visitor or member] --> Next[Next.js application]
-  Next -->|Clerk session| Auth[Clerk]
-  Next -->|Publishable key plus Clerk token| API[Supabase Data API]
-  Auth --> API
-  API --> RLS[Postgres RLS and permission checks]
-  RLS --> DB[(Supabase Postgres)]
-  Next -->|Admin invitation request| AuthAdmin[Clerk Backend API]
-  Next -->|Optional consented coarse summary| Diagnostics[Network diagnostics table]
+  subgraph client ["Web Clients"]
+    browser["Browser and installed PWA"]
+  end
+  subgraph gateway ["Hosting Gateway"]
+    vercel["Vercel routing"]
+  end
+  subgraph service ["Application Services"]
+    nextjs["Next.js application"]
+    supabaseApi["Supabase Data API and Realtime"]
+  end
+  subgraph datastore ["Application Data"]
+    postgres["Supabase Postgres with RLS"]
+    storage["Supabase Storage"]
+  end
+  subgraph external ["Identity Provider"]
+    clerk["Clerk"]
+  end
+
+  browser -->|"Pages and actions"| vercel
+  vercel -->|"Routes requests"| nextjs
+  browser -->|"Session-authenticated data and realtime"| supabaseApi
+  nextjs -->|"Server-side data queries"| supabaseApi
+  supabaseApi -->|"RLS-protected records"| postgres
+  supabaseApi -->|"Media reads and writes"| storage
+  nextjs -.->|"Sessions, invitations, and admin controls"| clerk
 ~~~
+
+[Open this editable diagram in Figma](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=1-2)
+
+[![Techtronica application architecture](images/figma-application-architecture.png)](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=1-2)
 
 The application uses `@supabase/ssr` clients in server components, server actions, route handlers, and browser components. Clerk session tokens authenticate those data requests through Supabase Third-Party Auth. Server-side Clerk Backend API calls handle invitations, bans, and session administration.
 
@@ -58,6 +79,8 @@ docs/                architecture, security, setup, and operations guides
 ~~~
 
 ## Related documentation
+
+- [System diagrams and Figma board](diagrams.md)
 
 - [Authentication and permissions](authentication-and-permissions.md)
 - [Content management and visibility](content-management.md)

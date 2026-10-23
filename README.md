@@ -15,6 +15,7 @@ The official website and member portal for Techtronica, the Electronics and Comm
 
 - [What it includes](#what-it-includes)
 - [Architecture and security](#architecture-and-security)
+- [System diagrams](docs/diagrams.md)
 - [Technology](#technology)
 - [Run locally](#run-locally)
 - [Project structure](docs/project-structure.md)
@@ -42,14 +43,36 @@ The seeded clubs are Technovation, Code-E-Phobia, Unnati, Gizmo, and Mindblogger
 
 ~~~mermaid
 flowchart LR
-  Visitor[Visitor or member] --> Web[Next.js application]
-  Web -->|Clerk session token| Auth[Clerk]
-  Web -->|Publishable key and user-scoped requests| API[Supabase Data API]
-  Auth --> API
-  API --> RLS[Postgres RLS and permission checks]
-  RLS --> DB[(Supabase database)]
-  Web -->|Admin invitation and session controls| ClerkAPI[Clerk Backend API]
+  subgraph client ["Web Clients"]
+    browser["Browser and installed PWA"]
+  end
+  subgraph gateway ["Hosting Gateway"]
+    vercel["Vercel routing"]
+  end
+  subgraph service ["Application Services"]
+    nextjs["Next.js application"]
+    supabaseApi["Supabase Data API and Realtime"]
+  end
+  subgraph datastore ["Application Data"]
+    postgres["Supabase Postgres with RLS"]
+    storage["Supabase Storage"]
+  end
+  subgraph external ["Identity Provider"]
+    clerk["Clerk"]
+  end
+
+  browser -->|"Pages and actions"| vercel
+  vercel -->|"Routes requests"| nextjs
+  browser -->|"Session-authenticated data and realtime"| supabaseApi
+  nextjs -->|"Server-side data queries"| supabaseApi
+  supabaseApi -->|"RLS-protected records"| postgres
+  supabaseApi -->|"Media reads and writes"| storage
+  nextjs -.->|"Sessions, invitations, and admin controls"| clerk
 ~~~
+
+[Open the editable architecture diagram in Figma](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=1-2) · [Browse all system diagrams](docs/diagrams.md)
+
+[![Techtronica application architecture](docs/images/figma-application-architecture.png)](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=1-2)
 
 Clerk manages login identity and sessions. Supabase stores profiles and app data, and validates Clerk session tokens through Third-Party Auth. Postgres row-level security (RLS) and database permissions enforce access. The frontend does not use a Supabase service-role key or grant app roles from Clerk metadata. UI hiding is not an authorization boundary.
 
