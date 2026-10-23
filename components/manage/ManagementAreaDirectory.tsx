@@ -30,12 +30,13 @@ export default function ManagementAreaDirectory({ groups }: { groups: Management
           <div><p className="text-xs font-bold uppercase tracking-[0.14em] text-sky-700">Workspace</p><h2 id="management-tools-title" className="mt-1 text-lg font-bold text-slate-950 sm:text-xl">Management tools</h2><p className="mt-1 text-sm text-slate-600">Find the right place to manage society work.</p></div>
           <p aria-live="polite" className="text-xs font-medium text-slate-500">{resultCount} {resultCount === 1 ? "tool" : "tools"}</p>
         </div>
-        <label className="mt-4 flex min-h-11 items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 focus-within:border-sky-600 focus-within:ring-2 focus-within:ring-sky-100">
-          <Search aria-hidden="true" className="size-4 shrink-0 text-slate-500" /><span className="sr-only">Search management tools</span>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools" className="min-w-0 flex-1 border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500" />
+        <div className="mt-4 flex min-h-11 items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 focus-within:border-sky-600 focus-within:ring-2 focus-within:ring-sky-100">
+          <Search aria-hidden="true" className="size-4 shrink-0 text-slate-500" />
+          <label className="sr-only" htmlFor="management-tools-search">Search management tools</label>
+          <input id="management-tools-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools" className="min-w-0 flex-1 border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500" />
           {query && <button type="button" onClick={() => setQuery("")} className="rounded-md px-2 py-1 text-xs font-semibold text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">Clear</button>}
-        </label>
-        <div aria-label="Filter management tools by category" className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+        </div>
+        <div aria-label="Filter management tools by category" role="group" className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
           {groupNames.map((name) => <button key={name} type="button" aria-pressed={selectedGroup === name} onClick={() => setSelectedGroup(name)} className={"min-h-10 shrink-0 rounded-full border px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 " + (selectedGroup === name ? "border-sky-700 bg-sky-700 text-white" : "border-slate-300 bg-white text-slate-700")}>{name}</button>)}
         </div>
         <div className="mt-4 space-y-5">
