@@ -23,7 +23,7 @@ export default async function ManageUsersPage({ searchParams }: { searchParams: 
     const client = await clerkClient();
     const [userResponse, invitationResponse] = await Promise.all([
       client.users.getUserList({ limit: pageSize, offset: (page - 1) * pageSize, orderBy: "-created_at", ...(query ? { query } : {}) }),
-      client.invitations.getInvitationList({ limit: 8, offset: 0, orderBy: "-created_at" }),
+      client.invitations.getInvitationList({ limit: 25, offset: 0, orderBy: "-created_at" }),
     ]);
     users = userResponse.data;
     totalUsers = userResponse.totalCount;
@@ -70,8 +70,9 @@ export default async function ManageUsersPage({ searchParams }: { searchParams: 
           </div>
           <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200">
             <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+              <caption className="sr-only">Clerk user accounts</caption>
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>
-                <th className="px-4 py-3 font-semibold">Account</th><th className="px-4 py-3 font-semibold">Status</th><th className="px-4 py-3 font-semibold">Joined</th><th className="px-4 py-3 text-right font-semibold">Actions</th>
+                <th className="px-4 py-3 font-semibold" scope="col">Account</th><th className="px-4 py-3 font-semibold" scope="col">Status</th><th className="px-4 py-3 font-semibold" scope="col">Joined</th><th className="px-4 py-3 text-right font-semibold" scope="col">Actions</th>
               </tr></thead>
               <tbody className="divide-y divide-slate-100">
                 {users.map((user) => {
@@ -124,29 +125,59 @@ export default async function ManageUsersPage({ searchParams }: { searchParams: 
             </form>
           </section>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recent invitations</p><h2 className="mt-1 text-lg font-semibold">Sent by Clerk</h2></div><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-muted">{invitations.length} shown</span></div>
-            <ul className="mt-3 divide-y divide-slate-100">
-              {invitations.map((invitation) => <li className="flex items-center justify-between gap-3 py-3 text-sm" key={invitation.id}>
-                <span className="min-w-0"><span className="block truncate font-medium">{invitation.emailAddress}</span><span className="mt-0.5 block text-xs text-muted">{formatDate(invitation.createdAt)}</span></span>
-                <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium capitalize text-slate-700">{invitation.status}</span>
-              </li>)}
-              {!invitations.length && <li className="py-4 text-sm text-muted">No invitations found.</li>}
-            </ul>
-          </section>
-
           <section className="rounded-3xl border border-sky-200 bg-sky-50 p-5 text-sm leading-6 text-slate-700 sm:p-6">
             <h2 className="font-semibold text-slate-900">Roles and permissions</h2>
             <p className="mt-2">Open <Link className="font-semibold text-sky-800 underline" href="/manage/access">Roles &amp; access</Link> to assign society-wide or club-scoped permissions. Role changes take effect directly from the database and are checked by Supabase RLS.</p>
           </section>
         </aside>
       </div>
+
+      <section aria-labelledby="recent-invitations-title" className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Clerk invitations</p>
+            <h2 className="mt-1 text-xl font-semibold" id="recent-invitations-title">Recent invitations</h2>
+            <p className="mt-1 text-sm text-muted">Review invitation status and when each email was invited.</p>
+          </div>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-muted">{invitations.length} shown</span>
+        </div>
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="w-full min-w-[560px] border-collapse text-left text-sm">
+            <caption className="sr-only">Recent Clerk invitations</caption>
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3 font-semibold" scope="col">Email address</th>
+                <th className="px-4 py-3 font-semibold" scope="col">Status</th>
+                <th className="px-4 py-3 font-semibold" scope="col">Invited</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {invitations.map((invitation) => (
+                <tr key={invitation.id}>
+                  <td className="max-w-[30rem] truncate px-4 py-3 font-medium" title={invitation.emailAddress}>{invitation.emailAddress}</td>
+                  <td className="px-4 py-3">
+                    <span className={invitationStatusClass(invitation.status)}>{invitation.status}</span>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted">{formatDate(invitation.createdAt)}</td>
+                </tr>
+              ))}
+              {!invitations.length && <tr><td className="px-4 py-8 text-center text-muted" colSpan={3}>No invitations found.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   );
 }
 
 function formatDate(timestamp: number) {
   return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(timestamp));
+}
+
+function invitationStatusClass(status: string) {
+  if (status === "accepted") return "rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold capitalize text-emerald-800";
+  if (status === "revoked") return "rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold capitalize text-rose-800";
+  return "rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold capitalize text-amber-900";
 }
 
 function pageHref(query: string, page: number) {
