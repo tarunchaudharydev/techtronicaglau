@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { readJsonBodyLimited } from "@/lib/security/read-json-body.mjs";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -7,22 +8,22 @@ const maxBodyBytes = 12_000;
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
-  if (origin && origin !== request.nextUrl.origin) {
+  if (
+    (origin && origin !== request.nextUrl.origin) ||
+    request.headers.get("sec-fetch-site") === "cross-site"
+  ) {
     return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   }
 
-  const contentLength = Number(request.headers.get("content-length") || 0);
-  if (contentLength > maxBodyBytes) {
-    return NextResponse.json({ error: "The message is too large." }, { status: 413 });
-  }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
+  const parsed = await readJsonBodyLimited(request, maxBodyBytes);
+  if (!parsed.ok) {
+    if (parsed.reason === "too_large") {
+      return NextResponse.json({ error: "The message is too large." }, { status: 413 });
+    }
     return NextResponse.json({ error: "Submit a valid contact form." }, { status: 400 });
   }
 
+  const body = parsed.value;
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return NextResponse.json({ error: "Submit a valid contact form." }, { status: 400 });
   }
