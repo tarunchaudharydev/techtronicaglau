@@ -99,7 +99,19 @@ export async function getCurrentAppUser(): Promise<CurrentAppUser | null> {
       .select("id, clerk_user_id, full_name, created_at, department, year_of_study, avatar_url")
       .maybeSingle();
     if (error) return null;
-    if (data) profile = data;
+    if (data) {
+      profile = data;
+    } else {
+      // Another first-login request may have claimed this legacy profile. Only
+      // continue if the persisted Clerk subject matches this authenticated user.
+      const { data: linkedProfile, error: linkedProfileError } = await supabase
+        .from("profiles")
+        .select("id, clerk_user_id, full_name, created_at, department, year_of_study, avatar_url")
+        .eq("id", profile.id)
+        .maybeSingle();
+      if (linkedProfileError || linkedProfile?.clerk_user_id !== userId) return null;
+      profile = linkedProfile;
+    }
   }
 
   if (profile.clerk_user_id && profile.clerk_user_id !== userId) return null;
