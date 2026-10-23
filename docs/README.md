@@ -7,7 +7,8 @@ Use this index to find the guide for the task you are working on.
 - [Project overview and local setup](../README.md)
 - [Contribution guidelines](../CONTRIBUTING.md)
 - [Project structure](project-structure.md)
-- [Testing and isolated development environment](testing.md)
+- [Testing, dependency audit, and isolated development environment](testing.md)
+- [Security boundaries and access control](security-and-access-control.md)
 - [Security policy and vulnerability reporting](../SECURITY.md)
 - [License and third-party asset notice](../LICENSE) · [NOTICE](../NOTICE.md)
 
