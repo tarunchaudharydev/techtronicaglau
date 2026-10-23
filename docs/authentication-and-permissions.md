@@ -12,6 +12,11 @@ The Supabase publishable key is safe to expose. Never use a Supabase service/sec
 
 ## Authentication flows
 
+[Open the sign-in and data-access sequence in Figma](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=2-43)
+
+[![Clerk sign-in and protected data sequence](images/figma-authentication-flow.png)](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=2-43)
+
+
 - `/auth/sign-up` and `/auth/sign-in` use Clerk's hosted widgets embedded in the site.
 - Clerk owns email verification, password recovery, active sessions, invitations, and account suspension.
 - `/account/settings` keeps profile fields in Supabase and opens Clerk's account UI for sign-in methods and devices.

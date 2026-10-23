@@ -2,6 +2,10 @@
 
 This guide describes the browser's Supabase Realtime subscriptions and the Next.js refresh path used to keep pages current without routine reloads.
 
+[Open the realtime flow in Figma](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=3-114)
+
+[![Realtime change and authorized page refresh sequence](images/figma-realtime-refresh.png)](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=3-114)
+
 ## What updates live
 
 The application listens for database `INSERT` and `UPDATE` changes on:

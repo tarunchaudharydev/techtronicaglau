@@ -13,6 +13,8 @@ Use this index to find the guide for the task you are working on.
 
 ## Product and engineering
 
+- [System diagrams and Figma board](diagrams.md)
+
 - [Architecture and data boundaries](architecture.md)
 - [Live database updates and Realtime](realtime.md)
 - [In-app notifications and society activity](notifications.md)
