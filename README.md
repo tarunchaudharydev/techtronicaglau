@@ -17,6 +17,8 @@ The official website and member portal for Techtronica, the Electronics and Comm
 - [Architecture and security](#architecture-and-security)
 - [Technology](#technology)
 - [Run locally](#run-locally)
+- [Project structure](docs/project-structure.md)
+- [Testing](docs/testing.md)
 - [Database and backend](#database-and-backend)
 - [Deploy](#deploy)
 - [Contribute](#contribute)
@@ -69,7 +71,7 @@ The exact dependency versions are defined in [package.json](package.json) and [p
 
 ### Requirements
 
-- Node.js 20 or later
+- Node.js 22 or 24 (LTS)
 - npm
 - A configured Clerk instance and Supabase project for authenticated and data-backed features
 
@@ -79,7 +81,7 @@ The exact dependency versions are defined in [package.json](package.json) and [p
 git clone https://github.com/tarunchaudharydev/techtronicaglau.git
 cd techtronicaglau
 npm ci
-cp .env.example .env.local
+cp .env.test.example .env.local
 ~~~
 
 Set these values in `.env.local`:
@@ -94,7 +96,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ~~~
 
-The example file points to the society's Supabase project. Use credentials only for an environment you are authorized to access. Never commit `.env.local`, place a secret/service-role key in a `NEXT_PUBLIC_` variable, or paste credentials into an issue or pull request.
+The test template uses placeholder credentials and a non-production Supabase URL. Replace them with a Clerk development instance and a dedicated non-production Supabase project you control. The frontend repository does not contain the full backend schema; follow the backend repository's local/test setup before expecting data-backed pages to work. Never connect contributor work to production, commit `.env.local`, put a service-role key in a `NEXT_PUBLIC_` variable, or paste credentials into an issue or pull request.
 
 ### Start the development server
 
@@ -108,11 +110,12 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ~~~sh
 npm run lint
-npx tsc --noEmit
+npm run typecheck
+npm test
 npm run build
 ~~~
 
-There is currently no `npm test` script. For changes that affect authorization, database behavior, or user flows, include a clear manual verification plan in the pull request.
+The automated test runner uses Node's built-in test framework and does not require external credentials. The production build and service-backed flows need your local non-production keys; CI runs lint, type checking, and unit tests without secrets. Follow [Testing](docs/testing.md) for the isolated integration environment and smoke checklist.
 
 ## Database and backend
 

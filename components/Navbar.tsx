@@ -1,6 +1,5 @@
 "use client";
 
-import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
@@ -12,7 +11,7 @@ import {
   Code2, GraduationCap, House, Info, Library, LogIn, LogOut, Mail, Menu,
   Settings2, Sparkles, UserPlus, UserRound, Users, X, type LucideIcon,
 } from "lucide-react";
-import { signOutAction } from "@/app/auth/actions";
+import SignOutButton from "@/components/auth/SignOutButton";
 
 const navLinks = [
   { href: "/", label: "Home", icon: House },
@@ -208,9 +207,7 @@ export default function Navbar() {
                 <Avatar account={account} size="size-9" />
                 {sidebarExpanded && <span className="min-w-0 flex-1"><span className="block text-[10px] text-slate-400">Signed in as</span><span className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{account.name}</span></span>}
               </Link>
-              <form action={signOutAction} className={sidebarExpanded ? "mt-1" : "mt-1"}>
-                <PendingSubmitButton type="submit" pendingLabel={sidebarExpanded ? "Signing out…" : "…"} aria-label="Sign out" title="Sign out" className={`inline-flex min-h-10 w-full items-center rounded-xl text-sm font-medium text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-slate-300 dark:hover:bg-rose-950/40 ${sidebarExpanded ? "gap-3 px-3" : "justify-center"}`}><LogOut aria-hidden="true" className="size-[18px]" />{sidebarExpanded && "Sign out"}</PendingSubmitButton>
-              </form>
+              <SignOutButton containerClassName="mt-1" pendingLabel={sidebarExpanded ? "Signing out…" : "…"} aria-label="Sign out" title="Sign out" className={`inline-flex min-h-10 w-full items-center rounded-xl text-sm font-medium text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-wait disabled:opacity-70 dark:text-slate-300 dark:hover:bg-rose-950/40 ${sidebarExpanded ? "gap-3 px-3" : "justify-center"}`}><LogOut aria-hidden="true" className="size-[18px]" />{sidebarExpanded && "Sign out"}</SignOutButton>
             </>
           ) : account.status === "loading" ? <div className="mx-auto size-9 animate-pulse rounded-full bg-slate-100 dark:bg-slate-900" aria-label="Loading account" /> : (
             <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} title="Sign in" className={`inline-flex min-h-10 w-full items-center rounded-xl text-sm font-semibold text-sky-700 hover:bg-sky-50 dark:hover:bg-slate-900 ${sidebarExpanded ? "gap-3 px-3" : "justify-center"}`}><LogIn className="size-[18px]" />{sidebarExpanded && "Sign in"}</Link>
@@ -240,7 +237,7 @@ export default function Navbar() {
                 {account.canManage && <AccountShortcut href="/manage" icon={BriefcaseBusiness} emphasis>Manage society</AccountShortcut>}
                 <AccountShortcut href="/account/settings" icon={Settings2}>Profile settings</AccountShortcut>
               </div>
-              <form action={signOutAction} className="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800"><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut className="size-4" />Sign out</PendingSubmitButton></form>
+              <SignOutButton containerClassName="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-wait disabled:opacity-70 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut className="size-4" />Sign out</SignOutButton>
             </div>}
           </div> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700"><LogIn className="size-4" />Sign in</Link> : <span className="size-9 animate-pulse rounded-full bg-slate-200" aria-label="Loading account" />}
         </div>
@@ -264,7 +261,7 @@ export default function Navbar() {
                 {account.canManage && <AccountShortcut href="/manage" icon={BriefcaseBusiness} onClick={() => setAccountMenuOpen(false)} emphasis>Manage society</AccountShortcut>}
                 <AccountShortcut href="/account/settings" icon={Settings2} onClick={() => setAccountMenuOpen(false)}>Profile settings</AccountShortcut>
               </div>
-              <form action={signOutAction} className="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800"><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut className="size-4" />Sign out</PendingSubmitButton></form>
+              <SignOutButton containerClassName="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-wait disabled:opacity-70 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut className="size-4" />Sign out</SignOutButton>
             </div>}
           </div> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} aria-label="Sign in" className="grid size-10 place-items-center rounded-full bg-sky-50 text-sky-700 dark:bg-slate-800 dark:text-sky-200"><LogIn className="size-5" /></Link> : <span className="size-10 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" aria-label="Loading account" />}
         </div>
@@ -283,7 +280,7 @@ export default function Navbar() {
               {account.canManage && <AccountShortcut href="/manage" icon={BriefcaseBusiness} onClick={() => setMenuOpen(false)} emphasis>Manage society</AccountShortcut>}
               <AccountShortcut href="/account/settings" icon={Settings2} onClick={() => setMenuOpen(false)}>Profile settings</AccountShortcut>
             </nav>
-            <form action={signOutAction}><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 text-sm font-semibold text-rose-700 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:bg-rose-950/40 dark:text-rose-200"><LogOut className="size-4" />Sign out</PendingSubmitButton></form>
+            <SignOutButton pendingLabel="Signing out…" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 text-sm font-semibold text-rose-700 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-wait disabled:opacity-70 dark:bg-rose-950/40 dark:text-rose-200"><LogOut className="size-4" />Sign out</SignOutButton>
           </> : account.status === "loading" ? <div className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-900" aria-label="Loading account" /> : <div className="grid grid-cols-2 gap-2"><Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} onClick={() => setMenuOpen(false)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-100"><LogIn className="size-4" />Sign in</Link><Link href="/auth/sign-up" onClick={() => setMenuOpen(false)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-600 text-sm font-semibold text-white"><UserPlus className="size-4" />Sign up</Link></div>}
         </div>
       </div><button type="button" className="absolute inset-0 -z-10 cursor-default" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)} /></div>}

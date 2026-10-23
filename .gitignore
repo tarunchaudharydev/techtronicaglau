@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files: keep real credentials local; commit only templates
 .env*
+!.env.example
+!.env.test.example
 
 # vercel
 .vercel
@@ -40,6 +42,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
-.env.local
 
