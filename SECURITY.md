@@ -45,7 +45,7 @@ Please do not disclose security vulnerabilities through public GitHub Issues, Di
 2. If private reporting is unavailable, contact the repository owner privately through [GitHub](https://github.com/tarunchaudharydev) and ask for a secure channel. Do not post exploit details publicly while arranging contact.
 3. For an issue that also affects the backend, send a separate private report there and link the two reports without copying sensitive details into public comments.
 
-**Repository owner:** before making this repository public, enable GitHub private vulnerability reporting in the repository's Security settings and confirm that the private reporting flow is available. Keep the private GitHub contact route as the fallback.
+**Repository owner:** this repository is public. Enable GitHub private vulnerability reporting in the repository's Security settings and verify that **Security → Report a vulnerability** is available. Until private reporting is confirmed, use the private GitHub contact route as the fallback.
 
 When safe, include:
 
