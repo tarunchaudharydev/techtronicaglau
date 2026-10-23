@@ -237,9 +237,9 @@ export default async function ManageHomePage() {
             .select("id", { count: "exact", head: true }),
           supabase
             .from("memberships")
-            .select("user_id")
-            .eq("status", "active")
-            .limit(10000),
+            .select("user_id", { count: "exact", head: true })
+            .is("club_id", null)
+            .eq("status", "active"),
         ])
       : null;
   const overviewStats = overview
@@ -289,7 +289,7 @@ export default async function ManageHomePage() {
   const memberTotals = overview
     ? {
         accounts: overview[8].count,
-        members: new Set((overview[9].data ?? []).map((membership) => membership.user_id)).size,
+        members: overview[9].count,
         error: Boolean(overview[8].error || overview[9].error),
       }
     : null;
@@ -502,7 +502,7 @@ export default async function ManageHomePage() {
         {!error && groups.length > 0 && (
           <nav
             aria-label="Management areas"
-            className="sticky top-20 z-20 mt-3 flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-2 py-1"
+            className="sticky top-[4rem] z-20 mt-3 flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-2 py-1 shadow-sm lg:top-20"
           >
             {groups.map(({ name }) => (
               <a
