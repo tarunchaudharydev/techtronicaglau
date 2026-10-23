@@ -37,14 +37,15 @@ Before review, run the checks available in `package.json`:
 npm run lint
 npm run typecheck
 npm test
+npm run audit
 npm run build
 ~~~
 
-Run the build only after configuring the dedicated non-production Clerk and Supabase environment. GitHub Actions runs lint, type checking, and credential-free unit tests without provider secrets. Never commit local environment files, `.next` output, or production data.
+Run the build only after configuring the dedicated non-production Clerk and Supabase environment. GitHub Actions runs lint, type checking, credential-free unit tests, and the dependency audit without provider secrets. Configure the Vercel Firewall to rate-limit `POST /api/contact` in production; the route validates origin and body size but is intentionally public. Never commit local environment files, `.next` output, or production data.
 
 ## Identity and database setup
 
-1. Configure Clerk sign-in, sign-up, email verification, recovery, redirect paths, and allowed origins.
+1. Configure Clerk sign-in, sign-up, email verification, recovery, redirect paths, allowed origins, and the intended password/MFA controls. Supabase Auth password settings do not apply to Clerk identities.
 2. Add Clerk's session-token claims `role: "authenticated"` and `userId: "{{user.external_id}}"`.
 3. Configure Supabase Third-Party Auth to trust the matching Clerk issuer.
 4. Set Clerk publishable/secret keys and Supabase URL/publishable key in local and Vercel environments.
@@ -59,7 +60,7 @@ Run the build only after configuring the dedicated non-production Clerk and Supa
 2. Review migration scope and confirm the target Supabase project history is compatible.
 3. Set environment variables for the intended Vercel environment, including its correct `NEXT_PUBLIC_SITE_URL`.
 4. Confirm Clerk permits the deployed origin and callback paths, and Supabase Third-Party Auth trusts the Clerk issuer.
-5. Review available PR checks and the Vercel build. Do not treat a preview deployment as a production release.
+5. Review available PR checks, including the npm vulnerability audit, and the Vercel build. Do not treat a preview deployment as a production release.
 6. Verify public/private visibility and representative allowed and denied role scopes.
 7. Promote only after review and required database changes are ready.
 8. Review Vercel runtime logs, Clerk logs, and Supabase Postgres logs after release.
