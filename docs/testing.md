@@ -19,9 +19,10 @@ npm ci
 npm run lint
 npm run typecheck
 npm test
+npm run audit
 ```
 
-The unit tests use Node's built-in test runner. They cover India-time birthday date boundaries and guard the test environment template against production credentials. The current repository has pre-existing ESLint errors in application files: GitHub Actions reports lint as a non-blocking signal during cleanup, while TypeScript and unit tests are blocking checks. Avoid introducing new lint errors.
+The unit tests use Node's built-in test runner. They cover India-time birthday date boundaries, the non-production environment template, and streamed JSON byte limits including absent or understated `Content-Length`. CI blocks on type checking, tests, and `npm audit --audit-level=moderate`; lint remains non-blocking while its existing baseline is cleaned up. Avoid introducing new lint errors.
 
 The Next.js production build needs provider environment values and is not run in the secret-free GitHub Actions workflow. To check it locally, first configure the isolated environment below, then run:
 
