@@ -2,7 +2,7 @@
 
 import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity, BriefcaseBusiness, CalendarDays, ChevronDown, ChevronRight,
   Code2, GraduationCap, House, Info, Library, LogIn, LogOut, Mail, Menu,
-  Sparkles, UserPlus, UserRound, Users, X,
+  Settings2, Sparkles, UserPlus, UserRound, Users, X, type LucideIcon,
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 
@@ -44,11 +44,12 @@ const comingSoonItems = [
 type HeaderAccountState =
   | { status: "loading" }
   | { status: "signed-out" }
-  | { status: "signed-in"; userId: string; name: string; initials: string; avatarUrl: string | null };
+  | { status: "signed-in"; userId: string; name: string; initials: string; avatarUrl: string | null; canManage: boolean };
 
 export default function Navbar() {
   const [account, setAccount] = useState<HeaderAccountState>({ status: "loading" });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [clubsOpen, setClubsOpen] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
@@ -57,6 +58,10 @@ export default function Navbar() {
   const { user: clerkUser } = useUser();
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const accountMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const mobileAccountMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileAccountMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const sidebarExpanded = sidebarPinned || sidebarHovered;
   const userId = account.status === "signed-in" && isProfileId(account.userId) ? account.userId : null;
 
@@ -89,8 +94,8 @@ export default function Navbar() {
             return;
           }
 
-          const identity = await response.json() as { id: string; fullName: string; avatarUrl: string | null };
-          if (active) setAccount(accountStateFor(identity.id, identity.fullName || fallbackName, identity.avatarUrl));
+          const identity = await response.json() as { id: string; fullName: string; avatarUrl: string | null; canManage: boolean };
+          if (active) setAccount(accountStateFor(identity.id, identity.fullName || fallbackName, identity.avatarUrl, identity.canManage));
           return;
         } catch {
           if (attempt >= retryDelays.length) return;
@@ -103,6 +108,31 @@ export default function Navbar() {
 
     return () => { active = false; };
   }, [authLoaded, clerkId, clerkUser?.id, clerkUser?.fullName, clerkUser?.imageUrl, clerkUser?.primaryEmailAddress?.emailAddress]);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      const target = event.target as Node;
+      const insideDesktopMenu = accountMenuRef.current?.contains(target) ?? false;
+      const insideMobileMenu = mobileAccountMenuRef.current?.contains(target) ?? false;
+      if (!insideDesktopMenu && !insideMobileMenu) setAccountMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setAccountMenuOpen(false);
+      if (window.matchMedia("(min-width: 1024px)").matches) accountMenuTriggerRef.current?.focus();
+      else mobileAccountMenuTriggerRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountMenuOpen]);
+
+  useEffect(() => setAccountMenuOpen(false), [pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -195,7 +225,24 @@ export default function Navbar() {
         </div>
         <div className="flex shrink-0 items-center gap-3">
           {userId && <NotificationBell userId={userId} />}
-          {account.status === "signed-in" ? <details className="group relative"><summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-full border border-slate-200 bg-white/70 py-1 pl-1 pr-3 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"><Avatar account={account} size="size-8" /><span className="max-w-36 truncate">{account.name}</span><ChevronDown aria-hidden="true" className="size-4 text-slate-400 transition group-open:rotate-180" /></summary><div className="absolute right-0 top-full z-[80] mt-2 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900"><Link href="/account" className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800">My account</Link><Link href="/account/settings" className="block rounded-xl px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">Profile settings</Link><form action={signOutAction} className="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800"><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut className="size-4" />Sign out</PendingSubmitButton></form></div></details> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700"><LogIn className="size-4" />Sign in</Link> : <span className="size-9 animate-pulse rounded-full bg-slate-200" aria-label="Loading account" />}
+          {account.status === "signed-in" ? <div ref={accountMenuRef} className="relative">
+            <button ref={accountMenuTriggerRef} type="button" onClick={() => setAccountMenuOpen((open) => !open)} aria-expanded={accountMenuOpen} aria-haspopup="true" aria-controls="account-options" className="flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white/70 py-1 pl-1 pr-3 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              <Avatar account={account} size="size-8" /><span className="max-w-36 truncate">{account.name}</span><ChevronDown aria-hidden="true" className={`size-4 text-slate-400 transition ${accountMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+            {accountMenuOpen && <div id="account-options" aria-label="Account options" className="absolute right-0 top-full z-[80] mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              <div className="px-3 py-2"><p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">{account.canManage ? "Society manager" : "Member portal"}</p><p className="mt-0.5 truncate text-sm font-semibold text-slate-900 dark:text-white">{account.name}</p></div>
+              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+              <div className="space-y-0.5">
+                <AccountShortcut href="/account" icon={UserRound}>My account</AccountShortcut>
+                <AccountShortcut href="/account#account-memberships" icon={Users}>My memberships</AccountShortcut>
+                <AccountShortcut href="/account#account-latest-activity" icon={Activity}>Latest activity</AccountShortcut>
+                <AccountShortcut href="/events" icon={CalendarDays}>Events</AccountShortcut>
+                {account.canManage && <AccountShortcut href="/manage" icon={BriefcaseBusiness} emphasis>Manage society</AccountShortcut>}
+                <AccountShortcut href="/account/settings" icon={Settings2}>Profile settings</AccountShortcut>
+              </div>
+              <form action={signOutAction} className="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800"><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut className="size-4" />Sign out</PendingSubmitButton></form>
+            </div>}
+          </div> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700"><LogIn className="size-4" />Sign in</Link> : <span className="size-9 animate-pulse rounded-full bg-slate-200" aria-label="Loading account" />}
         </div>
       </header>
 
@@ -204,7 +251,22 @@ export default function Navbar() {
           <button ref={triggerRef} type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation menu" aria-expanded={menuOpen} aria-controls="mobile-navigation" className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 text-slate-700 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:bg-slate-800 dark:text-slate-100"><Menu aria-hidden="true" className="size-5" /></button>
           <Link href="/" className="relative h-10 w-32 flex-1" aria-label="Techtronica home"><Image src="/logo.png" alt="" fill sizes="128px" className="object-contain" priority /></Link>
           {userId && <NotificationBell userId={userId} />}
-          {account.status === "signed-in" ? <Link href="/account" aria-label={`Open ${account.name}'s profile`} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"><Avatar account={account} size="size-10" /></Link> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} aria-label="Sign in" className="grid size-10 place-items-center rounded-full bg-sky-50 text-sky-700 dark:bg-slate-800 dark:text-sky-200"><LogIn className="size-5" /></Link> : <span className="size-10 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" aria-label="Loading account" />}
+          {account.status === "signed-in" ? <div ref={mobileAccountMenuRef} className="relative">
+            <button ref={mobileAccountMenuTriggerRef} type="button" onClick={() => setAccountMenuOpen((open) => !open)} aria-label={"Open " + account.name + "'s account options"} aria-expanded={accountMenuOpen} aria-haspopup="true" aria-controls="mobile-account-options" className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"><Avatar account={account} size="size-10" /></button>
+            {accountMenuOpen && <div id="mobile-account-options" aria-label="Account options" className="absolute right-0 top-full z-[80] mt-2 max-h-[calc(100dvh-5rem)] w-72 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              <div className="px-3 py-2"><p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">{account.canManage ? "Society manager" : "Member portal"}</p><p className="mt-0.5 truncate text-sm font-semibold text-slate-900 dark:text-white">{account.name}</p></div>
+              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+              <div className="space-y-0.5">
+                <AccountShortcut href="/account" icon={UserRound} onClick={() => setAccountMenuOpen(false)}>My account</AccountShortcut>
+                <AccountShortcut href="/account#account-memberships" icon={Users} onClick={() => setAccountMenuOpen(false)}>My memberships</AccountShortcut>
+                <AccountShortcut href="/account#account-latest-activity" icon={Activity} onClick={() => setAccountMenuOpen(false)}>Latest activity</AccountShortcut>
+                <AccountShortcut href="/events" icon={CalendarDays} onClick={() => setAccountMenuOpen(false)}>Events</AccountShortcut>
+                {account.canManage && <AccountShortcut href="/manage" icon={BriefcaseBusiness} onClick={() => setAccountMenuOpen(false)} emphasis>Manage society</AccountShortcut>}
+                <AccountShortcut href="/account/settings" icon={Settings2} onClick={() => setAccountMenuOpen(false)}>Profile settings</AccountShortcut>
+              </div>
+              <form action={signOutAction} className="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800"><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut className="size-4" />Sign out</PendingSubmitButton></form>
+            </div>}
+          </div> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} aria-label="Sign in" className="grid size-10 place-items-center rounded-full bg-sky-50 text-sky-700 dark:bg-slate-800 dark:text-sky-200"><LogIn className="size-5" /></Link> : <span className="size-10 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" aria-label="Loading account" />}
         </div>
       </header>
 
@@ -212,7 +274,17 @@ export default function Navbar() {
         <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800"><Link href="/" onClick={() => setMenuOpen(false)} className="relative h-11 w-36"><Image src="/logo.png" alt="Techtronica" fill sizes="144px" className="object-contain object-left" /></Link><button type="button" onClick={() => setMenuOpen(false)} aria-label="Close navigation menu" className="grid size-10 place-items-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100"><X className="size-5" /></button></div>
         <nav aria-label="Mobile navigation" className="flex-1 space-y-1">{navLinks.map((link) => { const Icon = link.icon; const active = isActive(link.href); return <div key={link.href}><Link href={link.href} onClick={() => setMenuOpen(false)} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium ${active ? "bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200" : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"}`}><Icon aria-hidden="true" className="size-5 text-sky-600" />{link.label}{link.badge && <span className="ml-auto rounded-full bg-sky-100 px-2 py-0.5 text-[9px] font-bold text-sky-700">{link.badge}</span>}</Link>{link.href === "/clubs" && <div className="ml-8 mt-1 grid grid-cols-2 gap-1">{clubItems.map((club) => <Link key={club.href} href={club.href} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2 text-xs text-slate-500 hover:bg-sky-50 hover:text-sky-800 dark:hover:bg-slate-900">{club.label}</Link>)}</div>}</div>; })}</nav>
         <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800"><p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.16em] text-slate-400">Coming soon</p><div className="mb-4 grid grid-cols-3 gap-2">{comingSoonItems.map((item) => { const Icon = item.icon; return <div key={item.label} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 text-center text-[10px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900"><Icon className="size-4 text-slate-500" /><span>{item.label}</span><span className="animate-pulse text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">Soon</span></div>; })}</div>
-          {account.status === "signed-in" ? <><Link href="/account" onClick={() => setMenuOpen(false)} className="mb-3 flex min-h-14 items-center gap-3 rounded-xl bg-sky-50 p-3 dark:bg-slate-900"><Avatar account={account} size="size-11" /><span className="min-w-0 flex-1"><span className="block text-[11px] text-slate-500">Your account</span><span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">{account.name}</span></span><UserRound className="size-4 text-sky-700" /></Link><Link href="/account/settings" onClick={() => setMenuOpen(false)} className="mb-2 block rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900">Profile settings</Link><form action={signOutAction}><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 text-sm font-semibold text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-200"><LogOut className="size-4" />Sign out</PendingSubmitButton></form></> : account.status === "loading" ? <div className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-900" aria-label="Loading account" /> : <div className="grid grid-cols-2 gap-2"><Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} onClick={() => setMenuOpen(false)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-100"><LogIn className="size-4" />Sign in</Link><Link href="/auth/sign-up" onClick={() => setMenuOpen(false)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-600 text-sm font-semibold text-white"><UserPlus className="size-4" />Sign up</Link></div>}
+          {account.status === "signed-in" ? <>
+            <Link href="/account" onClick={() => setMenuOpen(false)} className="mb-3 flex min-h-14 items-center gap-3 rounded-xl bg-sky-50 p-3 dark:bg-slate-900"><Avatar account={account} size="size-11" /><span className="min-w-0 flex-1"><span className="block text-[11px] text-slate-500">{account.canManage ? "Society manager" : "Member portal"}</span><span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">{account.name}</span></span><UserRound className="size-4 text-sky-700" /></Link>
+            <nav aria-label="Account shortcuts" className="mb-3 grid grid-cols-2 gap-1">
+              <AccountShortcut href="/account#account-memberships" icon={Users} onClick={() => setMenuOpen(false)}>My memberships</AccountShortcut>
+              <AccountShortcut href="/account#account-latest-activity" icon={Activity} onClick={() => setMenuOpen(false)}>Latest activity</AccountShortcut>
+              <AccountShortcut href="/events" icon={CalendarDays} onClick={() => setMenuOpen(false)}>Events</AccountShortcut>
+              {account.canManage && <AccountShortcut href="/manage" icon={BriefcaseBusiness} onClick={() => setMenuOpen(false)} emphasis>Manage society</AccountShortcut>}
+              <AccountShortcut href="/account/settings" icon={Settings2} onClick={() => setMenuOpen(false)}>Profile settings</AccountShortcut>
+            </nav>
+            <form action={signOutAction}><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 text-sm font-semibold text-rose-700 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:bg-rose-950/40 dark:text-rose-200"><LogOut className="size-4" />Sign out</PendingSubmitButton></form>
+          </> : account.status === "loading" ? <div className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-900" aria-label="Loading account" /> : <div className="grid grid-cols-2 gap-2"><Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} onClick={() => setMenuOpen(false)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-100"><LogIn className="size-4" />Sign in</Link><Link href="/auth/sign-up" onClick={() => setMenuOpen(false)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-600 text-sm font-semibold text-white"><UserPlus className="size-4" />Sign up</Link></div>}
         </div>
       </div><button type="button" className="absolute inset-0 -z-10 cursor-default" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)} /></div>}
     </>
@@ -223,11 +295,25 @@ function isProfileId(value: string) {
   return /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value);
 }
 
-function accountStateFor(userId: string, value: string, avatarUrl: string | null): HeaderAccountState {
+function accountStateFor(userId: string, value: string, avatarUrl: string | null, canManage = false): HeaderAccountState {
   const name = value.trim().replace(/\s+/g, " ") || "Techtronica member";
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
     .map((part) => Array.from(part)[0]?.toLocaleUpperCase() ?? "").join("") || "T";
-  return { status: "signed-in", userId, name: name.slice(0, 40), initials, avatarUrl };
+  return { status: "signed-in", userId, name: name.slice(0, 40), initials, avatarUrl, canManage };
+}
+
+function AccountShortcut({ href, icon: Icon, children, onClick, emphasis = false }: {
+  href: string;
+  icon: LucideIcon;
+  children: ReactNode;
+  onClick?: () => void;
+  emphasis?: boolean;
+}) {
+  return <Link href={href} onClick={onClick} className={`flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${emphasis
+    ? "font-semibold text-sky-800 hover:bg-sky-50 dark:text-sky-200 dark:hover:bg-sky-950/50"
+    : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"}`}>
+    <Icon aria-hidden="true" className="size-4 shrink-0 text-slate-400" /><span>{children}</span>
+  </Link>;
 }
 
 function Avatar({ account, size }: { account: Extract<HeaderAccountState, { status: "signed-in" }>; size: string }) {
