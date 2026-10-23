@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readJsonBodyLimited } from "@/lib/security/read-json-body.mjs";
 import { createClient } from "@/lib/supabase/server";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentAppUser } from "@/lib/auth/current-user";
@@ -24,15 +25,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Same-origin request required." }, { status: 403 });
   }
 
-  const length = Number(request.headers.get("content-length") ?? 0);
-  if (length > 2048) return NextResponse.json({ error: "Request too large." }, { status: 413 });
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
+  const parsed = await readJsonBodyLimited(request, 2048);
+  if (!parsed.ok) {
+    if (parsed.reason === "too_large") {
+      return NextResponse.json({ error: "Request too large." }, { status: 413 });
+    }
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+
+  const body = parsed.value;
 
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });

@@ -18,6 +18,15 @@ The website uses request-scoped server and browser clients. Authenticated databa
 
 Hiding an admin control does not authorize a database request. A policy-filtered query may return no rows without an error, so explain missing scope access in the UI.
 
+## Request and browser protections
+
+- The contact and opt-in network diagnostics endpoints reject cross-origin browser requests.
+- Both endpoints parse JSON with the shared streaming byte limiter. Contact bodies are capped at 12 KB and diagnostics bodies at 2 KB even when `Content-Length` is missing or inaccurate.
+- The Next.js configuration sends `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS headers.
+- The contact endpoint is intentionally public and writes only to the private submissions table. Apply a Vercel Firewall rate limit to `POST /api/contact` in production; request-size and origin controls do not cap request frequency.
+
+Run `npm run audit` before release to check direct and transitive packages. CI runs the same audit and blocks on moderate or higher advisories.
+
 ## Private content rules
 
 Events and team profiles default to public. Anonymous users can read only records permitted by the public policy (active public team profiles and published public events). An authenticated active member of the society or any club can also read private team profiles and private published events. Pending/rejected memberships do not qualify. A manager with the matching content permission can read/manage rows in the allowed scope.
@@ -50,6 +59,8 @@ Roles can grant only existing permission keys. Adding a new key requires a backe
 - Event registration capacity, waitlist assignment, and promotion are database-owned to handle concurrent sign-ups.
 - Cancelling an active registration may promote a waitlisted user. Stale manager actions are rejected by checking the previous status.
 - Prefer deactivation for clubs, positions, team, and alumni when history matters. Deleting an event cascades to its registrations in the current schema.
+
+The Supabase Auth leaked-password advisor applies to Supabase Auth password accounts. This application uses Clerk for sign-in; changing the Supabase Auth password setting does not harden Clerk accounts. Keep identity-provider password controls configured in Clerk if password sign-in is enabled.
 
 ## Security review checklist
 
