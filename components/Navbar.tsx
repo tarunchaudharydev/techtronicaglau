@@ -2,7 +2,7 @@
 
 import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity, BriefcaseBusiness, CalendarDays, ChevronDown, ChevronRight,
   Code2, GraduationCap, House, Info, Library, LogIn, LogOut, Mail, Menu,
-  Settings2, Sparkles, UserPlus, UserRound, Users, X,
+  Settings2, ShieldCheck, Sparkles, UserPlus, UserRound, Users, X,
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 
@@ -60,6 +60,8 @@ export default function Navbar() {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const accountMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const mobileAccountMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileAccountMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const sidebarExpanded = sidebarPinned || sidebarHovered;
   const userId = account.status === "signed-in" && isProfileId(account.userId) ? account.userId : null;
 
@@ -110,15 +112,17 @@ export default function Navbar() {
   useEffect(() => {
     if (!accountMenuOpen) return;
     const closeOnOutsideClick = (event: PointerEvent) => {
-      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
-        setAccountMenuOpen(false);
-      }
+      const target = event.target as Node;
+      const insideDesktopMenu = accountMenuRef.current?.contains(target) ?? false;
+      const insideMobileMenu = mobileAccountMenuRef.current?.contains(target) ?? false;
+      if (!insideDesktopMenu && !insideMobileMenu) setAccountMenuOpen(false);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
       setAccountMenuOpen(false);
-      accountMenuTriggerRef.current?.focus();
+      if (window.matchMedia("(min-width: 1024px)").matches) accountMenuTriggerRef.current?.focus();
+      else mobileAccountMenuTriggerRef.current?.focus();
     };
     document.addEventListener("pointerdown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
@@ -247,7 +251,22 @@ export default function Navbar() {
           <button ref={triggerRef} type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation menu" aria-expanded={menuOpen} aria-controls="mobile-navigation" className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 text-slate-700 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:bg-slate-800 dark:text-slate-100"><Menu aria-hidden="true" className="size-5" /></button>
           <Link href="/" className="relative h-10 w-32 flex-1" aria-label="Techtronica home"><Image src="/logo.png" alt="" fill sizes="128px" className="object-contain" priority /></Link>
           {userId && <NotificationBell userId={userId} />}
-          {account.status === "signed-in" ? <Link href="/account" aria-label={`Open ${account.name}'s profile`} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"><Avatar account={account} size="size-10" /></Link> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} aria-label="Sign in" className="grid size-10 place-items-center rounded-full bg-sky-50 text-sky-700 dark:bg-slate-800 dark:text-sky-200"><LogIn className="size-5" /></Link> : <span className="size-10 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" aria-label="Loading account" />}
+          {account.status === "signed-in" ? <div ref={mobileAccountMenuRef} className="relative">
+            <button ref={mobileAccountMenuTriggerRef} type="button" onClick={() => setAccountMenuOpen((open) => !open)} aria-label={"Open " + account.name + "'s account options"} aria-expanded={accountMenuOpen} aria-haspopup="true" aria-controls="mobile-account-options" className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"><Avatar account={account} size="size-10" /></button>
+            {accountMenuOpen && <div id="mobile-account-options" aria-label="Account options" className="absolute right-0 top-full z-[80] mt-2 max-h-[calc(100dvh-5rem)] w-72 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              <div className="px-3 py-2"><p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">{account.canManage ? "Society manager" : "Member portal"}</p><p className="mt-0.5 truncate text-sm font-semibold text-slate-900 dark:text-white">{account.name}</p></div>
+              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+              <div className="space-y-0.5">
+                <AccountShortcut href="/account" icon={UserRound} onClick={() => setAccountMenuOpen(false)}>My account</AccountShortcut>
+                <AccountShortcut href="/account#account-memberships" icon={Users} onClick={() => setAccountMenuOpen(false)}>My memberships</AccountShortcut>
+                <AccountShortcut href="/account#account-latest-activity" icon={Activity} onClick={() => setAccountMenuOpen(false)}>Latest activity</AccountShortcut>
+                <AccountShortcut href="/events" icon={CalendarDays} onClick={() => setAccountMenuOpen(false)}>Events</AccountShortcut>
+                {account.canManage && <AccountShortcut href="/manage" icon={BriefcaseBusiness} onClick={() => setAccountMenuOpen(false)} emphasis>Manage society</AccountShortcut>}
+                <AccountShortcut href="/account/settings" icon={Settings2} onClick={() => setAccountMenuOpen(false)}>Profile settings</AccountShortcut>
+              </div>
+              <form action={signOutAction} className="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800"><PendingSubmitButton type="submit" pendingLabel="Signing out…" className="inline-flex min-h-10 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut className="size-4" />Sign out</PendingSubmitButton></form>
+            </div>}
+          </div> : account.status === "signed-out" ? <Link href={`/auth/sign-in?next=${encodeURIComponent(pathname || "/")}`} aria-label="Sign in" className="grid size-10 place-items-center rounded-full bg-sky-50 text-sky-700 dark:bg-slate-800 dark:text-sky-200"><LogIn className="size-5" /></Link> : <span className="size-10 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" aria-label="Loading account" />}
         </div>
       </header>
 
@@ -286,7 +305,7 @@ function accountStateFor(userId: string, value: string, avatarUrl: string | null
 function AccountShortcut({ href, icon: Icon, children, onClick, emphasis = false }: {
   href: string;
   icon: LucideIcon;
-  children: ReactNode;
+  children: React.ReactNode;
   onClick?: () => void;
   emphasis?: boolean;
 }) {
