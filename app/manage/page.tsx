@@ -237,9 +237,9 @@ export default async function ManageHomePage() {
             .select("id", { count: "exact", head: true }),
           supabase
             .from("memberships")
-            .select("user_id", { count: "exact", head: true })
-            .is("club_id", null)
-            .eq("status", "active"),
+            .select("user_id")
+            .eq("status", "active")
+            .limit(10000),
         ])
       : null;
   const overviewStats = overview
@@ -289,7 +289,7 @@ export default async function ManageHomePage() {
   const memberTotals = overview
     ? {
         accounts: overview[8].count,
-        members: overview[9].count,
+        members: new Set((overview[9].data ?? []).map((membership) => membership.user_id)).size,
         error: Boolean(overview[8].error || overview[9].error),
       }
     : null;
