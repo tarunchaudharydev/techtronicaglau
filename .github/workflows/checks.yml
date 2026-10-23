@@ -28,3 +28,5 @@ jobs:
         continue-on-error: true
       - run: npm run typecheck
       - run: npm test
+      - name: Audit npm dependencies
+        run: npm run audit
