@@ -502,7 +502,7 @@ export default async function ManageHomePage() {
         {!error && groups.length > 0 && (
           <nav
             aria-label="Management areas"
-            className="sticky top-20 z-20 mt-3 flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-2 py-1"
+            className="sticky top-[4rem] z-20 mt-3 flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-2 py-1 shadow-sm lg:top-20"
           >
             {groups.map(({ name }) => (
               <a
