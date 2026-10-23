@@ -40,36 +40,6 @@ The official website and member portal for Techtronica, the Electronics and Comm
 The seeded clubs are Technovation, Code-E-Phobia, Unnati, Gizmo, and Mindblogger.
 
 ## Architecture and security
-
-~~~mermaid
-flowchart LR
-  subgraph client ["Web Clients"]
-    browser["Browser and installed PWA"]
-  end
-  subgraph gateway ["Hosting Gateway"]
-    vercel["Vercel routing"]
-  end
-  subgraph service ["Application Services"]
-    nextjs["Next.js application"]
-    supabaseApi["Supabase Data API and Realtime"]
-  end
-  subgraph datastore ["Application Data"]
-    postgres["Supabase Postgres with RLS"]
-    storage["Supabase Storage"]
-  end
-  subgraph external ["Identity Provider"]
-    clerk["Clerk"]
-  end
-
-  browser -->|"Pages and actions"| vercel
-  vercel -->|"Routes requests"| nextjs
-  browser -->|"Session-authenticated data and realtime"| supabaseApi
-  nextjs -->|"Server-side data queries"| supabaseApi
-  supabaseApi -->|"RLS-protected records"| postgres
-  supabaseApi -->|"Media reads and writes"| storage
-  nextjs -.->|"Sessions, invitations, and admin controls"| clerk
-~~~
-
 [Open the editable architecture diagram in Figma](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=1-2) · [Browse all system diagrams](docs/diagrams.md)
 
 [![Techtronica application architecture](docs/images/figma-application-architecture.png)](https://www.figma.com/board/gAGnPMmSaABH8jC6riESPs?node-id=1-2)
