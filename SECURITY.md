@@ -13,11 +13,11 @@ Until the project publishes a release and support matrix, security fixes are int
 This policy covers the frontend application and source code in this repository:
 
 - Next.js pages, server actions, and route handlers.
-- Supabase Auth and cookie-aware frontend integration.
+- Clerk authentication and cookie-aware Supabase client integration.
 - Role-aware society management interfaces and frontend authorization checks.
 - Application deployment configuration maintained in this repository.
 
-The frontend uses a Supabase publishable key, which is designed to be visible to browsers. Access to protected data and management operations must be enforced by the backend, not by hiding buttons or pages in the UI.
+The frontend uses Clerk for account identity and session management. Supabase validates the Clerk session token and applies database RLS to application data. A Supabase publishable key is designed to be visible to browsers; no Supabase service-role key belongs in this frontend.
 
 The Supabase schema, migrations, Row Level Security (RLS) policies, database functions, Storage policies, and Edge Functions are maintained separately in the [Techtronica backend repository](https://github.com/tarunchaudharydev/techtronica-backend). Report a vulnerability in those components against that repository's security policy. If an issue crosses both repositories, report each side privately and link the reports without putting exploit details in a public issue.
 
@@ -33,6 +33,7 @@ Examples of in-scope security issues include:
 - Exposure of secrets, session tokens, or sensitive data through the frontend, logs, or shared caches.
 - A vulnerability in a frontend route or action that permits unauthorized reads or changes.
 - A privacy or access-control flaw involving the visitor IP display or opt-in network speed check.
+- Missing or ineffective request-size, origin, cache, or input validation on a public route.
 
 Do not report ordinary bugs, feature requests, visual issues, or availability problems as security vulnerabilities unless they create a security impact. If uncertain, report privately and explain the potential impact.
 
