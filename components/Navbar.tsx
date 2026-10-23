@@ -2,7 +2,7 @@
 
 import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity, BriefcaseBusiness, CalendarDays, ChevronDown, ChevronRight,
   Code2, GraduationCap, House, Info, Library, LogIn, LogOut, Mail, Menu,
-  Settings2, ShieldCheck, Sparkles, UserPlus, UserRound, Users, X,
+  Settings2, Sparkles, UserPlus, UserRound, Users, X,
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 
@@ -305,7 +305,7 @@ function accountStateFor(userId: string, value: string, avatarUrl: string | null
 function AccountShortcut({ href, icon: Icon, children, onClick, emphasis = false }: {
   href: string;
   icon: LucideIcon;
-  children: React.ReactNode;
+  children: ReactNode;
   onClick?: () => void;
   emphasis?: boolean;
 }) {
