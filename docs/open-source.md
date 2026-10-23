@@ -8,7 +8,7 @@ Until a stable release is announced, interfaces, database integration, and deplo
 
 ## What is open source
 
-The original frontend application source and project documentation are licensed under MIT. The repository is an application source repository, not a published npm package. Its `package.json` remains marked `private` to prevent accidental package publication.
+The original frontend application source and project documentation carry the MIT license. GitHub repository visibility is a separate setting: a license file does not make a private repository publicly accessible. The repository currently remains private until the maintainer completes a public-release review. The repository is an application source repository, not a published npm package; `package.json` remains marked `private` to prevent accidental package publication.
 
 The database schema, migration files, RLS and Storage policies, and invitation Edge Function are maintained in the separate [backend repository](https://github.com/tarunchaudharydev/techtronica-backend). A frontend change does not automatically change or deploy the backend.
 

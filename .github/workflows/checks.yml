@@ -1,0 +1,30 @@
+name: Contributor checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Node ${{ matrix.node-version }} checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - name: Report lint baseline (non-blocking during cleanup)
+        run: npm run lint
+        continue-on-error: true
+      - run: npm run typecheck
+      - run: npm test

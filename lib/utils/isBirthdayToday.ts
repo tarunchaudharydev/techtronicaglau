@@ -1,12 +1,3 @@
-// lib/utils/isBirthdayToday.ts
-export function isBirthdayToday(dob?: string) {
-  if (!dob) return false;
+import { isBirthdayToday as isBirthdayTodayImpl } from "./isBirthdayToday.mjs";
 
-  const today = new Date();
-  const birthDate = new Date(dob);
-
-  return (
-    today.getDate() === birthDate.getDate() &&
-    today.getMonth() === birthDate.getMonth()
-  );
-}
+export const isBirthdayToday: (dob?: string | null, now?: Date) => boolean = isBirthdayTodayImpl;

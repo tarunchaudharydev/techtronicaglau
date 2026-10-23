@@ -11,9 +11,9 @@ Thanks for considering a contribution to Techtronica's website. Contributions ar
 
 ## Local setup
 
-1. Install Node.js 20 or later and npm.
+1. Install Node.js 22 or 24 LTS and npm.
 2. Clone the frontend repository and run `npm ci`.
-3. Copy `.env.example` to `.env.local` and configure an authorized Supabase project.
+3. Copy `.env.test.example` to `.env.local`; use a Clerk development instance and a dedicated non-production Supabase project. Never use production credentials.
 4. Start the application with `npm run dev`.
 
 See the [README](README.md) for environment variables and the [documentation index](docs/README.md) for system details.
@@ -38,12 +38,13 @@ Database schema and policy changes belong in the [backend repository](https://gi
 Run the available checks:
 
 ~~~sh
+npm ci
 npm run lint
-npx tsc --noEmit
-npm run build
+npm run typecheck
+npm test
 ~~~
 
-There is no `npm test` script at this time. If you add or change a user flow, include a concise manual verification plan.
+The current main branch has pre-existing ESLint errors in application files. CI runs lint as a non-blocking signal while that baseline is cleaned up; TypeScript and unit tests are required checks. Avoid adding new lint errors. Run `npm run build` when you have configured the isolated test services. CI intentionally does not need auth or database secrets. For service-backed flows, include the relevant smoke checks from [Testing](docs/testing.md) in the pull request.
 
 ## Pull request checklist
 

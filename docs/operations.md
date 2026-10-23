@@ -2,7 +2,7 @@
 
 ## Environments and credentials
 
-- Clerk owns identity and account sessions; Supabase project `erivblclxwtonwysgdle` owns app data and RLS.
+- Clerk owns identity and account sessions; the configured Supabase project owns app data and RLS.
 - Local development uses `.env.local` (ignored by Git).
 - Vercel uses encrypted variables configured per environment.
 - Clerk's secret key is server-only. The Supabase publishable key and Clerk publishable key are intended for browser use.
@@ -23,9 +23,11 @@ Never expose a Clerk secret key or Supabase secret/service-role key with the `NE
 
 ## Local workflow
 
+Use Node.js 22 or 24 LTS. Keep local development isolated from production:
+
 ~~~sh
 npm ci
-cp .env.example .env.local
+cp .env.test.example .env.local
 npm run dev
 ~~~
 
@@ -33,11 +35,12 @@ Before review, run the checks available in `package.json`:
 
 ~~~sh
 npm run lint
-npx tsc --noEmit
+npm run typecheck
+npm test
 npm run build
 ~~~
 
-There is no `npm test` script currently. Do not commit local environment files, `.next` output, or production data.
+Run the build only after configuring the dedicated non-production Clerk and Supabase environment. GitHub Actions runs lint, type checking, and credential-free unit tests without provider secrets. Never commit local environment files, `.next` output, or production data.
 
 ## Identity and database setup
 
@@ -76,7 +79,7 @@ A frontend deployment does not apply database migrations. Apply backend migratio
 
 - Target Vercel Clerk/Supabase environment variables and Clerk redirects are correct.
 - Required schema changes are applied and frontend generated types match.
-- The available lint, type, and production build checks pass.
+- Lint, type checking, unit tests, and the production build pass in the correct non-production environment.
 - No private keys, contact message contents, phone numbers, student IDs, or member photos are included in the change.
 - Public and private paths are checked as a visitor, non-member, and active member.
 - Admin tasks are checked with allowed and denied scopes.
