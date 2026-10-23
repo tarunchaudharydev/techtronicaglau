@@ -66,12 +66,14 @@ export async function getCurrentAppUser(): Promise<CurrentAppUser | null> {
       ? metadata.invited_name.trim()
       : "";
     const name = clerkUser.fullName?.trim() || invitedName || clerkUser.primaryEmailAddress?.emailAddress.split("@")[0] || "Techtronica member";
+    const avatarUrl = clerkUser.hasImage ? clerkUser.imageUrl : null;
     const { data, error } = await supabase
       .from("profiles")
       .insert({
         id: importedProfileId ?? crypto.randomUUID(),
         clerk_user_id: userId,
         full_name: name.slice(0, 120),
+        avatar_url: avatarUrl,
       })
       .select("id, clerk_user_id, full_name, created_at, department, year_of_study, avatar_url")
       .maybeSingle();
@@ -102,6 +104,18 @@ export async function getCurrentAppUser(): Promise<CurrentAppUser | null> {
 
   if (profile.clerk_user_id && profile.clerk_user_id !== userId) return null;
 
+  const providerAvatarUrl = clerkUser.hasImage ? clerkUser.imageUrl : null;
+  let savedAvatarUrl = profile.avatar_url;
+  if (providerAvatarUrl && savedAvatarUrl !== providerAvatarUrl) {
+    const { data: avatarProfile } = await supabase
+      .from("profiles")
+      .update({ avatar_url: providerAvatarUrl })
+      .eq("id", profile.id)
+      .select("avatar_url")
+      .maybeSingle();
+    savedAvatarUrl = avatarProfile?.avatar_url ?? savedAvatarUrl;
+  }
+
   const email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
   const claimName = typeof sessionClaims?.name === "string" ? sessionClaims.name : "";
   return {
@@ -115,7 +129,7 @@ export async function getCurrentAppUser(): Promise<CurrentAppUser | null> {
     yearOfStudy: profile.year_of_study,
     // Prefer the photo Clerk received from Google OAuth (or the Clerk profile),
     // and retain the saved Techtronica image as a fallback.
-    avatarUrl: (clerkUser.hasImage ? clerkUser.imageUrl : null) || profile.avatar_url,
+    avatarUrl: providerAvatarUrl || savedAvatarUrl,
   };
 }
 
