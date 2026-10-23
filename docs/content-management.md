@@ -24,9 +24,9 @@ Team records also use `is_public`, defaulting to true. Active public profiles re
 
 ## Society membership and roles
 
-Anyone can create a normal email/password account. Only a Society Admin can add or activate a society-wide membership, using `/manage/memberships`. The account must exist and have a verified email. This action does not grant a management role. A Society Admin must separately grant a role from `/manage/access`. Club membership applications are separate: a user can request a club membership and an authorized club manager can review it.
+Users create accounts and sign in through Clerk. A new account does not automatically become a society member or receive a management role. A Society Admin can add or activate a society-wide membership from `/manage/memberships`; the account must already exist in Clerk and this action does not grant a management role. The Society Admin grants roles separately from `/manage/access`. Club membership applications are separate: users can request club membership and an authorized club manager can review it.
 
-Database RLS and the `admin_add_society_member` RPC enforce these rules. Hiding controls in the dashboard is not the authorization boundary.
+The frontend verifies the target Clerk account and calls the guarded `admin_add_clerk_society_member` RPC. Database RLS and its permission checks enforce the operation; hiding controls in the dashboard is not the authorization boundary.
 
 ## Admin workflows
 
