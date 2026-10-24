@@ -9,6 +9,28 @@ Thanks for considering a contribution to Techtronica's website. Contributions ar
 - Keep one pull request focused on one behavior or maintenance goal.
 - Do not use real member data, production credentials, or private images in examples or screenshots.
 
+## Branch and pull request workflow
+
+Start from an up-to-date `main` branch and make your change on a descriptive feature branch. Do not commit directly to `main`. If you do not have write access, fork this repository first and push your branch to your fork.
+
+For a fork, clone your fork, add the original repository as `upstream`, and create a branch from its latest `main`:
+
+~~~sh
+git clone https://github.com/<your-username>/techtronicaglau.git
+cd techtronicaglau
+git remote add upstream https://github.com/tarunchaudharydev/techtronicaglau.git
+git fetch upstream
+git switch -c docs/short-description upstream/main
+~~~
+
+Use a prefix such as `feat/`, `fix/`, or `docs/`, followed by a short description. Make and commit your focused change, run the checks below, then push your branch:
+
+~~~sh
+git push -u origin docs/short-description
+~~~
+
+Open a pull request from your branch into `tarunchaudharydev/techtronicaglau:main`. Describe the change, link related issues, and include the checks you ran.
+
 ## Local setup
 
 1. Install Node.js 22 or 24 LTS and npm.
