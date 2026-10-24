@@ -202,7 +202,7 @@ export default function RealtimePageRefresh() {
       if (channel) void supabase.removeChannel(channel).catch(() => undefined);
       channel = null;
     };
-  }, [getToken, isLoaded, managementRoute, router]);
+  }, [getToken, isLoaded, pathname, router]);
 
   return null;
 }
