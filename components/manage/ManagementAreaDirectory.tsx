@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, BellRing, CalendarDays, ClipboardCheck, ContactRound, GraduationCap, Inbox, Layers3, Network, Search, ShieldCheck, Sparkles, TicketCheck, UserPlus, UsersRound } from "lucide-react";
+import { ArrowUpRight, BellRing, BriefcaseBusiness, CalendarDays, ClipboardCheck, ContactRound, GraduationCap, Inbox, Layers3, Network, Search, ShieldCheck, Sparkles, TicketCheck, UserPlus, UsersRound } from "lucide-react";
 type DirectorySection = { title: string; href: string; description: string };
 export type ManagementDirectoryGroup = { name: string; number: string; description: string; sections: DirectorySection[] };
 const icons: Record<string, typeof UsersRound> = {
@@ -9,6 +9,7 @@ const icons: Record<string, typeof UsersRound> = {
   "/manage/access": ShieldCheck, "/manage/users": UserPlus, "/manage/clubs": Layers3,
   "/manage/positions": ContactRound, "/manage/events": CalendarDays, "/manage/attendance": ClipboardCheck,
   "/manage/registrations": TicketCheck, "/manage/contacts": Inbox, "/manage/content": Sparkles, "/manage/notifications": BellRing,
+  "/manage/internships": BriefcaseBusiness,
 };
 const tints = ["bg-blue-50 text-blue-700", "bg-emerald-50 text-emerald-700", "bg-amber-50 text-amber-800", "bg-violet-50 text-violet-700"];
 export default function ManagementAreaDirectory({ groups }: { groups: ManagementDirectoryGroup[] }) {

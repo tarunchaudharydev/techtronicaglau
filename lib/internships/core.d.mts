@@ -1,0 +1,26 @@
+export type InternshipSort = "deadline" | "newest" | "verified";
+export type InternshipFilters = {
+  query: string;
+  category: string;
+  companyId: string;
+  city: string;
+  citySearch: string;
+  countryCode: string;
+  arrangement: "remote" | "hybrid" | "onsite" | "";
+  degree: string;
+  year: number | null;
+  deadlineWindow: "7" | "30" | "90" | "none" | "";
+  sort: InternshipSort;
+  cursor: string;
+};
+export const internshipCategories: readonly string[];
+export const internshipDegrees: readonly string[];
+export const internshipArrangements: readonly string[];
+export const internshipSorts: readonly InternshipSort[];
+export function parseInternshipFilters(params: URLSearchParams | Record<string, string | string[] | undefined>): InternshipFilters;
+export function encodeInternshipCursor(sort: InternshipSort, key: string | null, id: string): string;
+export function decodeInternshipCursor(raw: string, expectedSort: InternshipSort): { sort: InternshipSort; key: string | null; id: string } | null;
+export function isSafeHttpsUrl(value: string): boolean;
+export function classifyInternshipExpiry(listing: { listingStatus: string; verificationStatus: string; deadline: string | null; verificationDueAt: string | null }, now?: Date): "closed" | "stale" | "unchanged";
+export function isAuthorizedCronRequest(authorization: string | null, secret: string | undefined): boolean;
+export function runInternshipAdapters<T>(adapters: Array<{ name: string; run: () => Promise<T> }>, options?: { maxAttempts?: number }): Promise<{ status: "completed" | "partial" | "failed"; outcomes: Array<{ source: string; status: "completed"; attempt: number; result: T } | { source: string; status: "failed"; error: string }> }>;

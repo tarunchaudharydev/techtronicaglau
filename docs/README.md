@@ -23,6 +23,7 @@ Use this index to find the guide for the task you are working on.
 - [Authentication, membership, and permissions](authentication-and-permissions.md)
 - [Clerk cutover checklist](auth-migration-checklist.md)
 - [Content management and public/private visibility](content-management.md)
+- [Internship directory, review, and scheduled expiry](internships.md)
 - [Storage and image workflow](storage-and-assets.md)
 - [Installable app (PWA)](installable-app.md)
 
