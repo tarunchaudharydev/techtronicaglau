@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import {
   ArrowUpRight,
   BellRing,
+  BriefcaseBusiness,
   CalendarDays,
   ClipboardCheck,
   ContactRound,
@@ -148,6 +149,15 @@ const sections = [
       "Publish deployment notes, version releases, and society updates.",
     icon: BellRing,
     tone: "orange",
+  },
+  {
+    title: "Internships",
+    href: "/manage/internships",
+    permission: "internships.manage",
+    group: "Website & communication",
+    description: "Review official postings, verify details, and publish open opportunities.",
+    icon: BriefcaseBusiness,
+    tone: "blue",
   },
 ] as const;
 

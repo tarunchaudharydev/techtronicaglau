@@ -19,7 +19,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ~~~
 
-Never expose a Clerk secret key or Supabase secret/service-role key with the `NEXT_PUBLIC_` prefix. The frontend does not require a Supabase service-role key.
+Never expose a Clerk secret key or Supabase secret/service-role key with the `NEXT_PUBLIC_` prefix. Internship scheduled verification requires the server-only `SUPABASE_SECRET_KEY` and `CRON_SECRET` variables documented in [the internship runbook](internships.md). The browser never receives those credentials.
 
 ## Local workflow
 
