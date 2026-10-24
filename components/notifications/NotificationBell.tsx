@@ -147,16 +147,10 @@ export default function NotificationBell({ userId }: { userId: string }) {
           const suffix = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
           nextChannel = supabase
             .channel("notification-feed-" + userId + "-" + suffix)
-            .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => {
+            .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
               if (active) scheduleRefresh();
             })
-            .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => {
-              if (active) scheduleRefresh();
-            })
-            .on("postgres_changes", { event: "INSERT", schema: "public", table: "notification_reads", filter: "user_id=eq." + userId }, () => {
-              if (active) scheduleRefresh();
-            })
-            .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notification_reads", filter: "user_id=eq." + userId }, () => {
+            .on("postgres_changes", { event: "*", schema: "public", table: "notification_reads", filter: "user_id=eq." + userId }, () => {
               if (active) scheduleRefresh();
             });
   
