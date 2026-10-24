@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type PublicTableName = keyof Database["public"]["Tables"] & string;
 
-const sharedTables = [
+const siteTables = [
   "clubs",
   "positions",
   "events",
@@ -17,11 +17,40 @@ const sharedTables = [
   "site_content",
   "profiles",
   "memberships",
-  "event_registrations",
-  "event_registration_members",
 ] as const satisfies readonly PublicTableName[];
 
-const managementTables = [
+const clubTables = [
+  "clubs",
+  "positions",
+  "team_members",
+  "alumni",
+  "events",
+  "memberships",
+  "profiles",
+] as const satisfies readonly PublicTableName[];
+
+const eventTables = [
+  "events",
+  "clubs",
+  "event_registrations",
+  "event_registration_members",
+  "memberships",
+  "profiles",
+] as const satisfies readonly PublicTableName[];
+
+const accountTables = [
+  "profiles",
+  "memberships",
+  "positions",
+  "clubs",
+  "event_registrations",
+  "event_registration_members",
+  "meeting_attendance_sessions",
+  "meeting_attendance",
+] as const satisfies readonly PublicTableName[];
+
+const managementDashboardTables = [
+  ...siteTables,
   "permissions",
   "roles",
   "role_permissions",
@@ -29,7 +58,40 @@ const managementTables = [
   "contact_submissions",
   "meeting_attendance_sessions",
   "meeting_attendance",
+  "event_registrations",
+  "event_registration_members",
 ] as const satisfies readonly PublicTableName[];
+
+const managementTablesByRoute: ReadonlyArray<{
+  matches: (pathname: string) => boolean;
+  tables: readonly PublicTableName[];
+}> = [
+  { matches: (path) => path.startsWith("/manage/attendance"), tables: ["meeting_attendance_sessions", "meeting_attendance", "memberships", "profiles", "clubs"] },
+  { matches: (path) => path.startsWith("/manage/events"), tables: eventTables },
+  { matches: (path) => path.startsWith("/manage/registrations"), tables: ["event_registrations", "event_registration_members", "events", "clubs", "profiles", "memberships"] },
+  { matches: (path) => path.startsWith("/manage/alumni"), tables: ["alumni", "clubs", "profiles"] },
+  { matches: (path) => path.startsWith("/manage/contacts"), tables: ["contact_submissions"] },
+  { matches: (path) => path.startsWith("/manage/content"), tables: ["site_content"] },
+  { matches: (path) => path.startsWith("/manage/clubs"), tables: clubTables },
+  { matches: (path) => path.startsWith("/manage/positions"), tables: ["positions", "clubs", "roles", "memberships"] },
+  { matches: (path) => path.startsWith("/manage/memberships"), tables: ["memberships", "profiles", "clubs", "positions"] },
+  { matches: (path) => path.startsWith("/manage/team"), tables: ["team_members", "profiles", "clubs"] },
+  { matches: (path) => path.startsWith("/manage/notifications"), tables: ["notifications", "notification_reads"] },
+  { matches: (path) => path.startsWith("/manage/access") || path.startsWith("/manage/users"), tables: ["profiles", "memberships", "clubs", "positions", "roles", "permissions", "role_permissions", "user_role_assignments"] },
+];
+
+function tablesForPath(pathname: string): readonly PublicTableName[] {
+  if (pathname === "/manage") return managementDashboardTables;
+  if (pathname.startsWith("/manage/")) {
+    return managementTablesByRoute.find(({ matches }) => matches(pathname))?.tables ?? [];
+  }
+  if (pathname === "/" || pathname.startsWith("/about") || pathname.startsWith("/gallery")) return siteTables;
+  if (pathname.startsWith("/clubs")) return clubTables;
+  if (pathname.startsWith("/events")) return eventTables;
+  if (pathname.startsWith("/account")) return accountTables;
+  if (pathname.startsWith("/alumni")) return ["alumni", "clubs", "profiles"];
+  return [];
+}
 
 /**
  * Refreshes the current server-rendered route after a database change.
@@ -38,15 +100,13 @@ const managementTables = [
 export default function RealtimePageRefresh() {
   const router = useRouter();
   const pathname = usePathname();
-  const managementRoute = pathname === "/manage" || pathname.startsWith("/manage/");
   const { getToken, isLoaded } = useAuth();
 
   useEffect(() => {
     if (!isLoaded) return;
     const supabase = createClient(() => getToken());
-    const tables: readonly PublicTableName[] = managementRoute
-      ? [...sharedTables, ...managementTables]
-      : sharedTables;
+    const tables = tablesForPath(pathname);
+    if (!tables.length) return;
 
     let active = true;
     let pendingRefresh = false;
@@ -86,14 +146,11 @@ export default function RealtimePageRefresh() {
       if (!active || channel || channelStarting) return;
       channelStarting = true;
       const suffix = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
-      const nextChannel = supabase.channel(`techtronica-page-refresh-${managementRoute ? "management" : "public"}-${suffix}`);
+      const nextChannel = supabase.channel(`techtronica-page-refresh-${suffix}`);
 
       try {
         for (const table of tables) {
-          nextChannel
-            .on("postgres_changes", { event: "INSERT", schema: "public", table }, scheduleRefresh)
-            .on("postgres_changes", { event: "UPDATE", schema: "public", table }, scheduleRefresh)
-            .on("postgres_changes", { event: "DELETE", schema: "public", table }, scheduleRefresh);
+          nextChannel.on("postgres_changes", { event: "*", schema: "public", table }, scheduleRefresh);
         }
 
         channel = nextChannel;
@@ -121,10 +178,6 @@ export default function RealtimePageRefresh() {
       }
     };
 
-    const reconciliationTimer = window.setInterval(() => {
-      if (document.visibilityState === "visible") scheduleRefresh();
-    }, 30_000);
-
     const onVisibilityChange = () => {
       if (document.visibilityState !== "visible") return;
       if (pendingRefresh) scheduleRefresh();
@@ -142,7 +195,6 @@ export default function RealtimePageRefresh() {
 
     return () => {
       active = false;
-      window.clearInterval(reconciliationTimer);
       if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
       if (retryTimer !== null) window.clearTimeout(retryTimer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
