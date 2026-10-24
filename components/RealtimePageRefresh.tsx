@@ -19,6 +19,8 @@ const siteTables = [
   "memberships",
 ] as const satisfies readonly PublicTableName[];
 
+const contentTables = ["site_content"] as const satisfies readonly PublicTableName[];
+
 const clubTables = [
   "clubs",
   "positions",
@@ -67,13 +69,13 @@ const managementTablesByRoute: ReadonlyArray<{
   tables: readonly PublicTableName[];
 }> = [
   { matches: (path) => path.startsWith("/manage/attendance"), tables: ["meeting_attendance_sessions", "meeting_attendance", "memberships", "profiles", "clubs"] },
-  { matches: (path) => path.startsWith("/manage/events"), tables: eventTables },
+  { matches: (path) => path.startsWith("/manage/events"), tables: ["events", "clubs"] },
   { matches: (path) => path.startsWith("/manage/registrations"), tables: ["event_registrations", "event_registration_members", "events", "clubs", "profiles", "memberships"] },
   { matches: (path) => path.startsWith("/manage/alumni"), tables: ["alumni", "clubs", "profiles"] },
   { matches: (path) => path.startsWith("/manage/contacts"), tables: ["contact_submissions"] },
   { matches: (path) => path.startsWith("/manage/content"), tables: ["site_content"] },
-  { matches: (path) => path.startsWith("/manage/clubs"), tables: clubTables },
-  { matches: (path) => path.startsWith("/manage/positions"), tables: ["positions", "clubs", "roles", "memberships"] },
+  { matches: (path) => path.startsWith("/manage/clubs"), tables: ["clubs"] },
+  { matches: (path) => path.startsWith("/manage/positions"), tables: ["positions", "clubs", "roles"] },
   { matches: (path) => path.startsWith("/manage/memberships"), tables: ["memberships", "profiles", "clubs", "positions"] },
   { matches: (path) => path.startsWith("/manage/team"), tables: ["team_members", "profiles", "clubs"] },
   { matches: (path) => path.startsWith("/manage/notifications"), tables: ["notifications", "notification_reads"] },
@@ -85,7 +87,8 @@ function tablesForPath(pathname: string): readonly PublicTableName[] {
   if (pathname.startsWith("/manage/")) {
     return managementTablesByRoute.find(({ matches }) => matches(pathname))?.tables ?? [];
   }
-  if (pathname === "/" || pathname.startsWith("/about") || pathname.startsWith("/gallery")) return siteTables;
+  if (pathname === "/") return siteTables;
+  if (pathname.startsWith("/about") || pathname.startsWith("/gallery") || pathname.startsWith("/academics") || pathname.startsWith("/accessibility")) return contentTables;
   if (pathname.startsWith("/clubs")) return clubTables;
   if (pathname.startsWith("/events")) return eventTables;
   if (pathname.startsWith("/account")) return accountTables;
