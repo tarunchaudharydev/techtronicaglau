@@ -9,6 +9,28 @@ Thanks for considering a contribution to Techtronica's website. Contributions ar
 - Keep one pull request focused on one behavior or maintenance goal.
 - Do not use real member data, production credentials, or private images in examples or screenshots.
 
+## Branch and pull request workflow
+
+For each change, create a fresh, descriptive feature branch from the latest `develop`. `develop` is the testing/staging branch; `main` is production. Do not push contributions directly to either shared branch. If you do not have write access, fork this repository first and push your branch to your fork.
+
+For a fork, clone your fork, add the original repository as `upstream`, and create a branch from its latest `develop`:
+
+~~~sh
+git clone https://github.com/<your-username>/techtronicaglau.git
+cd techtronicaglau
+git remote add upstream https://github.com/tarunchaudharydev/techtronicaglau.git
+git fetch upstream
+git switch -c docs/short-description upstream/develop
+~~~
+
+Use a prefix such as `feat/`, `fix/`, or `docs/`, followed by a short description. Make and commit your focused change, run the checks below, then push your branch:
+
+~~~sh
+git push -u origin docs/short-description
+~~~
+
+Open a pull request from your branch into `tarunchaudharydev/techtronicaglau:develop`. Describe the change, link related issues, and include the checks you ran. Maintainers test and integrate changes on `develop`, then promote a reviewed, stable release from `develop` to `main`.
+
 ## Local setup
 
 1. Install Node.js 22 or 24 LTS and npm.
