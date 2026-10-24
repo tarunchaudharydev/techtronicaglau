@@ -11,14 +11,16 @@ export async function createMeetingAttendance(formData: FormData) {
   const meetingTime = readField(formData, "meeting_time", 8);
   const venue = readField(formData, "venue", 240);
   const scope = readField(formData, "scope", 10);
-  const clubValue = readField(formData, "club_id", 36);
+  const clubIds = readIds(formData, "club_ids", 20);
+  const targetYears = readYears(formData);
   const notes = readField(formData, "notes", 2000);
 
   if (!name || name.length < 2 || !isDate(meetingDate) ||
       (meetingTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(meetingTime)) ||
       (scope !== "society" && scope !== "club") ||
-      (scope === "society" && clubValue) ||
-      (scope === "club" && !validId(clubValue))) {
+      !clubIds || !targetYears ||
+      (scope === "society" && clubIds.length > 0) ||
+      (scope === "club" && (clubIds.length === 0 || clubIds.some((id) => !validId(id))))) {
     redirect("/manage/attendance?result=invalid");
   }
 
@@ -28,7 +30,8 @@ export async function createMeetingAttendance(formData: FormData) {
     p_meeting_time: meetingTime || null,
     p_venue: venue || null,
     p_scope: scope,
-    p_club_id: scope === "club" ? clubValue : null,
+    p_club_ids: scope === "club" ? clubIds : [],
+    p_target_years: targetYears,
     p_notes: notes || null,
   });
   if (error || !data) redirect("/manage/attendance?result=error");
@@ -70,6 +73,23 @@ function readField(formData: FormData, key: string, maxLength: number): string |
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length <= maxLength ? trimmed : null;
+}
+
+function readIds(formData: FormData, key: string, maxItems: number): string[] | null {
+  const values = formData.getAll(key);
+  if (values.some((value) => typeof value !== "string")) return null;
+  const ids = values.map((value) => (value as string).trim()).filter(Boolean);
+  if (ids.length > maxItems || new Set(ids).size !== ids.length) return null;
+  return ids;
+}
+
+function readYears(formData: FormData): number[] | null {
+  const values = formData.getAll("target_years");
+  if (values.some((value) => typeof value !== "string")) return null;
+  const raw = values.map((value) => (value as string).trim()).filter(Boolean);
+  if (raw.some((value) => !/^[1-8]$/.test(value))) return null;
+  const years = raw.map(Number);
+  return new Set(years).size === years.length ? years : null;
 }
 
 function isDate(value: string | null): value is string {

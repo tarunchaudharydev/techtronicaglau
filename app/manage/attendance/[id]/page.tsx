@@ -24,13 +24,20 @@ export default async function AttendanceSessionPage({
     : "all";
   const requestedPage = parsePage(queryParams.page);
   const sessionResult = await supabase.from("meeting_attendance_sessions")
-    .select("id, name, meeting_date, meeting_time, venue, scope, club_id, notes, created_at, clubs(name)")
+    .select("id, name, meeting_date, meeting_time, venue, scope, club_id, club_ids, target_years, notes, created_at")
     .eq("id", id)
     .maybeSingle();
 
   if (sessionResult.error || !sessionResult.data) notFound();
   const session = sessionResult.data;
-  const club = session.clubs && !Array.isArray(session.clubs) ? session.clubs : null;
+  const selectedClubIds = session.club_ids ?? (session.club_id ? [session.club_id] : []);
+  const selectedClubsResult = selectedClubIds.length
+    ? await supabase.from("clubs").select("id, name").in("id", selectedClubIds)
+    : { data: [] };
+  const clubNames = new Map((selectedClubsResult.data ?? []).map((club) => [club.id, club.name]));
+  const selectedClubNames = selectedClubIds.map((clubId) => clubNames.get(clubId) ?? "Club");
+  const audienceLabel = session.scope === "society" ? "Society · all Techtronica profiles" : selectedClubNames.join(", ") || "Club meeting";
+  const yearsLabel = formatTargetYears(session.target_years);
   const baseCount = () => supabase.from("meeting_attendance")
     .select("user_id", { count: "exact", head: true })
     .eq("session_id", session.id);
@@ -43,7 +50,7 @@ export default async function AttendanceSessionPage({
   ]);
 
   let rosterQuery = supabase.from("meeting_attendance")
-    .select("session_id, user_id, member_name, status, marked_by, marked_at", { count: "exact" })
+    .select("session_id, user_id, member_name, year_of_study, status, marked_by, marked_at", { count: "exact" })
     .eq("session_id", session.id)
     .order("status", { ascending: true })
     .order("member_name", { ascending: true })
@@ -72,15 +79,16 @@ export default async function AttendanceSessionPage({
       <Link href="/manage/attendance" className="text-sm font-medium text-sky-700 hover:underline">← Attendance sheets</Link>
       <header className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">{session.scope === "society" ? "Society meeting" : club?.name ?? "Club meeting"}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">{audienceLabel}</p>
           <h1 className="mt-2 text-3xl font-bold">{session.name}</h1>
           <p className="mt-2 text-sm text-muted">{formatMeetingDate(session.meeting_date, session.meeting_time)}{session.venue ? " · " + session.venue : ""}</p>
+          <p className="mt-1 text-sm text-muted">Student years: {yearsLabel}</p>
           {session.notes && <p className="mt-3 max-w-3xl whitespace-pre-wrap text-sm leading-6 text-muted">{session.notes}</p>}
         </div>
         <a href={"/manage/attendance/" + session.id + "/export"} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold hover:border-sky-500 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900">Export full attendance CSV</a>
       </header>
 
-      {queryParams.created === "1" && <p role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">The sheet starts with every active member in this scope. Choose Present, Absent, or Excused for people this meeting applies to. Leave everyone else as “Not in meeting”; those names appear at the end of the export.</p>}
+      {queryParams.created === "1" && <p role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">The sheet contains the profiles that matched this audience when it was created. Choose Present, Absent, or Excused for people this meeting applies to. Leave everyone else as “Not in meeting”; those names appear at the end of the export.</p>}
 
       <section className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-label="Attendance totals">
         <Summary label="Roster" value={total} tone="sky" />
@@ -94,7 +102,7 @@ export default async function AttendanceSessionPage({
         <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 id="roster-title" className="text-xl font-semibold">Member attendance</h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">All active members are listed automatically. “Not in meeting” means the meeting does not apply to that person; use Present, Absent, or Excused only for people included in this meeting.</p>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">{session.scope === "society" ? "Every Techtronica profile" : "Active members of the selected club or clubs"}{session.target_years.length ? " in the selected student years" : ""} were added when this sheet was created. “Not in meeting” means the meeting does not apply to that person.</p>
             <p className="mt-1 text-sm text-muted">{rosterError ? "Roster unavailable" : "Showing " + start + "–" + end + " of " + filteredTotal.toLocaleString() + " filtered members · " + PAGE_SIZE + " per page"}</p>
           </div>
           <form action={"/manage/attendance/" + session.id} method="get" role="search" className="grid w-full gap-2 sm:grid-cols-[minmax(0,1fr)_11rem_auto] lg:max-w-2xl">
@@ -118,10 +126,11 @@ export default async function AttendanceSessionPage({
         {!rosterError && (
           <>
             <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-              <table className="w-full min-w-[680px] border-collapse text-left text-sm">
+              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-950">
                   <tr>
                     <th scope="col" className="px-4 py-3 font-semibold">Member</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Year</th>
                     <th scope="col" className="px-4 py-3 font-semibold">Mark attendance</th>
                     <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">Last marked (IST)</th>
                   </tr>
@@ -130,13 +139,14 @@ export default async function AttendanceSessionPage({
                   {rows.map((member) => (
                     <tr key={member.user_id} className="align-top hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                       <th scope="row" className="px-4 py-3 font-medium">{member.member_name}</th>
+                      <td className="whitespace-nowrap px-4 py-3 text-muted">{member.year_of_study ? `Year ${member.year_of_study}` : "Not set"}</td>
                       <td className="px-4 py-3">
                         <AttendanceStatusPicker sessionId={session.id} userId={member.user_id} memberName={member.member_name} initialStatus={member.status as AttendanceStatus} />
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-muted">{member.marked_at ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(member.marked_at)) : "—"}</td>
                     </tr>
                   ))}
-                  {!rows.length && <tr><td colSpan={3} className="px-4 py-10 text-center text-muted">{search || statusFilter !== "all" ? "No members match these filters." : "No active members were present in this scope when the sheet was created."}</td></tr>}
+                  {!rows.length && <tr><td colSpan={4} className="px-4 py-10 text-center text-muted">{search || statusFilter !== "all" ? "No members match these filters." : "No profiles matched this audience when the sheet was created."}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -168,6 +178,10 @@ function Summary({ label, value, tone }: { label: string; value: number; tone: s
     slate: "border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100",
   };
   return <div className={`rounded-2xl border p-4 ${styles[tone] ?? styles.slate}`}><p className="text-xs font-semibold uppercase tracking-wide opacity-75">{label}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value.toLocaleString()}</p></div>;
+}
+
+function formatTargetYears(years: number[] | null) {
+  return years?.length ? years.map((year) => `Year ${year}`).join(", ") : "All years";
 }
 
 function normalizeSearch(value: string | undefined) {

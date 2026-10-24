@@ -36,6 +36,7 @@ export default function ProfileEditor({
           ))}
         </select>
       </label>
+      <p className="text-xs leading-5 text-muted">Your study year helps society managers create year-specific meeting rosters. If your year is blank, you remain on all-years rosters but are left out of a roster restricted to selected years.</p>
       <label className="block space-y-1.5" htmlFor="profile-avatar-url">
         <span className="text-sm font-medium">Profile image URL</span>
         <input className="input" defaultValue={profile.avatar_url ?? ""} id="profile-avatar-url" maxLength={500} name="avatar_url" placeholder="https://… or /images/profile.jpg" type="text" />

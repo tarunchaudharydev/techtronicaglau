@@ -500,6 +500,7 @@ export type Database = {
           member_name: string
           session_id: string
           status: string
+          year_of_study: number | null
           user_id: string
         }
         Insert: {
@@ -508,6 +509,7 @@ export type Database = {
           member_name: string
           session_id: string
           status?: string
+          year_of_study?: number | null
           user_id: string
         }
         Update: {
@@ -516,6 +518,7 @@ export type Database = {
           member_name?: string
           session_id?: string
           status?: string
+          year_of_study?: number | null
           user_id?: string
         }
         Relationships: [
@@ -545,6 +548,7 @@ export type Database = {
       meeting_attendance_sessions: {
         Row: {
           club_id: string | null
+          club_ids: string[]
           created_at: string
           created_by: string
           id: string
@@ -553,10 +557,12 @@ export type Database = {
           name: string
           notes: string | null
           scope: string
+          target_years: number[]
           venue: string | null
         }
         Insert: {
           club_id?: string | null
+          club_ids?: string[]
           created_at?: string
           created_by: string
           id?: string
@@ -565,10 +571,12 @@ export type Database = {
           name: string
           notes?: string | null
           scope: string
+          target_years?: number[]
           venue?: string | null
         }
         Update: {
           club_id?: string | null
+          club_ids?: string[]
           created_at?: string
           created_by?: string
           id?: string
@@ -577,6 +585,7 @@ export type Database = {
           name?: string
           notes?: string | null
           scope?: string
+          target_years?: number[]
           venue?: string | null
         }
         Relationships: [
@@ -1097,12 +1106,13 @@ export type Database = {
       }
       create_meeting_attendance_session: {
         Args: {
-          p_club_id: string | null
+          p_club_ids: string[]
           p_meeting_date: string
           p_meeting_time: string | null
           p_name: string
           p_notes: string | null
           p_scope: string
+          p_target_years: number[]
           p_venue: string | null
         }
         Returns: string
