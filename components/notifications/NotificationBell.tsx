@@ -194,7 +194,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
       };
   
       void connect();
-            document.addEventListener("visibilitychange", refreshOrReconnect);
+      document.addEventListener("visibilitychange", refreshOrReconnect);
       window.addEventListener("online", refreshOrReconnect);
   
       return () => {
