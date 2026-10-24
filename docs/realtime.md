@@ -6,7 +6,8 @@ Techtronica uses Supabase Postgres Changes as an invalidation signal for server-
 
 `components/RealtimePageRefresh.tsx` subscribes only to tables used by the current route. The main groups are:
 
-- **Site and homepage routes:** clubs, positions, events, team members, alumni, site content, profiles, and memberships.
+- **Homepage:** clubs, positions, events, team members, alumni, site content, profiles, and memberships.
+- **Static content routes:** site content only.
 - **Club routes:** clubs, positions, team members, alumni, events, memberships, and profiles.
 - **Event routes:** events, clubs, registrations, registration members, memberships, and profiles.
 - **Account routes:** the current profile's memberships, club/position details, registrations, and attendance.
