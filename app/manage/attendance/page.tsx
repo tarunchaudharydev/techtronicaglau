@@ -6,6 +6,7 @@ import PendingSubmitButton from "@/components/ui/PendingSubmitButton";
 import ResultMessage from "@/components/manage/ResultMessage";
 import { requireManager } from "@/lib/manage/server";
 import { createMeetingAttendance } from "./actions";
+import AttendanceAudienceFields from "./AttendanceAudienceFields";
 
 export const metadata: Metadata = { title: "Meeting attendance | Techtronica management" };
 
@@ -18,20 +19,24 @@ export default async function MeetingAttendancePage({
   const { supabase } = await requireManager("attendance.manage");
   const [sessionResult, clubsResult] = await Promise.all([
     supabase.from("meeting_attendance_sessions")
-      .select("id, name, meeting_date, meeting_time, venue, scope, club_id, notes, created_at, clubs(name)")
+      .select("id, name, meeting_date, meeting_time, venue, scope, club_id, club_ids, target_years, notes, created_at")
       .order("meeting_date", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(100),
-    supabase.from("clubs").select("id, name, is_active").eq("is_active", true).order("display_order").limit(20),
+    supabase.from("clubs").select("id, name, is_active").order("display_order").limit(100),
   ]);
   const sessions = sessionResult.data ?? [];
   const clubs = clubsResult.data ?? [];
+  const activeClubs = clubs.filter((club) => club.is_active);
+  const clubNames = new Map(clubs.map((club) => [club.id, club.name]));
   const rows = sessions.map((session) => {
-    const club = session.clubs && !Array.isArray(session.clubs) ? session.clubs : null;
+    const selectedClubIds = session.club_ids ?? (session.club_id ? [session.club_id] : []);
+    const selectedClubNames = selectedClubIds.map((clubId) => clubNames.get(clubId) ?? "Club");
     const values = {
       meeting: session.name,
       date: formatDate(session.meeting_date, session.meeting_time),
-      scope: session.scope === "society" ? "Society" : club?.name ?? "Club",
+      scope: session.scope === "society" ? "Society · all profiles" : selectedClubNames.join(", ") || "Club",
+      students: formatTargetYears(session.target_years),
       venue: session.venue ?? "—",
     };
     return {
@@ -43,7 +48,7 @@ export default async function MeetingAttendancePage({
       card: (
         <article className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
           <h3 className="font-semibold">{session.name}</h3>
-          <p className="mt-1 text-sm text-muted">{values.date} · {values.scope} · {values.venue}</p>
+          <p className="mt-1 text-sm text-muted">{values.date} · {values.scope} · {values.students} · {values.venue}</p>
           <Link href={"/manage/attendance/" + session.id} className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800">Open attendance sheet</Link>
         </article>
       ),
@@ -56,14 +61,14 @@ export default async function MeetingAttendancePage({
       <header className="mt-4">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">People & operations</p>
         <h1 className="mt-2 text-3xl font-bold">Meeting attendance</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Create a named attendance sheet for each meeting. A society sheet starts with all active society members; a club sheet starts with all active members of that club. “Not in meeting” means that person is not included in this meeting.</p>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Create a snapshot of every Techtronica profile for society meetings, or active members from one or more selected clubs. Optionally target specific student years; each person’s year is saved with the sheet.</p>
       </header>
 
       <ResultMessage result={result} />
 
       <section id="create-meeting" className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         <h2 className="text-xl font-semibold">Create an attendance sheet</h2>
-        <p className="mt-1 text-sm text-muted">The active member list is added automatically and saved as a snapshot. Mark people as Present, Absent, or Excused when the meeting applies to them; leave everyone else as Not in meeting. Later membership changes do not rewrite this sheet.</p>
+        <p className="mt-1 text-sm text-muted">The matching profiles are saved as a roster snapshot. Later profile, club, or year changes do not rewrite this sheet.</p>
         <form action={createMeetingAttendance} className="mt-5 grid gap-4 sm:grid-cols-2">
           <Field label="Meeting name">
             <input name="name" required minLength={2} maxLength={120} placeholder="Society meeting 1" className={inputClass} />
@@ -74,18 +79,7 @@ export default async function MeetingAttendancePage({
           <Field label="Meeting time (IST, optional)">
             <input name="meeting_time" type="time" className={inputClass} />
           </Field>
-          <Field label="Meeting scope">
-            <select name="scope" defaultValue="society" className={inputClass}>
-              <option value="society">Society meeting</option>
-              <option value="club">Club meeting</option>
-            </select>
-          </Field>
-          <Field label="Club (required for a club meeting)">
-            <select name="club_id" defaultValue="" className={inputClass}>
-              <option value="">Choose a club</option>
-              {clubs.map((club) => <option key={club.id} value={club.id}>{club.name}</option>)}
-            </select>
-          </Field>
+          <div className="sm:col-span-2"><AttendanceAudienceFields clubs={activeClubs.map(({ id, name }) => ({ id, name }))} /></div>
           <Field label="Venue (optional)">
             <input name="venue" maxLength={240} placeholder="Room or online meeting link" className={inputClass} />
           </Field>
@@ -93,7 +87,7 @@ export default async function MeetingAttendancePage({
             <textarea name="notes" maxLength={2000} rows={2} className={inputClass} />
           </Field>
           <div className="flex items-end">
-            <PendingSubmitButton type="submit" className={buttonClass}>Create sheet and add active members</PendingSubmitButton>
+            <PendingSubmitButton type="submit" className={buttonClass}>Create sheet with selected profiles</PendingSubmitButton>
           </div>
         </form>
       </section>
@@ -124,6 +118,10 @@ function formatDate(value: string, time: string | null) {
   return label + (time ? " · " + time.slice(0, 5) : "");
 }
 
+function formatTargetYears(years: number[] | null) {
+  return years?.length ? years.map((year) => `Year ${year}`).join(", ") : "All years";
+}
+
 function todayInIndia() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 }
@@ -131,7 +129,8 @@ function todayInIndia() {
 const columns = [
   { key: "meeting", label: "Meeting" },
   { key: "date", label: "Date" },
-  { key: "scope", label: "Scope" },
+  { key: "scope", label: "Audience" },
+  { key: "students", label: "Student years" },
   { key: "venue", label: "Venue" },
 ];
 

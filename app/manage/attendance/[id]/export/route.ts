@@ -3,7 +3,7 @@ import type { Tables } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
-type AttendanceExportRow = Pick<Tables<"meeting_attendance">, "member_name" | "status" | "marked_at">;
+type AttendanceExportRow = Pick<Tables<"meeting_attendance">, "member_name" | "year_of_study" | "status" | "marked_at">;
 
 export async function GET(
   _request: Request,
@@ -12,17 +12,24 @@ export async function GET(
   const [{ id }, { supabase }] = await Promise.all([params, requireManager("attendance.manage")]);
   const { data: session, error: sessionError } = await supabase
     .from("meeting_attendance_sessions")
-    .select("id, name, meeting_date, meeting_time, venue, scope, club_id, clubs(name)")
+    .select("id, name, meeting_date, meeting_time, venue, scope, club_id, club_ids, target_years")
     .eq("id", id)
     .maybeSingle();
 
   if (sessionError || !session) return new Response("Attendance sheet not found.", { status: 404 });
 
+  const selectedClubIds = session.club_ids ?? (session.club_id ? [session.club_id] : []);
+  const selectedClubsResult = selectedClubIds.length
+    ? await supabase.from("clubs").select("id, name").in("id", selectedClubIds)
+    : { data: [] };
+  const clubNames = new Map((selectedClubsResult.data ?? []).map((club) => [club.id, club.name]));
+  const selectedClubNames = selectedClubIds.map((clubId) => clubNames.get(clubId) ?? "Club").join(", ");
+  const selectedYears = session.target_years?.length ? session.target_years.map((year) => `Year ${year}`).join(", ") : "All years";
   const rows: AttendanceExportRow[] = [];
   const pageSize = 1000;
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await supabase.from("meeting_attendance")
-      .select("member_name, status, marked_at")
+      .select("member_name, year_of_study, status, marked_at")
       .eq("session_id", id)
       .order("member_name", { ascending: true })
       .order("user_id", { ascending: true })
@@ -35,14 +42,13 @@ export async function GET(
   rows.sort((a, b) => Number(a.status === "unmarked") - Number(b.status === "unmarked")
     || a.member_name.localeCompare(b.member_name, "en", { sensitivity: "base" }));
 
-  const club = session.clubs && !Array.isArray(session.clubs) ? session.clubs.name : "";
   const meetingDate = session.meeting_date;
   const meetingTime = session.meeting_time ?? "";
   const output = [
-    ["Meeting", "Date (IST)", "Time (IST)", "Scope", "Club", "Venue", "Member", "Attendance", "Marked at (IST)"],
+    ["Meeting", "Date (IST)", "Time (IST)", "Scope", "Clubs", "Student years", "Venue", "Member", "Year of study", "Attendance", "Marked at (IST)"],
     ...rows.map((row) => [
-      session.name, meetingDate, meetingTime, session.scope, club,
-      session.venue ?? "", row.member_name, formatAttendanceStatus(row.status), formatMarkedAt(row.marked_at),
+      session.name, meetingDate, meetingTime, session.scope, selectedClubNames, selectedYears,
+      session.venue ?? "", row.member_name, row.year_of_study ? `Year ${row.year_of_study}` : "", formatAttendanceStatus(row.status), formatMarkedAt(row.marked_at),
     ]),
   ].map((line) => line.map(quoteCsv).join(",")).join("\r\n");
 
