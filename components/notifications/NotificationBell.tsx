@@ -90,8 +90,36 @@ export default function NotificationBell({ userId }: { userId: string }) {
       let channel: ReturnType<ReturnType<typeof createClient>["channel"]> | null = null;
       let channelStarting = false;
       let retryTimer: number | null = null;
+      let refreshTimer: number | null = null;
+      let refreshInFlight = false;
+      let refreshQueued = false;
       let retryDelayMs = 1_000;
       const supabase = createClient(() => getToken());
+
+      const runQueuedRefresh = () => {
+        if (!active) return;
+        if (refreshInFlight) {
+          refreshQueued = true;
+          return;
+        }
+        refreshInFlight = true;
+        void refresh().finally(() => {
+          refreshInFlight = false;
+          if (refreshQueued) {
+            refreshQueued = false;
+            scheduleRefresh();
+          }
+        });
+      };
+
+      // Collapse bursts such as mark-all-read into one feed and receipt fetch.
+      const scheduleRefresh = () => {
+        if (!active || refreshTimer !== null) return;
+        refreshTimer = window.setTimeout(() => {
+          refreshTimer = null;
+          runQueuedRefresh();
+        }, 150);
+      };
   
       const scheduleRetry = () => {
         if (!active || retryTimer !== null) return;
@@ -120,16 +148,16 @@ export default function NotificationBell({ userId }: { userId: string }) {
           nextChannel = supabase
             .channel("notification-feed-" + userId + "-" + suffix)
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => {
-              if (active) void refresh();
+              if (active) scheduleRefresh();
             })
             .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => {
-              if (active) void refresh();
+              if (active) scheduleRefresh();
             })
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "notification_reads", filter: "user_id=eq." + userId }, () => {
-              if (active) void refresh();
+              if (active) scheduleRefresh();
             })
             .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notification_reads", filter: "user_id=eq." + userId }, () => {
-              if (active) void refresh();
+              if (active) scheduleRefresh();
             });
   
           channel = nextChannel;
@@ -141,7 +169,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
               if (retryTimer !== null) window.clearTimeout(retryTimer);
               retryTimer = null;
               // Reconcile the initial read with the moment the socket joined.
-              void refresh();
+              scheduleRefresh();
               return;
             }
   
@@ -163,7 +191,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
   
       const refreshOrReconnect = () => {
         if (document.visibilityState !== "visible") return;
-        if (channel) void refresh();
+        if (channel) scheduleRefresh();
         else {
           if (retryTimer !== null) window.clearTimeout(retryTimer);
           retryTimer = null;
@@ -172,16 +200,13 @@ export default function NotificationBell({ userId }: { userId: string }) {
       };
   
       void connect();
-      const reconciliationTimer = window.setInterval(() => {
-        if (document.visibilityState === "visible") void refresh();
-      }, 30_000);
-      document.addEventListener("visibilitychange", refreshOrReconnect);
+            document.addEventListener("visibilitychange", refreshOrReconnect);
       window.addEventListener("online", refreshOrReconnect);
   
       return () => {
         active = false;
         if (retryTimer !== null) window.clearTimeout(retryTimer);
-        window.clearInterval(reconciliationTimer);
+        if (refreshTimer !== null) window.clearTimeout(refreshTimer);
         document.removeEventListener("visibilitychange", refreshOrReconnect);
         window.removeEventListener("online", refreshOrReconnect);
         if (channel) void supabase.removeChannel(channel).catch(() => undefined);
