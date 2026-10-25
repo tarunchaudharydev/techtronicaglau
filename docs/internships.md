@@ -4,13 +4,15 @@ The public directory lives at `/internships`. Society Admins manage records at `
 
 ## Listing lifecycle
 
-1. A Society Admin adds an opportunity from its official source. The page accepts structured technical areas, skills, country/city, work arrangement, degree requirements, eligible years, posting date, deadline, application URL, and source URL.
-2. New rows start as `listing_status = unverified` and `verification_status = pending`. They are hidden from the public site by RLS.
-3. A Society Admin checks that the source and application links are official and confirms both links in the review form. Publishing records `verified_at`, sets a seven-day `verification_due_at`, and makes the listing public.
-4. Editing any listing removes it from public search and requires another review. Closing removes it from public search without deleting its history.
-5. A daily scheduled check closes rows whose explicit deadline has passed and marks overdue verification as stale. A temporary feed or network failure must not close a listing.
+1. A Society Admin can add an opportunity manually using its official source, structured technical areas, skills, location, work arrangement, degree requirements, eligible years, posting date, deadline, and HTTPS application/source links.
+2. Manual rows start as `listing_status = unverified` and `verification_status = pending`. They stay hidden from the public site until a Society Admin opens the links, checks the posting, and confirms publication.
+3. The daily importer discovers internship results through Google Jobs via SerpApi for Google, NVIDIA, Microsoft, Amazon, and Netflix. It accepts a result only when the company name matches an approved alias, the title says internship, and the application URL is a job-specific HTTPS page on that employer's exact allowlisted careers domain.
+4. Accepted imported rows are published automatically as `listing_status = open` and `verification_status = verified`. The public listing contains a short directory note rather than copied employer text and links directly to the official employer page. It does not infer degree requirements, eligible years, or a deadline; members must confirm those details on the employer's page.
+5. Each successful daily match refreshes the imported title, location, application link, and last-check timestamp, and sets a 72-hour verification deadline. If a provider run fails, an active listing remains available until that deadline; after it passes, the cron hides the listing as stale. A later successful match can reopen a stale auto-imported listing.
+6. Editing an imported listing through the admin form changes it to a manual listing and requires another review. The importer never reopens a listing an admin closed or rejected, and it never overwrites manual edits.
+7. A daily scheduled check closes rows whose explicit deadline has passed. Closing or rejecting keeps history and is never undone by a later feed result.
 
-The public policy returns only rows that are published, open, verified, have a verification timestamp, and do not have an expired deadline. The detail page repeats the verification date and links to both the source posting and application page. Description text is rendered as plain text; imported HTML is never trusted.
+The public policy returns only rows that are open, verified, have a verification timestamp, and do not have an expired deadline. The detail page explains whether the row passed an automatic source check or a Society Admin review. Description text is rendered as plain text; imported HTML and provider descriptions are never trusted.
 
 ## Search, filters, and pagination
 
@@ -20,32 +22,32 @@ The public page queries through the anonymous RLS-scoped Supabase client. It sel
 
 ## Career-source status
 
-The scheduled importer uses [SerpApi's Google Jobs API](https://serpapi.com/google-jobs-api) as a third-party discovery provider for Google, NVIDIA, Microsoft, Amazon, and Netflix. Google Jobs is a discovery index, not a feed provided by those employers. The importer does not crawl company career pages.
+The scheduled importer uses [SerpApi's Google Jobs API](https://serpapi.com/google-jobs-api) as a discovery provider for Google, NVIDIA, Microsoft, Amazon, and Netflix in India. Google Jobs is a third-party index, not an employer feed; Techtronica does not crawl employer websites or copy provider job descriptions. Every published application link is a direct, job-specific URL on the matching employer's allowlisted careers domain.
 
-The provider is optional. Set `SERPAPI_API_KEY` as a server-only environment variable to enable five searches per daily run (one per employer). If it is unset, the cron still performs expiry and freshness checks. SerpApi currently lists 250 monthly searches on its free plan; five daily searches use at most about 150 in a 30-day month. Check [current plan limits and pricing](https://serpapi.com/pricing) before enabling it because provider pricing and terms can change.
+The provider is optional. Set `SERPAPI_API_KEY` as a server-only environment variable to enable five searches per daily run (one per employer). Check [SerpApi's current plan limits and pricing](https://serpapi.com/pricing) before enabling it because limits and terms can change.
 
-Discovery results are accepted only when the employer name matches and the application link is a job-specific page on an exact allowlisted company career host. Aggregator, search-result, and generic career landing links are rejected. The app stores a short generic review note rather than copying a provider's job description, requirements, or other posting text. Source identifiers and provenance stay in the backend's private schema. Every imported listing is an unpublished `unverified` draft, and existing records are never overwritten or reopened by a later feed result. A Society Admin must open the official links, confirm the opportunity is current, complete eligibility details, and publish it. The public directory links directly to the employer's official posting/application page.
+Discovery results are accepted only when the employer name matches and the application link is a job-specific page on an exact allowlisted company career host. Aggregator, search-result, and generic career landing links are rejected. The importer stores a short generic directory note and structured title/location only. Automated rows publish immediately after these checks, then are refreshed daily and hidden after 72 hours without a successful check. A Society Admin can still add/edit manual listings; those stay unpublished until reviewed. Closed, rejected, and manually edited records are not reopened or overwritten by the importer.
 
 ## Scheduled checks and configuration
 
-`vercel.json` schedules `GET /api/cron/internships` once per day for 02:30 UTC (08:00 India Standard Time). Vercel Cron uses UTC and invokes routes only for production deployments. On Vercel Hobby, the request may arrive at any time during the selected 02:00–02:59 UTC hour (07:30–08:29 IST); the cleanup is idempotent, so it does not depend on the exact minute. The route:
+`vercel.json` schedules `GET /api/cron/internships` once per day for 02:30 UTC (08:00 India Standard Time). Vercel Cron uses UTC and invokes routes only for production deployments. On Vercel Hobby, the request may arrive at any time during the selected 02:00–02:59 UTC hour (07:30–08:29 IST); cleanup is idempotent and the provider search budget remains one request per company per run. The route:
 
 - Requires `Authorization: Bearer $CRON_SECRET` and rejects missing/short secrets.
 - Uses `SUPABASE_SECRET_KEY` (or the legacy `SUPABASE_SERVICE_ROLE_KEY`) only in server-side code.
-- Uses optional `SERPAPI_API_KEY` only on the server for the five daily Google Jobs searches.
+- Uses optional `SERPAPI_API_KEY` only on the server for five daily Google Jobs searches.
 - Claims a five-minute database lease before it starts so duplicate or overlapping requests do not process concurrently.
-- Closes explicitly expired listings, marks overdue checks stale, imports only verified employer-domain links as pending drafts, and writes a run summary and duration to `internship_ingestion_runs`.
-- Isolates provider failures by employer and leaves existing listing content and status unchanged when a search fails or a duplicate posting is seen.
+- Closes explicitly expired listings, refreshes and publishes valid official employer links, and hides auto-imported rows when their 72-hour verification window expires.
+- Preserves records an admin closed, rejected, or edited, and writes each run's counts and duration to `internship_ingestion_runs`.
 
-Set the following Vercel variables for the Production environment after reviewing the backend migration:
+Configure these server-only Vercel variables for the Production environment:
 
 ```dotenv
 SUPABASE_SECRET_KEY=<server-only Supabase secret key>
 CRON_SECRET=<random value with at least 16 characters>
-SERPAPI_API_KEY=<optional SerpApi key for internship discovery>
+SERPAPI_API_KEY=<SerpApi key for internship discovery>
 ```
 
-Use the matching development-project key locally. Do not use `NEXT_PUBLIC_` prefixes, commit these values, or share them in issues. Vercel reports job invocations under Cron Jobs and runtime logs. Cron is not exercised by preview deployments; run it only against an isolated development database with a development secret and provider key.
+Use matching development-project credentials locally. Do not use `NEXT_PUBLIC_` prefixes, commit these values, or share them in issues. Vercel reports job invocations under Cron Jobs and runtime logs. Cron is not exercised by preview deployments; run it only against an isolated development database with a development secret and provider key.
 
 ## Database deployment order
 
