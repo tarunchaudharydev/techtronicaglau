@@ -55,7 +55,7 @@ const companies: CompanySource[] = [
     slug: "google",
     name: "Google",
     aliases: ["google", "google llc", "google india private limited", "google cloud"],
-    officialHosts: ["google.com", "careers.google.com"],
+    officialHosts: ["google.com", "www.google.com", "careers.google.com"],
   },
   {
     slug: "nvidia",
@@ -73,7 +73,7 @@ const companies: CompanySource[] = [
     slug: "amazon",
     name: "Amazon",
     aliases: ["amazon", "amazon web services", "aws", "amazon.com services llc"],
-    officialHosts: ["amazon.jobs"],
+    officialHosts: ["amazon.jobs", "www.amazon.jobs"],
   },
   {
     slug: "netflix",
@@ -111,7 +111,9 @@ function isJobDetailUrl(url: URL, company: CompanySource) {
 
   switch (company.slug) {
     case "google":
-      return /^\/about\/careers\/applications\/jobs\/results\/[^/]+\/?$/.test(path);
+      return url.hostname === "careers.google.com"
+        ? /^\/jobs\/results\/[^/]+\/?$/.test(path)
+        : /^\/about\/careers\/applications\/jobs\/results\/[^/]+\/?$/.test(path);
     case "nvidia":
       return /^\/[^/]+\/job\/[^/]+\/[^/]+\/?$/.test(path);
     case "microsoft":
