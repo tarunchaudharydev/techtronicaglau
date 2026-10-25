@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCronRequest, runInternshipAdapters } from "@/lib/internships/core.mjs";
 import {
@@ -10,6 +11,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const releasedLockTime = "1970-01-01T00:00:00.000Z";
+const verificationWindowMs = 72 * 60 * 60_000;
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -101,12 +103,56 @@ export async function GET(request: Request) {
           p_normalized_hash: listing.normalizedHash,
           p_provenance: listing.provenance,
         });
-        if (error || !data?.[0]) return { status: "failed" as const, code: error?.code ?? "missing_result" };
-        return { status: data[0].inserted ? "inserted" as const : "existing" as const };
+        const importedRecord = data?.[0];
+        if (error || !importedRecord?.internship_id) {
+          return { status: "failed" as const, code: error?.code ?? "missing_result" };
+        }
+
+        const current = await supabase.from("internships")
+          .select("source_name, listing_status, verification_status, published_at")
+          .eq("id", importedRecord.internship_id)
+          .maybeSingle();
+        if (current.error) return { status: "failed" as const, code: current.error.code };
+        if (!current.data
+          || current.data.source_name !== listing.sourceName
+          || current.data.listing_status === "closed"
+          || current.data.verification_status === "rejected") {
+          return { status: "protected" as const };
+        }
+
+        const checkedAt = new Date().toISOString();
+        const wasPublic = current.data.listing_status === "open" && current.data.verification_status === "verified";
+        const synced = await supabase.from("internships").update({
+          company_name: listing.companyName,
+          title: listing.title,
+          description: internshipDescription,
+          country_code: listing.countryCode,
+          city: listing.city,
+          location_label: listing.locationLabel,
+          work_arrangement: listing.workArrangement,
+          application_url: listing.applicationUrl,
+          official_source_url: listing.officialSourceUrl,
+          ...(listing.sourceUpdatedAt ? { posted_at: listing.sourceUpdatedAt } : {}),
+          listing_status: "open",
+          verification_status: "verified",
+          verified_at: checkedAt,
+          verification_due_at: new Date(Date.parse(checkedAt) + verificationWindowMs).toISOString(),
+          published_at: current.data.published_at ?? checkedAt,
+        })
+          .eq("id", importedRecord.internship_id)
+          .eq("source_name", listing.sourceName)
+          .in("listing_status", ["unverified", "open", "stale"])
+          .neq("verification_status", "rejected")
+          .select("id")
+          .maybeSingle();
+        if (synced.error) return { status: "failed" as const, code: synced.error.code };
+        if (!synced.data) return { status: "protected" as const };
+        return { status: wasPublic ? "refreshed" as const : "published" as const };
       }));
 
-      const insertedCount = imported.filter((item) => item.status === "inserted").length;
-      const existingCount = imported.filter((item) => item.status === "existing").length;
+      const publishedCount = imported.filter((item) => item.status === "published").length;
+      const refreshedCount = imported.filter((item) => item.status === "refreshed").length;
+      const protectedCount = imported.filter((item) => item.status === "protected").length;
       const importErrorCount = imported.filter((item) => item.status === "failed").length;
       const skippedCount = imported.filter((item) => item.status === "skipped").length;
       return {
@@ -115,8 +161,9 @@ export async function GET(request: Request) {
         attempt: outcome.attempt,
         provider_results: outcome.result.providerResultCount,
         rejected_non_official_or_non_internship: outcome.result.rejectedCount,
-        imported_as_pending_drafts: insertedCount,
-        already_seen: existingCount,
+        auto_published: publishedCount,
+        refreshed: refreshedCount,
+        protected_existing_records: protectedCount,
         skipped: skippedCount,
         import_errors: importErrorCount,
       };
@@ -129,8 +176,9 @@ export async function GET(request: Request) {
     const results = {
       mode: internshipDiscoveryAdapters.length ? "verification_expiry_and_provider_ingestion" : "verification_and_expiry_only",
       provider: internshipDiscoveryAdapters.length ? "Google Jobs via SerpApi" : "not_configured",
-      import_visibility: "unverified_pending_admin_review",
-      auto_published_count: 0,
+      import_visibility: "published_after_employer_and_official_job_url_checks",
+      auto_published_count: adapters.reduce((total, adapter) => total + ("auto_published" in adapter ? adapter.auto_published ?? 0 : 0), 0),
+      refreshed_count: adapters.reduce((total, adapter) => total + ("refreshed" in adapter ? adapter.refreshed ?? 0 : 0), 0),
       expired_count: expired.count ?? 0,
       stale_count: stale.count ?? 0,
       adapters,
@@ -141,13 +189,28 @@ export async function GET(request: Request) {
       finished_at: new Date().toISOString(),
       duration_ms: duration,
       results,
-      error_summary: status === "failed" || status === "partial" ? "One or more internship provider searches or draft imports failed." : null,
+      error_summary: status === "failed" || status === "partial" ? "One or more internship provider searches or listing updates failed." : null,
     }).eq("id", runId);
     if (updated.error) throw new Error(`Could not finish run record (${updated.error.code})`);
 
-    console.info("Internship scheduled check completed", { status, expired: results.expired_count, stale: results.stale_count, adapters: results.adapters.length });
-    const importedCount = adapters.reduce((total, adapter) => total + ("imported_as_pending_drafts" in adapter ? adapter.imported_as_pending_drafts ?? 0 : 0), 0);
-    response = Response.json({ status, expired: results.expired_count, stale: results.stale_count, adapters: results.adapters.length, imported: importedCount });
+    const importedCount = results.auto_published_count + results.refreshed_count;
+    if (importedCount > 0) revalidatePath("/internships");
+    console.info("Internship scheduled check completed", {
+      status,
+      expired: results.expired_count,
+      stale: results.stale_count,
+      published: results.auto_published_count,
+      refreshed: results.refreshed_count,
+      adapters: results.adapters.length,
+    });
+    response = Response.json({
+      status,
+      expired: results.expired_count,
+      stale: results.stale_count,
+      adapters: results.adapters.length,
+      published: results.auto_published_count,
+      refreshed: results.refreshed_count,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Scheduled check failed";
     if (runId) {

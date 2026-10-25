@@ -28,11 +28,11 @@ The official website and member portal for Techtronica, the Electronics and Comm
 
 ## What it includes
 
-- Public pages for the society, five clubs, events, reviewed internships, team, alumni, projects, research, gallery, and learning resources.
+- Public pages for the society, five clubs, events, internship listings linked to official employer pages, team, alumni, projects, research, gallery, and learning resources.
 - Clerk-managed sign-up, sign-in, email verification, password recovery, device sessions, and profile settings.
 - Club applications and member-only access to private events and team profiles.
 - Society and club roles, positions, scoped permissions, and membership review.
-- Admin workspaces for managing clubs, events, reviewed internship listings, registrations, team members, alumni, roles, positions, memberships, invitations, website content, and contact enquiries.
+- Admin workspaces for managing clubs, events, internship listings and review, registrations, team members, alumni, roles, positions, memberships, invitations, website content, and contact enquiries.
 - Public/private visibility controls for events and team records. New records default to public.
 - Database-backed content and Supabase Storage for website and member media.
 - Installable Progressive Web App behavior using the responsive website.
@@ -87,12 +87,14 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/auth/sign-up
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-# Needed only for the scheduled internship maintenance endpoint:
+# Needed for the scheduled internship discovery and maintenance endpoint:
 SUPABASE_SECRET_KEY=server-only-secret-key-from-your-non-production-project
 CRON_SECRET=random-secret-with-at-least-16-characters
+# Optional provider key for daily internship discovery through Google Jobs:
+SERPAPI_API_KEY=
 ~~~
 
-The test template uses placeholder credentials and a non-production Supabase URL. Replace them with a Clerk development instance and a dedicated non-production Supabase project you control. The frontend repository does not contain the full backend schema; follow the backend repository's local/test setup before expecting data-backed pages to work. The `SUPABASE_SECRET_KEY` and `CRON_SECRET` values are only needed to exercise the scheduled endpoint; keep both server-only. Never connect contributor work to production, commit `.env.local`, put a service-role key in a `NEXT_PUBLIC_` variable, or paste credentials into an issue or pull request.
+The test template uses placeholder credentials and a non-production Supabase URL. Replace them with a Clerk development instance and a dedicated non-production Supabase project you control. The frontend repository does not contain the full backend schema; follow the backend repository's local/test setup before expecting data-backed pages to work. The `SUPABASE_SECRET_KEY` and `CRON_SECRET` values are needed to exercise the scheduled endpoint; `SERPAPI_API_KEY` enables provider discovery. Keep all three server-only. Never connect contributor work to production, commit `.env.local`, put a service-role key in a `NEXT_PUBLIC_` variable, or paste credentials into an issue or pull request.
 
 ### Start the development server
 
@@ -124,7 +126,7 @@ For the first Society Admin, follow the protected bootstrap procedure in the bac
 
 ## Deploy
 
-The production site is hosted on Vercel. Deployment requires the Clerk publishable/secret keys, Supabase URL/publishable key, and correct site URL to be configured for the target environment. The internship maintenance cron also needs `SUPABASE_SECRET_KEY` (server-only) and `CRON_SECRET` set for Production. The cron runs daily at 02:30 UTC and activates only on production deployments. Clerk must allow the deployed origin and Supabase Third-Party Auth must trust the configured Clerk issuer.
+The production site is hosted on Vercel. Deployment requires the Clerk publishable/secret keys, Supabase URL/publishable key, and correct site URL to be configured for the target environment. Automatic internship discovery also needs `SUPABASE_SECRET_KEY` (server-only), `CRON_SECRET`, and `SERPAPI_API_KEY` set for Production. The daily importer discovers roles through Google Jobs and publishes only employer-matched results with direct, allowlisted official career links. The cron runs daily at 02:30 UTC and activates only on production deployments. Clerk must allow the deployed origin and Supabase Third-Party Auth must trust the configured Clerk issuer.
 
 Use the checklist in [Operations and deployment](docs/operations.md). Preview deployments are not production releases. Verify public/private visibility and representative role scopes before promoting changes.
 
