@@ -1280,6 +1280,26 @@ export type Database = {
         }
         Returns: string
       }
+      import_internship_source_listing: {
+        Args: {
+          p_application_url: string
+          p_city: string | null
+          p_company_id: string
+          p_country_code: string | null
+          p_description: string
+          p_location_label: string | null
+          p_normalized_hash: string
+          p_official_source_url: string
+          p_provenance: Json
+          p_source_identifier: string
+          p_source_name: string
+          p_source_updated_at: string | null
+          p_source_url: string
+          p_title: string
+          p_work_arrangement: string
+        }
+        Returns: { internship_id: string; inserted: boolean }[]
+      }
     }
     Enums: {
       [_ in never]: never

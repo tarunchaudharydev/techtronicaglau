@@ -27,6 +27,16 @@ function parseOptionalIstDate(formData: FormData, field: string) {
   return { value, valid: value !== null };
 }
 
+function isMissingInternshipSchema(code?: string) {
+  return ["42P01", "PGRST205", "PGRST204", "PGRST202"].includes(code ?? "");
+}
+
+function saveFailureResult(code?: string) {
+  if (isMissingInternshipSchema(code)) return "database_unavailable";
+  if (code === "42501") return "database_access_denied";
+  return "error";
+}
+
 async function saveListing(formData: FormData, existingId?: string) {
   const path = "/manage/internships";
   const { supabase } = await requireManager("internships.manage");
@@ -48,11 +58,29 @@ async function saveListing(formData: FormData, existingId?: string) {
   const deadline = parseOptionalIstDate(formData, "deadline");
   const postedAt = parseOptionalIstDate(formData, "posted_at");
   const slug = name ? slugify(name) : "";
+  const workArrangement = internshipArrangements.find((value) => value === arrangement);
 
-  if (!name || !slug || !title || !description || !applicationUrl || !sourceUrl || !careersUrl
-      || !isSafeHttpsUrl(applicationUrl) || !isSafeHttpsUrl(sourceUrl) || !isSafeHttpsUrl(careersUrl)
-      || skillsInput === null || !internshipArrangements.includes(arrangement ?? "") || !deadline.valid || !postedAt.valid
-      || (countryRaw && !/^[A-Za-z]{2}$/.test(countryRaw))) {
+  const invalidFields = [
+    ...(!name || !slug ? ["company_name"] : []),
+    ...(!careersUrl || !isSafeHttpsUrl(careersUrl) ? ["company_careers_url"] : []),
+    ...(!title ? ["title"] : []),
+    ...(!description ? ["description"] : []),
+    ...(!applicationUrl || !isSafeHttpsUrl(applicationUrl) ? ["application_url"] : []),
+    ...(!sourceUrl || !isSafeHttpsUrl(sourceUrl) ? ["official_source_url"] : []),
+    ...(skillsInput === null ? ["skills"] : []),
+    ...(!workArrangement ? ["work_arrangement"] : []),
+    ...(!deadline.valid ? ["deadline"] : []),
+    ...(!postedAt.valid ? ["posted_at"] : []),
+    ...(countryRaw && !/^[A-Za-z]{2}$/.test(countryRaw) ? ["country_code"] : []),
+  ];
+
+  if (invalidFields.length) {
+    const fields = encodeURIComponent(invalidFields.join(","));
+    redirect(`${path}?result=invalid&fields=${fields}`);
+  }
+
+  // Keep the parsed values explicitly narrowed for the Supabase generated types.
+  if (!name || !slug || !careersUrl || !title || !description || !applicationUrl || !sourceUrl || skillsInput === null || !workArrangement) {
     redirect(`${path}?result=invalid`);
   }
 
@@ -60,7 +88,7 @@ async function saveListing(formData: FormData, existingId?: string) {
   const company = await supabase.from("internship_companies").upsert(companyPayload, { onConflict: "slug" }).select("id").single();
   if (company.error || !company.data) {
     console.error("Internship company save failed", { code: company.error?.code });
-    redirect(`${path}?result=error`);
+    redirect(`${path}?result=${saveFailureResult(company.error?.code)}`);
   }
 
   const listingPayload = {
@@ -73,7 +101,7 @@ async function saveListing(formData: FormData, existingId?: string) {
     country_code: countryRaw ? countryRaw.toUpperCase() : null,
     city: city || null,
     location_label: locationLabel || null,
-    work_arrangement: arrangement ?? "unknown",
+    work_arrangement: workArrangement,
     degree_requirements: degrees,
     eligible_years: years,
     application_url: applicationUrl,
@@ -93,7 +121,7 @@ async function saveListing(formData: FormData, existingId?: string) {
     : await supabase.from("internships").insert(listingPayload).select("id").single();
   if (result.error || !result.data) {
     console.error("Internship listing save failed", { code: result.error?.code });
-    redirect(`${path}?result=error`);
+    redirect(`${path}?result=${saveFailureResult(result.error?.code)}`);
   }
 
   revalidatePath("/internships");

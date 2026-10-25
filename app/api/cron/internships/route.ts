@@ -1,6 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCronRequest, runInternshipAdapters } from "@/lib/internships/core.mjs";
-import { authorizedInternshipAdapters } from "@/lib/internships/sources";
+import {
+  internshipDiscoveryAdapters,
+  internshipDescription,
+  internshipSourceCompanies,
+} from "@/lib/internships/sources";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -38,7 +42,10 @@ export async function GET(request: Request) {
   try {
     const created = await supabase.from("internship_ingestion_runs").insert({
       status: "running",
-      results: { mode: "verification_and_expiry", adapters_configured: authorizedInternshipAdapters.length },
+      results: {
+        mode: internshipDiscoveryAdapters.length ? "verification_expiry_and_provider_ingestion" : "verification_and_expiry_only",
+        adapters_configured: internshipDiscoveryAdapters.length,
+      },
     }).select("id").single();
     if (created.error || !created.data) throw new Error(`Could not create run record (${created.error?.code ?? "missing row"})`);
     runId = created.data.id;
@@ -58,31 +65,89 @@ export async function GET(request: Request) {
       .lte("verification_due_at", now.toISOString());
     if (stale.error) throw new Error(`Could not mark stale listings (${stale.error.code})`);
 
-    const adapterResult = await runInternshipAdapters(authorizedInternshipAdapters, { maxAttempts: 2 });
+    // Keep the daily provider request budget predictable: one request per
+    // company per run, with the next scheduled run serving as the retry.
+    const adapterResult = await runInternshipAdapters(internshipDiscoveryAdapters, { maxAttempts: 1 });
+    const companyRows = internshipDiscoveryAdapters.length
+      ? await supabase.from("internship_companies").select("id, slug").eq("is_active", true)
+        .in("slug", internshipSourceCompanies.map((company) => company.slug))
+      : { data: [], error: null };
+    if (companyRows.error) throw new Error(`Could not load internship companies (${companyRows.error.code})`);
+    const companyIds = new Map((companyRows.data ?? []).map((company) => [company.slug, company.id]));
+
+    const adapters = await Promise.all(adapterResult.outcomes.map(async (outcome) => {
+      if (outcome.status !== "completed") {
+        return { source: outcome.source, status: outcome.status, error: outcome.error };
+      }
+
+      const imported = await Promise.all(outcome.result.listings.map(async (listing) => {
+        const companyId = companyIds.get(listing.companySlug);
+        if (!companyId) return { status: "skipped" as const };
+
+        const { data, error } = await supabase.rpc("import_internship_source_listing", {
+          p_company_id: companyId,
+          p_title: listing.title,
+          p_description: internshipDescription,
+          p_country_code: listing.countryCode,
+          p_city: listing.city,
+          p_location_label: listing.locationLabel,
+          p_work_arrangement: listing.workArrangement,
+          p_application_url: listing.applicationUrl,
+          p_official_source_url: listing.officialSourceUrl,
+          p_source_name: listing.sourceName,
+          p_source_identifier: listing.sourceIdentifier,
+          p_source_url: listing.sourceUrl,
+          p_source_updated_at: listing.sourceUpdatedAt,
+          p_normalized_hash: listing.normalizedHash,
+          p_provenance: listing.provenance,
+        });
+        if (error || !data?.[0]) return { status: "failed" as const, code: error?.code ?? "missing_result" };
+        return { status: data[0].inserted ? "inserted" as const : "existing" as const };
+      }));
+
+      const insertedCount = imported.filter((item) => item.status === "inserted").length;
+      const existingCount = imported.filter((item) => item.status === "existing").length;
+      const importErrorCount = imported.filter((item) => item.status === "failed").length;
+      const skippedCount = imported.filter((item) => item.status === "skipped").length;
+      return {
+        source: outcome.source,
+        status: importErrorCount ? "partial" as const : "completed" as const,
+        attempt: outcome.attempt,
+        provider_results: outcome.result.providerResultCount,
+        rejected_non_official_or_non_internship: outcome.result.rejectedCount,
+        imported_as_pending_drafts: insertedCount,
+        already_seen: existingCount,
+        skipped: skippedCount,
+        import_errors: importErrorCount,
+      };
+    }));
+    const hasAdapterFailures = adapters.some((adapter) => adapter.status !== "completed");
+    const hasCompletedAdapter = adapters.some((adapter) => adapter.status === "completed" || adapter.status === "partial");
+    const status = hasAdapterFailures
+      ? hasCompletedAdapter ? "partial" : "failed"
+      : "completed";
     const results = {
-      mode: authorizedInternshipAdapters.length ? "verification_expiry_and_authorized_sources" : "verification_and_expiry_only",
+      mode: internshipDiscoveryAdapters.length ? "verification_expiry_and_provider_ingestion" : "verification_and_expiry_only",
+      provider: internshipDiscoveryAdapters.length ? "Google Jobs via SerpApi" : "not_configured",
+      import_visibility: "unverified_pending_admin_review",
+      auto_published_count: 0,
       expired_count: expired.count ?? 0,
       stale_count: stale.count ?? 0,
-      adapters: adapterResult.outcomes.map((outcome) => ({
-        source: outcome.source,
-        status: outcome.status,
-        ...(outcome.status === "completed" ? { attempt: outcome.attempt } : { error: outcome.error }),
-      })),
-      sources_needing_authorization: ["Google", "NVIDIA", "Microsoft", "Amazon", "Netflix"],
+      adapters,
     };
-    const status = adapterResult.status === "partial" ? "partial" : adapterResult.status === "failed" ? "failed" : "completed";
     const duration = Date.now() - startedAt;
     const updated = await supabase.from("internship_ingestion_runs").update({
       status,
       finished_at: new Date().toISOString(),
       duration_ms: duration,
       results,
-      error_summary: status === "failed" || status === "partial" ? "One or more authorized source adapters failed." : null,
+      error_summary: status === "failed" || status === "partial" ? "One or more internship provider searches or draft imports failed." : null,
     }).eq("id", runId);
     if (updated.error) throw new Error(`Could not finish run record (${updated.error.code})`);
 
     console.info("Internship scheduled check completed", { status, expired: results.expired_count, stale: results.stale_count, adapters: results.adapters.length });
-    response = Response.json({ status, expired: results.expired_count, stale: results.stale_count, adapters: results.adapters.length });
+    const importedCount = adapters.reduce((total, adapter) => total + ("imported_as_pending_drafts" in adapter ? adapter.imported_as_pending_drafts ?? 0 : 0), 0);
+    response = Response.json({ status, expired: results.expired_count, stale: results.stale_count, adapters: results.adapters.length, imported: importedCount });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Scheduled check failed";
     if (runId) {
