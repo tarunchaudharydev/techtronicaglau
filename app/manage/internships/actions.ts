@@ -58,6 +58,7 @@ async function saveListing(formData: FormData, existingId?: string) {
   const deadline = parseOptionalIstDate(formData, "deadline");
   const postedAt = parseOptionalIstDate(formData, "posted_at");
   const slug = name ? slugify(name) : "";
+  const workArrangement = internshipArrangements.find((value) => value === arrangement);
 
   const invalidFields = [
     ...(!name || !slug ? ["company_name"] : []),
@@ -67,7 +68,7 @@ async function saveListing(formData: FormData, existingId?: string) {
     ...(!applicationUrl || !isSafeHttpsUrl(applicationUrl) ? ["application_url"] : []),
     ...(!sourceUrl || !isSafeHttpsUrl(sourceUrl) ? ["official_source_url"] : []),
     ...(skillsInput === null ? ["skills"] : []),
-    ...(!internshipArrangements.includes(arrangement ?? "") ? ["work_arrangement"] : []),
+    ...(!workArrangement ? ["work_arrangement"] : []),
     ...(!deadline.valid ? ["deadline"] : []),
     ...(!postedAt.valid ? ["posted_at"] : []),
     ...(countryRaw && !/^[A-Za-z]{2}$/.test(countryRaw) ? ["country_code"] : []),
@@ -76,6 +77,11 @@ async function saveListing(formData: FormData, existingId?: string) {
   if (invalidFields.length) {
     const fields = encodeURIComponent(invalidFields.join(","));
     redirect(`${path}?result=invalid&fields=${fields}`);
+  }
+
+  // Keep the parsed values explicitly narrowed for the Supabase generated types.
+  if (!name || !slug || !careersUrl || !title || !description || !applicationUrl || !sourceUrl || skillsInput === null || !workArrangement) {
+    redirect(`${path}?result=invalid`);
   }
 
   const companyPayload = { name, slug, careers_url: careersUrl, is_active: true };
@@ -95,7 +101,7 @@ async function saveListing(formData: FormData, existingId?: string) {
     country_code: countryRaw ? countryRaw.toUpperCase() : null,
     city: city || null,
     location_label: locationLabel || null,
-    work_arrangement: arrangement ?? "unknown",
+    work_arrangement: workArrangement,
     degree_requirements: degrees,
     eligible_years: years,
     application_url: applicationUrl,
