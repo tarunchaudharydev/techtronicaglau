@@ -48,7 +48,7 @@ const providerName = "serpapi-google-jobs" as const;
 const fetchTimeoutMs = 12_000;
 const maxListingsPerCompany = 5;
 const internshipDescription =
-  "Imported from Google Jobs for review. Check the official company posting for full requirements, eligibility, dates, and application details before publishing.";
+  "Automatically discovered via Google Jobs. This is a short directory note, not an employer-written description. Check the official company posting for eligibility, deadlines, availability, and application details.";
 
 const companies: CompanySource[] = [
   {
