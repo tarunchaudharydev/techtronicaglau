@@ -18,6 +18,7 @@ const navLinks = [
   { href: "/clubs", label: "Clubs", icon: Users },
   { href: "/how-to-join", label: "How to join", icon: UserPlus },
   { href: "/events", label: "Events", icon: CalendarDays },
+  { href: "/internships", label: "Internships", icon: BriefcaseBusiness },
   { href: "/projects", label: "Projects", icon: Code2 },
   { href: "/research", label: "Research", icon: Sparkles },
   { href: "/library", label: "Library", icon: Library, badge: "NEW" },
@@ -35,7 +36,6 @@ const clubItems = [
 ];
 
 const comingSoonItems = [
-  { label: "Internships", icon: BriefcaseBusiness },
   { label: "Mentorship", icon: GraduationCap },
   { label: "Member activity", icon: Activity },
 ];
@@ -270,7 +270,7 @@ export default function Navbar() {
       {menuOpen && <div className="fixed inset-0 z-[70] bg-slate-950/45 backdrop-blur-[2px] lg:hidden"><div id="mobile-navigation" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Navigation menu" className="absolute inset-y-0 left-0 flex w-[min(88vw,350px)] flex-col overflow-y-auto bg-white p-4 shadow-2xl dark:bg-slate-950">
         <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800"><Link href="/" onClick={() => setMenuOpen(false)} className="relative h-11 w-36"><Image src="/logo.png" alt="Techtronica" fill sizes="144px" className="object-contain object-left" /></Link><button type="button" onClick={() => setMenuOpen(false)} aria-label="Close navigation menu" className="grid size-10 place-items-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100"><X className="size-5" /></button></div>
         <nav aria-label="Mobile navigation" className="flex-1 space-y-1">{navLinks.map((link) => { const Icon = link.icon; const active = isActive(link.href); return <div key={link.href}><Link href={link.href} onClick={() => setMenuOpen(false)} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium ${active ? "bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200" : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"}`}><Icon aria-hidden="true" className="size-5 text-sky-600" />{link.label}{link.badge && <span className="ml-auto rounded-full bg-sky-100 px-2 py-0.5 text-[9px] font-bold text-sky-700">{link.badge}</span>}</Link>{link.href === "/clubs" && <div className="ml-8 mt-1 grid grid-cols-2 gap-1">{clubItems.map((club) => <Link key={club.href} href={club.href} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2 text-xs text-slate-500 hover:bg-sky-50 hover:text-sky-800 dark:hover:bg-slate-900">{club.label}</Link>)}</div>}</div>; })}</nav>
-        <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800"><p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.16em] text-slate-400">Coming soon</p><div className="mb-4 grid grid-cols-3 gap-2">{comingSoonItems.map((item) => { const Icon = item.icon; return <div key={item.label} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 text-center text-[10px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900"><Icon className="size-4 text-slate-500" /><span>{item.label}</span><span className="animate-pulse text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">Soon</span></div>; })}</div>
+        <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800"><p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.16em] text-slate-400">Coming soon</p><div className="mb-4 grid grid-cols-2 gap-2">{comingSoonItems.map((item) => { const Icon = item.icon; return <div key={item.label} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 text-center text-[10px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900"><Icon className="size-4 text-slate-500" /><span>{item.label}</span><span className="animate-pulse text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">Soon</span></div>; })}</div>
           {account.status === "signed-in" ? <>
             <Link href="/account" onClick={() => setMenuOpen(false)} className="mb-3 flex min-h-14 items-center gap-3 rounded-xl bg-sky-50 p-3 dark:bg-slate-900"><Avatar account={account} size="size-11" /><span className="min-w-0 flex-1"><span className="block text-[11px] text-slate-500">{account.canManage ? "Society manager" : "Member portal"}</span><span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">{account.name}</span></span><UserRound className="size-4 text-sky-700" /></Link>
             <nav aria-label="Account shortcuts" className="mb-3 grid grid-cols-2 gap-1">

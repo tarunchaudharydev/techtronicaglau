@@ -14,6 +14,169 @@ export type Database = {
   }
   public: {
     Tables: {
+      internship_companies: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          careers_url: string
+          logo_url: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          careers_url: string
+          logo_url?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          careers_url?: string
+          logo_url?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      internships: {
+        Row: {
+          id: string
+          company_id: string
+          company_name: string
+          title: string
+          description: string
+          technical_categories: string[]
+          skills: string[]
+          country_code: string | null
+          city: string | null
+          city_search: string | null
+          location_label: string | null
+          work_arrangement: string
+          degree_requirements: string[]
+          eligible_years: number[]
+          application_url: string
+          official_source_url: string
+          source_name: string
+          posted_at: string | null
+          deadline: string | null
+          listing_status: string
+          verification_status: string
+          verified_at: string | null
+          verification_due_at: string | null
+          published_at: string | null
+          created_at: string
+          updated_at: string
+          search_document: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          company_name: string
+          title: string
+          description: string
+          technical_categories?: string[]
+          skills?: string[]
+          country_code?: string | null
+          city?: string | null
+          location_label?: string | null
+          work_arrangement?: string
+          degree_requirements?: string[]
+          eligible_years?: number[]
+          application_url: string
+          official_source_url: string
+          source_name?: string
+          posted_at?: string | null
+          deadline?: string | null
+          listing_status?: string
+          verification_status?: string
+          verified_at?: string | null
+          verification_due_at?: string | null
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          company_name?: string
+          title?: string
+          description?: string
+          technical_categories?: string[]
+          skills?: string[]
+          country_code?: string | null
+          city?: string | null
+          location_label?: string | null
+          work_arrangement?: string
+          degree_requirements?: string[]
+          eligible_years?: number[]
+          application_url?: string
+          official_source_url?: string
+          source_name?: string
+          posted_at?: string | null
+          deadline?: string | null
+          listing_status?: string
+          verification_status?: string
+          verified_at?: string | null
+          verification_due_at?: string | null
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internships_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "internship_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internship_ingestion_runs: {
+        Row: {
+          id: string
+          status: string
+          started_at: string
+          finished_at: string | null
+          duration_ms: number | null
+          results: Json
+          error_summary: string | null
+        }
+        Insert: {
+          id?: string
+          status: string
+          started_at?: string
+          finished_at?: string | null
+          duration_ms?: number | null
+          results?: Json
+          error_summary?: string | null
+        }
+        Update: {
+          id?: string
+          status?: string
+          started_at?: string
+          finished_at?: string | null
+          duration_ms?: number | null
+          results?: Json
+          error_summary?: string | null
+        }
+        Relationships: []
+      }
+      internship_ingestion_locks: {
+        Row: { id: number; lock_token: string | null; locked_until: string }
+        Insert: { id?: number; lock_token?: string | null; locked_until?: string }
+        Update: { id?: number; lock_token?: string | null; locked_until?: string }
+        Relationships: []
+      }
       alumni: {
         Row: {
           achievements: string[]
@@ -1116,6 +1279,26 @@ export type Database = {
           p_venue: string | null
         }
         Returns: string
+      }
+      import_internship_source_listing: {
+        Args: {
+          p_application_url: string
+          p_city: string | null
+          p_company_id: string
+          p_country_code: string | null
+          p_description: string
+          p_location_label: string | null
+          p_normalized_hash: string
+          p_official_source_url: string
+          p_provenance: Json
+          p_source_identifier: string
+          p_source_name: string
+          p_source_updated_at: string | null
+          p_source_url: string
+          p_title: string
+          p_work_arrangement: string
+        }
+        Returns: { internship_id: string; inserted: boolean }[]
       }
     }
     Enums: {

@@ -22,7 +22,7 @@ npm test
 npm run audit
 ```
 
-The unit tests use Node's built-in test runner. They cover India-time birthday date boundaries, the non-production environment template, and streamed JSON byte limits including absent or understated `Content-Length`. CI blocks on type checking, tests, and `npm audit --audit-level=moderate`; lint remains non-blocking while its existing baseline is cleaned up. Avoid introducing new lint errors.
+The unit tests use Node's built-in test runner. They cover India-time birthday date boundaries, internship filter/cursor validation, URL safety, expiry transitions, cron authentication, source adapter failure isolation, the non-production environment template, and streamed JSON byte limits including absent or understated `Content-Length`. CI blocks on type checking, tests, and `npm audit --audit-level=moderate`; lint remains non-blocking while its existing baseline is cleaned up. Avoid introducing new lint errors.
 
 The Next.js production build needs provider environment values and is not run in the secret-free GitHub Actions workflow. To check it locally, first configure the isolated environment below, then run:
 
@@ -60,5 +60,8 @@ The frontend repository does not contain the complete Supabase project configura
 - Create and edit a test event; confirm public/private visibility and registration behavior.
 - Confirm notification and member data are scoped to the test account.
 - Check one narrow mobile viewport and keyboard navigation for every UI change.
+- Search the internship directory, combine filters, follow the next-page cursor, and open an official application link.
+- In an isolated test database, create an internship draft, confirm it is absent publicly, verify and publish it as a Society Admin, edit it and confirm it returns to unverified, then close it and confirm it disappears.
+- Call the internship Cron route without `CRON_SECRET` and confirm it returns 401. In the isolated test project, call it with a configured secret and confirm expiry/staleness updates and the run log.
 
 Record the environment, steps, expected/actual behavior, and checks in the pull request. Redact tokens, emails, user IDs, and member data from logs and screenshots.

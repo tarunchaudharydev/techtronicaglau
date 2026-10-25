@@ -5,7 +5,7 @@
 - Supabase publishable key: identifies the project; it is public and safe for browser use.
 - Clerk session: establishes identity. Supabase Third-Party Auth validates the Clerk-signed token before Postgres uses it.
 - Application profile and permission records: Supabase stores the stable UUID, society/club roles, and scope. These database records are the authority for management access.
-- Service credentials: Clerk's secret key is server-only and used for invitations/session administration. The frontend does not use a Supabase service-role key.
+- Service credentials: Clerk's secret key is server-only and used for invitations/session administration. Browser and user-scoped application clients do not use a Supabase service-role/secret key. The scheduled internship maintenance route is the only feature that uses the server-only `SUPABASE_SECRET_KEY`, and it also requires `CRON_SECRET`.
 
 The website uses request-scoped server and browser clients. Authenticated database requests carry the current Clerk session token and remain limited by RLS.
 
