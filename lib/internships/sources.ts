@@ -113,7 +113,7 @@ function isJobDetailUrl(url: URL, company: CompanySource) {
     case "google":
       return /^\/about\/careers\/applications\/jobs\/results\/[^/]+\/?$/.test(path);
     case "nvidia":
-      return /^\/[^/]+\/job\/[^/]+\/?$/.test(path);
+      return /^\/[^/]+\/job\/[^/]+\/[^/]+\/?$/.test(path);
     case "microsoft":
       return hasIdQuery || /^\/(?:careers\/)?job\/[^/]+\/?$/.test(path);
     case "amazon":
