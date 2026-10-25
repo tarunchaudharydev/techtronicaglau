@@ -4,9 +4,9 @@ import { getHomepageCounts, getPublicClubs, getPublicSiteContent } from "@/lib/d
 import { mapClub } from "@/lib/config/clubs";
 
 export const metadata: Metadata = {
-  title: "Technical Clubs, Projects & Events at GLA University",
+  title: "Techtronica",
   description:
-    "Meet Techtronica, GLA University Mathura’s student technical society. Explore five student-led clubs, engineering projects, workshops, and upcoming campus events.",
+    "Made with ❤️ in Techtronica",
   alternates: { canonical: "/" },
 };
 
