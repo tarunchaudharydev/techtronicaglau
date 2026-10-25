@@ -5,7 +5,7 @@ import { parseInternshipFilters } from "@/lib/internships/core.mjs";
 
 export const metadata: Metadata = {
   title: "Internships and career opportunities | Techtronica",
-  description: "Explore reviewed technology internships and career opportunities for students in the Techtronica community.",
+  description: "Browse technology internships discovered from major employers, with direct links to official company career pages.",
   alternates: { canonical: "/internships" },
 };
 
