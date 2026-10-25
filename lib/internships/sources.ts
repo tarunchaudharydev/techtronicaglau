@@ -38,7 +38,7 @@ export type InternshipImportBatch = {
   listings: InternshipImportCandidate[];
 };
 
-export type AuthorizedInternshipAdapter = {
+export type InternshipSourceAdapter = {
   name: string;
   companySlug: CompanySource["slug"];
   run: () => Promise<InternshipImportBatch>;
@@ -129,7 +129,10 @@ function isOfficialCompanyJobUrl(rawUrl: unknown, company: CompanySource): rawUr
     const url = new URL(rawUrl);
     const hostname = url.hostname.toLocaleLowerCase("en-US");
     const isOfficialHost = company.officialHosts.includes(hostname);
-    return isOfficialHost && isJobDetailUrl(url, company);
+    const hasRedirectParameter = ["redirect", "redirect_url", "return_url", "next", "target", "continue"].some((key) =>
+      Boolean(url.searchParams.get(key)?.trim()),
+    );
+    return isOfficialHost && !hasRedirectParameter && isJobDetailUrl(url, company);
   } catch {
     return false;
   }
@@ -279,7 +282,7 @@ const apiKey = process.env.SERPAPI_API_KEY?.trim();
  * Google Jobs is the discovery provider. Every saved record must have a
  * job-specific apply URL on the employer's allowlisted official domains.
  */
-export const authorizedInternshipAdapters: AuthorizedInternshipAdapter[] = apiKey
+export const internshipDiscoveryAdapters: InternshipSourceAdapter[] = apiKey
   ? companies.map((company) => ({
       name: `${company.name} · Google Jobs via SerpApi`,
       companySlug: company.slug,

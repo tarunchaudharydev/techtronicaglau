@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCronRequest, runInternshipAdapters } from "@/lib/internships/core.mjs";
 import {
-  authorizedInternshipAdapters,
+  internshipDiscoveryAdapters,
   internshipDescription,
   internshipSourceCompanies,
 } from "@/lib/internships/sources";
@@ -43,8 +43,8 @@ export async function GET(request: Request) {
     const created = await supabase.from("internship_ingestion_runs").insert({
       status: "running",
       results: {
-        mode: authorizedInternshipAdapters.length ? "verification_expiry_and_provider_ingestion" : "verification_and_expiry_only",
-        adapters_configured: authorizedInternshipAdapters.length,
+        mode: internshipDiscoveryAdapters.length ? "verification_expiry_and_provider_ingestion" : "verification_and_expiry_only",
+        adapters_configured: internshipDiscoveryAdapters.length,
       },
     }).select("id").single();
     if (created.error || !created.data) throw new Error(`Could not create run record (${created.error?.code ?? "missing row"})`);
@@ -67,8 +67,8 @@ export async function GET(request: Request) {
 
     // Keep the daily provider request budget predictable: one request per
     // company per run, with the next scheduled run serving as the retry.
-    const adapterResult = await runInternshipAdapters(authorizedInternshipAdapters, { maxAttempts: 1 });
-    const companyRows = authorizedInternshipAdapters.length
+    const adapterResult = await runInternshipAdapters(internshipDiscoveryAdapters, { maxAttempts: 1 });
+    const companyRows = internshipDiscoveryAdapters.length
       ? await supabase.from("internship_companies").select("id, slug").eq("is_active", true)
         .in("slug", internshipSourceCompanies.map((company) => company.slug))
       : { data: [], error: null };
@@ -127,8 +127,8 @@ export async function GET(request: Request) {
       ? hasCompletedAdapter ? "partial" : "failed"
       : "completed";
     const results = {
-      mode: authorizedInternshipAdapters.length ? "verification_expiry_and_provider_ingestion" : "verification_and_expiry_only",
-      provider: authorizedInternshipAdapters.length ? "Google Jobs via SerpApi" : "not_configured",
+      mode: internshipDiscoveryAdapters.length ? "verification_expiry_and_provider_ingestion" : "verification_and_expiry_only",
+      provider: internshipDiscoveryAdapters.length ? "Google Jobs via SerpApi" : "not_configured",
       import_visibility: "unverified_pending_admin_review",
       auto_published_count: 0,
       expired_count: expired.count ?? 0,
