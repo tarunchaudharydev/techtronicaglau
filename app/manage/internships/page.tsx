@@ -16,8 +16,24 @@ const resultMessages: Record<string, string> = {
   closed: "Listing closed and removed from public search.",
   verification_required: "Confirm that you checked both official links before publishing.",
   expired: "This deadline has passed. Update it from the official source before publishing.",
-  invalid: "Check the required fields, supported values, HTTPS links, and dates.",
+  invalid: "Some fields need attention before this listing can be saved.",
+  database_unavailable: "The internship database tables are not installed in this Supabase project. Apply the backend internship migration used by this website, then refresh before saving listings.",
+  database_access_denied: "Supabase denied this save. Confirm that your Society Admin role has access to the internship tables and try again.",
   error: "We could not save this change. Check database access and try again.",
+};
+
+const invalidFieldLabels: Record<string, string> = {
+  company_name: "company name",
+  company_careers_url: "company careers page URL (HTTPS)",
+  title: "internship title",
+  description: "description",
+  application_url: "official application URL (HTTPS)",
+  official_source_url: "official source URL (HTTPS)",
+  skills: "skills field length",
+  work_arrangement: "work arrangement",
+  deadline: "application deadline",
+  posted_at: "posting date",
+  country_code: "two-letter country code",
 };
 
 function dateLabel(value: string | null, includeTime = false) {
@@ -59,7 +75,7 @@ function LoadIssue({ area, issue }: { area: "listings" | "run history"; issue: N
   </p>;
 }
 
-export default async function ManageInternshipsPage({ searchParams }: { searchParams: Promise<{ result?: string }> }) {
+export default async function ManageInternshipsPage({ searchParams }: { searchParams: Promise<{ result?: string; fields?: string }> }) {
   const [{ supabase }, params] = await Promise.all([requireManager("internships.manage"), searchParams]);
   const providerConfigured = Boolean(process.env.SERPAPI_API_KEY?.trim());
   const [listingsResult, runsResult] = await Promise.all([
@@ -76,7 +92,9 @@ export default async function ManageInternshipsPage({ searchParams }: { searchPa
       <Link href="/internships" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"><ArrowUpRight aria-hidden="true" className="size-4" />Public directory</Link>
     </header>
 
-    {params.result && resultMessages[params.result] && <p role="status" className={`mt-5 rounded-xl border p-4 text-sm ${["error", "invalid", "verification_required", "expired"].includes(params.result) ? "border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-100" : "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100"}`}>{resultMessages[params.result]}</p>}
+    {!listingsIssue && params.result && resultMessages[params.result] && <p role="status" className={`mt-5 rounded-xl border p-4 text-sm ${["error", "invalid", "database_unavailable", "database_access_denied", "verification_required", "expired"].includes(params.result) ? "border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-100" : "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100"}`}>
+      {params.result === "invalid" ? <>{resultMessages.invalid} {params.fields?.split(",").map((field) => invalidFieldLabels[field]).filter(Boolean).join(", ") || "Review the required fields, HTTPS links, supported values, and dates."}.</> : resultMessages[params.result]}
+    </p>}
     {listingsIssue && <div className="mt-5"><LoadIssue area="listings" issue={listingsIssue} /></div>}
     {runsIssue && <div className="mt-5"><LoadIssue area="run history" issue={runsIssue} /></div>}
 
@@ -94,7 +112,10 @@ export default async function ManageInternshipsPage({ searchParams }: { searchPa
 
     <section id="add-listing" className="mt-6 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
       <div className="mb-5 flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-sky-50 text-sky-700 dark:bg-slate-800 dark:text-sky-300"><Plus aria-hidden="true" className="size-5" /></span><div><h2 className="text-xl font-bold">Add an opportunity</h2><p className="text-sm text-slate-600 dark:text-slate-300">It will remain hidden until reviewed and published.</p></div></div>
-      <InternshipAdminForm action={createInternship} />
+      {listingsIssue ? <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">Saving is temporarily unavailable because the listings database could not be loaded. Resolve the database warning above before adding or editing opportunities.</p> : <>
+        <p className="mb-4 text-xs leading-5 text-slate-500">Required: company name and HTTPS careers page, title, description, and HTTPS application and source links. Optional dates must be valid; country codes use two letters.</p>
+        <InternshipAdminForm action={createInternship} />
+      </>}
     </section>
 
     <section className="mt-8" aria-labelledby="listing-records-heading">
