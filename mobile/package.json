@@ -1,0 +1,21 @@
+{
+  "name": "techtronica-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {"start":"expo start","android":"expo run:android","ios":"expo run:ios","typecheck":"tsc --noEmit"},
+  "dependencies": {
+    "@clerk/expo": "4.12.0",
+    "@supabase/supabase-js": "2.117.3",
+    "expo": "~58.0.0",
+    "expo-auth-session": "~58.0.0",
+    "expo-crypto": "~58.0.0",
+    "expo-router": "~58.0.19",
+    "expo-secure-store": "~58.0.0",
+    "expo-web-browser": "~58.0.0",
+    "react": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-url-polyfill": "2.0.0"
+  },
+  "devDependencies": {"@types/react":"~19.3.0","typescript":"~5.9.3"}
+}
