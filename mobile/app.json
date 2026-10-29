@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name":"Techtronica","slug":"techtronica","scheme":"techtronica","version":"0.1.0",
+    "orientation":"portrait","userInterfaceStyle":"automatic","newArchEnabled":true,
+    "plugins":["expo-router","expo-secure-store","@clerk/expo"],
+    "experiments":{"typedRoutes":true},
+    "ios":{"supportsTablet":true,"bundleIdentifier":"in.techtronica.gla"},
+    "android":{"package":"in.techtronica.gla","adaptiveIcon":{"backgroundColor":"#0b75bb"}}
+  }
+}
