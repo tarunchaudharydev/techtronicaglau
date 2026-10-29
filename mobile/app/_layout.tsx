@@ -1,7 +1,6 @@
 import { ClerkProvider, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { Stack } from 'expo-router';
-import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { setClerkTokenProvider } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
@@ -9,7 +8,8 @@ import { theme } from '@/lib/theme';
 const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 function SessionBridge() {
   const { getToken } = useAuth();
-  useEffect(() => { setClerkTokenProvider(() => getToken()); }, [getToken]);
+  // Register synchronously before route effects can issue their first Supabase request.
+  setClerkTokenProvider(() => getToken());
   return <Stack screenOptions={{headerShown:false,contentStyle:{backgroundColor:theme.background}}}/>;
 }
 export default function RootLayout() {
