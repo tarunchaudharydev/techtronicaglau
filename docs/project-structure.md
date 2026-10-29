@@ -32,6 +32,7 @@ test/
   unit/                    Credential-free automated unit tests
   legacy-supabase-auth/    Archived pre-Clerk reference code; not used at runtime
 types/                     Shared TypeScript and database types
+mobile/                    Expo SDK 58 React Native app; independent mobile package and route structure
 ```
 
 ## Where to make a change
@@ -46,6 +47,7 @@ types/                     Shared TypeScript and database types
 | Small deterministic logic | `lib/utils/` with a focused test under `test/unit/` |
 | Shared type changes | `types/` |
 | Public/static images and app icons | `public/` |
+| Native app screens and shared mobile query code | `mobile/app/`, `mobile/lib/`, and `mobile/components/` |
 | Contributor setup, operations, or product behavior | `docs/` |
 
 `test/legacy-supabase-auth/` is historical code preserved for reference. Do not import from it into the application. The backend repository is authoritative for production schema and migration operations; coordinate any corresponding frontend type or query changes in this repo.
