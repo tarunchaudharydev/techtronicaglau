@@ -36,6 +36,7 @@ The official website and member portal for Techtronica, the Electronics and Comm
 - Public/private visibility controls for events and team records. New records default to public.
 - Database-backed content and Supabase Storage for website and member media.
 - Installable Progressive Web App behavior using the responsive website.
+- Early React Native/Expo SDK 58 app foundation in [mobile/](mobile/README.md); mobile feature parity is in progress.
 
 The seeded clubs are Technovation, Code-E-Phobia, Unnati, Gizmo, and Mindblogger.
 
