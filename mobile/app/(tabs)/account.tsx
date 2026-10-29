@@ -7,7 +7,7 @@ import { RecordCard } from '@/components/RecordCard';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
 
-type Profile={full_name:string;avatar_url:string|null;department:string|null;year_of_study:number|null};
+type Profile={id:string;full_name:string;avatar_url:string|null;department:string|null;year_of_study:number|null};
 type RoleGrant={roles:{name:string}|null;clubs:{name:string}|null};
 
 export default function AccountScreen() {
@@ -15,11 +15,13 @@ export default function AccountScreen() {
   const [profile,setProfile]=useState<Profile|null>(null); const [roles,setRoles]=useState<string[]>([]); const [profileError,setProfileError]=useState('');
   useEffect(()=>{if(!isSignedIn||!user?.id)return;let active=true;
     async function loadAccount(){
-      const [p,r]=await Promise.all([
-        supabase.from('profiles').select('full_name,avatar_url,department,year_of_study').eq('clerk_user_id',user!.id).maybeSingle(),
-        supabase.from('user_role_assignments').select('roles(name),clubs(name)').eq('user_id',user!.id),
-      ]);
-      if(!active)return;if(p.error)setProfileError('Your profile details are unavailable right now.');setProfile(p.data);
+      const p=await supabase.from('profiles').select('id,full_name,avatar_url,department,year_of_study').eq('clerk_user_id',user!.id).maybeSingle();
+      if(!active)return;
+      if(p.error)setProfileError('Your profile details are unavailable right now.');
+      setProfile(p.data);
+      if(!p.data?.id)return;
+      const r=await supabase.from('user_role_assignments').select('roles(name),clubs(name)').eq('user_id',p.data.id);
+      if(!active)return;
       setRoles((r.data??[]).map((grant)=>{const item=grant as unknown as RoleGrant;return [item.roles?.name,item.clubs?.name].filter(Boolean).join(' · ');}).filter(Boolean));
     }
     void loadAccount();return ()=>{active=false;};
